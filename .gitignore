@@ -1,0 +1,22 @@
+# Build output
+addons/*.pbo
+*.pbo
+
+# Temp / cache
+*.bisign
+*.biprivatekey
+
+# IDE
+.vscode/
+.idea/
+*.suo
+*.user
+
+# OS
+Thumbs.db
+.DS_Store
+desktop.ini
+
+# Logs
+*.rpt
+*.log
