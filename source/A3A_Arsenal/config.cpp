@@ -5,9 +5,9 @@ class CfgPatches {
         units[] = {"A3A_ModuleArsenal", "A3A_ModuleGarage"};
         requiredVersion = 1.0;
         requiredAddons[] = {"A3_Modules_F", "A3_UI_F", "A3_Structures_F_Heli_Items_Electronics"};
-        version = 0.3;
-        versionStr = "0.3.0";
-        versionAr[] = {0,3,0};
+        version = 0.4;
+        versionStr = "0.4.0";
+        versionAr[] = {0,4,0};
         author = "Zeta Ded";
     };
 };

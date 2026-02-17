@@ -1,8 +1,8 @@
 #define COMPONENT jeroen_arsenal
 #define PREFIX A3A_Arsenal
 
-#define MAJOR 1
-#define MINOR 0
+#define MAJOR 0
+#define MINOR 4
 #define PATCHLVL 0
 
 #define VERSION MAJOR.MINOR.PATCHLVL

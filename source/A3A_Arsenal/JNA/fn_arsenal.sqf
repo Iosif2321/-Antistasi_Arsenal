@@ -3408,8 +3408,8 @@ switch _mode do {
 		private _catNames = [
 			"PrimaryWeapon","SecondaryWeapon","Handgun","Uniform","Vest","Backpack",
 			"Headgear","Goggles","NVG","Binoculars","Map","GPS","Radio",
-			"Compass","Watch","Face","Voice","Insignia","Optic","Muzzle",
-			"Pointer","Bipod","CargoMag","Magazines","Grenades","Mines","Misc"
+			"Compass","Watch","Face","Voice","Insignia","Optic","Pointer",
+			"Muzzle","Bipod","CargoMag","Magazines","Grenades","Mines","Misc"
 		];
 
 		private _totalItems = 0;
@@ -3604,8 +3604,8 @@ switch _mode do {
 			[8,  "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\nvgs_ca.paa"],             // IDC 8 = NVG
 			[9,  "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\binoculars_ca.paa"],       // IDC 9 = Binoculars
 			[18, "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\itemOptic_ca.paa"],        // IDC 18 = Optic
-			[19, "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\itemMuzzle_ca.paa"],       // IDC 19 = Muzzle
-			[20, "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\itemAcc_ca.paa"],          // IDC 20 = Flashlight/Laser
+			[19, "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\itemAcc_ca.paa"],          // IDC 19 = Pointer/Flashlight (ITEMACC)
+			[20, "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\itemMuzzle_ca.paa"],       // IDC 20 = Muzzle/Suppressor (ITEMMUZZLE)
 			[21, "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\itemBipod_ca.paa"],        // IDC 21 = Bipod
 			[23, "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\cargoMagAll_ca.paa"],      // IDC 23 = Magazines
 			[24, "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\cargoThrow_ca.paa"],       // IDC 24 = Grenades
@@ -3987,10 +3987,10 @@ switch _mode do {
 			systemChat format ["Arsenal '%1' saved.", _arsenalID];
 			diag_log format ["A3A_EditorSave: Saved locally (server). Key='%1'", _profileKey];
 		} else {
-			// Dedicated server: send full jna_dataList to server via arsenalLogic
-			["SAVE_JNA", [_arsenalID, jna_dataList]] remoteExecCall ["A3A_fnc_arsenalLogic", 2];
+			// Dedicated server: send full jna_dataList to server via CBA event
+			["A3A_editorSaveRequest", [_arsenalID, +jna_dataList]] call CBA_fnc_serverEvent;
 			systemChat format ["Arsenal '%1' sent to server for saving.", _arsenalID];
-			diag_log format ["A3A_EditorSave: remoteExecCall SAVE_JNA sent to server for '%1'", _arsenalID];
+			diag_log format ["A3A_EditorSave: Sent save request for '%1' to server (CBA event).", _arsenalID];
 		};
 		hint parseText format ["<t size='1.2' color='#00cc00'>SAVED '%1'</t>", _arsenalID];
 	};

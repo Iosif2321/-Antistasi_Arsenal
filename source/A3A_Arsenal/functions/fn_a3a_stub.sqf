@@ -197,4 +197,21 @@ if (isNil "SCRT_fnc_arsenal_loadoutArsenal") then {
     SCRT_fnc_arsenal_loadoutArsenal = {};
 };
 
+// ========================================================================================
+// Zeus assignment via CBA event (bypasses CfgRemoteExec issues)
+// ========================================================================================
+
+if (isServer) then {
+    ["A3A_assignZeusRequest", {
+        params ["_player"];
+        [_player] call A3A_fnc_assignZeus;
+    }] call CBA_fnc_addEventHandler;
+
+    ["A3A_editorSaveRequest", {
+        ["SAVE_JNA", _this] call A3A_fnc_arsenalLogic;
+    }] call CBA_fnc_addEventHandler;
+
+    diag_log "A3A_Arsenal: CBA server events registered.";
+};
+
 diag_log "A3A_Arsenal: Stubs initialized.";

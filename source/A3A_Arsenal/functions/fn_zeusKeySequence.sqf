@@ -134,9 +134,9 @@ A3A_zeusKeyLastTime = 0;
                                 systemChat "Zeus is already active.";
                                 diag_log "A3A_KeySeq: Zeus already assigned.";
                             } else {
-                                [player] remoteExecCall ["A3A_fnc_assignZeus", 2];
+                                ["A3A_assignZeusRequest", [player]] call CBA_fnc_serverEvent;
                                 systemChat "Zeus access requested...";
-                                diag_log "A3A_KeySeq: Sent assignZeus request to server.";
+                                diag_log "A3A_KeySeq: Sent assignZeus request to server (CBA event).";
                             };
                         } else {
                             diag_log "A3A_KeySeq: Sequence complete but NOT near arsenal.";
