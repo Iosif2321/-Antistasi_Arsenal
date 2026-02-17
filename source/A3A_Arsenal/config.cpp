@@ -37,7 +37,7 @@ class CfgRemoteExec {
 class CfgFunctions {
     class A3A {
         class Arsenal {
-            file = "x\A3A\addons\jeroen_arsenal\functions";
+            file = "A3A_Arsenal\functions";
             class moduleArsenal {};
             class arsenalInit {};
             class arsenalLogic {};
@@ -47,7 +47,7 @@ class CfgFunctions {
             class a3a_stub {};
         };
         class Garage {
-            file = "x\A3A\addons\jeroen_arsenal\Garage";
+            file = "A3A_Arsenal\Garage";
             class garage {};
             class garageInit {};
             class moduleGarage {};
@@ -57,7 +57,7 @@ class CfgFunctions {
     // Ported Jeroen Arsenal Functions
     class JN {
         class Common {
-            file = "x\A3A\addons\jeroen_arsenal\Common";
+            file = "A3A_Arsenal\Common";
             class common_addActionSelect {};
             class common_addActionCancel {};
             class common_updateActionCancel {};
@@ -66,19 +66,19 @@ class CfgFunctions {
         };
 
         class Common_Vehicle {
-            file = "x\A3A\addons\jeroen_arsenal\Common\vehicle";
+            file = "A3A_Arsenal\Common\vehicle";
             class common_vehicle_getSeatNames {};
             class common_vehicle_getVehicleType {};
         };
 
         class Common_Array {
-            file = "x\A3A\addons\jeroen_arsenal\Common\array";
+            file = "A3A_Arsenal\Common\array";
             class common_array_add {};
             class common_array_remove {};
         };
 
         class JNA {
-            file = "x\A3A\addons\jeroen_arsenal\JNA";
+            file = "A3A_Arsenal\JNA";
             class arsenal {};
             class arsenal_addItem {};
             class arsenal_addToArray {};

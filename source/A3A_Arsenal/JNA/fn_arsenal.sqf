@@ -467,7 +467,7 @@ switch _mode do {
 
 		_ctrlButtonExport = _display displayctrl IDC_RSCDISPLAYARSENAL_CONTROLSBAR_BUTTONEXPORT;
 		_ctrlButtonExport ctrlRemoveAllEventHandlers "buttonclick";
-		if ([player] call A3A_fnc_arsenal_isZeus) then {
+		if (!isNil "A3A_fnc_arsenal_isZeus" && {[player] call A3A_fnc_arsenal_isZeus}) then {
 			_ctrlButtonExport ctrlSetText (localize "STR_JNA_ACT_EDIT_ARSENAL");
 			_ctrlButtonExport ctrlSetTooltip (localize "STR_JNA_ACT_EDIT_ARSENAL_TIP");
 			_ctrlButtonExport ctrlEnable true;
@@ -3002,7 +3002,7 @@ switch _mode do {
 			};
 			//--- Ctrl+V: Import arsenal data from clipboard (Zeus only)
 			case (_key == DIK_V): {
-				if (_ctrl && {[player] call A3A_fnc_arsenal_isZeus}) then {
+				if (_ctrl && {!isNil "A3A_fnc_arsenal_isZeus"} && {[player] call A3A_fnc_arsenal_isZeus}) then {
 					["ImportData"] call jn_fnc_arsenal;
 					_return = true;
 				};
@@ -3578,7 +3578,6 @@ switch _mode do {
 		private _display = _this select 0;
 		disableSerialization;
 
-		// Zeus only — prevent bypass via direct call
 		// Zeus only — prevent bypass via direct call
 		if (isNil "A3A_fnc_arsenal_isZeus" || {!([player] call A3A_fnc_arsenal_isZeus)}) exitWith {};
 

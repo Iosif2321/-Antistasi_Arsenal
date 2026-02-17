@@ -13,18 +13,16 @@ private _unlockThreshold = _logic getVariable ["UnlockThreshold", 25];
 private _syncedObjects = synchronizedObjects _logic;
 
 // Debug log if no objects found
-// Debug log if no objects found
 if (count _syncedObjects == 0) then {
-    _msg = format ["Antistasi Arsenal: Module %1 (ID %2) has no synchronized objects!", _logic, _arsenalID];
-    diag_log text _msg;
+    private _msg = format ["Antistasi Arsenal: Module %1 (ID %2) has no synchronized objects!", _logic, _arsenalID];
+    diag_log _msg;
     systemChat _msg;
 };
 
 {
     private _object = _x;
-    // Debu log
-    _msg = format ["Antistasi Arsenal: Initializing object: %1 with ID: %2", _object, _arsenalID];
-    diag_log text _msg;
+    private _msg = format ["Antistasi Arsenal: Initializing object: %1 with ID: %2", _object, _arsenalID];
+    diag_log _msg;
     systemChat _msg;
 
     // Initialize arsenal on each synchronized object

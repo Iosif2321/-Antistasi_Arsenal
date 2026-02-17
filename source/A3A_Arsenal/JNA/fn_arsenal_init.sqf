@@ -55,6 +55,13 @@ if (isNil "jna_commonInitDone") then {
     jna_commonInitDone = true;
     missionNamespace setVariable ["jna_object", _object]; // default, overwritten on each open
 
+    // Ensure A3A_guestItemLimit is available on this machine.
+    // publicVariable from server is NOT JIP-safe, so JIP clients may not have it.
+    // Fall back to _unlockThreshold which is read from the object (JIP-safe).
+    if (isNil "A3A_guestItemLimit") then {
+        A3A_guestItemLimit = _unlockThreshold;
+    };
+
     jna_minItemMember = [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1];
     jna_minItemMember = jna_minItemMember apply { A3A_guestItemLimit };
     jna_minItemMember set [IDC_RSCDISPLAYARSENAL_TAB_CARGOMAG, A3A_guestItemLimit*3];
@@ -290,7 +297,6 @@ if(hasInterface)then{
         [] spawn {
             disableSerialization;
             private _type = UINamespace getVariable ["jn_type",""];
-            _veh = vehicle player;
 
             switch (true) do {
                 case (uiNamespace getVariable ["isLoadoutArsenal", false]): {
@@ -311,7 +317,7 @@ if(hasInterface)then{
 
 	//add close event
     [missionNamespace, "arsenalClosed", {
-        _type = UINamespace getVariable ["jn_type",""];
+        private _type = UINamespace getVariable ["jn_type",""];
 
         private _arsenalObj = missionNamespace getVariable ["jna_object", objNull];
 
