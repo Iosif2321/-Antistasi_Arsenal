@@ -25,6 +25,7 @@ class CfgRemoteExec {
         class jn_fnc_arsenal_requestOpen { allowedTargets = 2; };
         class jn_fnc_arsenal_handleAction { allowedTargets = 0; };
         class A3A_fnc_assignZeus { allowedTargets = 2; };
+        class A3A_fnc_arsenalLogic { allowedTargets = 2; };
         class A3A_fnc_garage { allowedTargets = 0; };
         class A3A_fnc_garageInit { allowedTargets = 0; };
     };
@@ -36,7 +37,7 @@ class CfgRemoteExec {
 class CfgFunctions {
     class A3A {
         class Arsenal {
-            file = "A3A_Arsenal\functions";
+            file = "x\A3A\addons\jeroen_arsenal\functions";
             class moduleArsenal {};
             class arsenalInit {};
             class arsenalLogic {};
@@ -46,7 +47,7 @@ class CfgFunctions {
             class a3a_stub {};
         };
         class Garage {
-            file = "A3A_Arsenal\Garage";
+            file = "x\A3A\addons\jeroen_arsenal\Garage";
             class garage {};
             class garageInit {};
             class moduleGarage {};
@@ -56,7 +57,7 @@ class CfgFunctions {
     // Ported Jeroen Arsenal Functions
     class JN {
         class Common {
-            file = "A3A_Arsenal\Common";
+            file = "x\A3A\addons\jeroen_arsenal\Common";
             class common_addActionSelect {};
             class common_addActionCancel {};
             class common_updateActionCancel {};
@@ -65,19 +66,19 @@ class CfgFunctions {
         };
 
         class Common_Vehicle {
-            file = "A3A_Arsenal\Common\vehicle";
+            file = "x\A3A\addons\jeroen_arsenal\Common\vehicle";
             class common_vehicle_getSeatNames {};
             class common_vehicle_getVehicleType {};
         };
 
         class Common_Array {
-            file = "A3A_Arsenal\Common\array";
+            file = "x\A3A\addons\jeroen_arsenal\Common\array";
             class common_array_add {};
             class common_array_remove {};
         };
 
         class JNA {
-            file = "A3A_Arsenal\JNA";
+            file = "x\A3A\addons\jeroen_arsenal\JNA";
             class arsenal {};
             class arsenal_addItem {};
             class arsenal_addToArray {};

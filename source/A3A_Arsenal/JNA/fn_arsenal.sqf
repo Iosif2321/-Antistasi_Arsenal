@@ -3579,7 +3579,8 @@ switch _mode do {
 		disableSerialization;
 
 		// Zeus only — prevent bypass via direct call
-		if (!([player] call A3A_fnc_arsenal_isZeus)) exitWith {};
+		// Zeus only — prevent bypass via direct call
+		if (isNil "A3A_fnc_arsenal_isZeus" || {!([player] call A3A_fnc_arsenal_isZeus)}) exitWith {};
 
 		// Prevent double-open
 		if (!isNil {uiNamespace getVariable "jna_editor_open"}) exitWith {};
@@ -3657,11 +3658,13 @@ switch _mode do {
 		{
 			_x params ["_catIdx", "_iconPath"];
 			private _idc = 90100 + _forEachIndex;
-			private _tabBtn = _display ctrlCreate ["RscButton", _idc];
+			// Use RscActivePicture to show the icon, not the text path
+			private _tabBtn = _display ctrlCreate ["RscActivePicture", _idc];
 			_tabBtn ctrlSetPosition [_panelX + _pad + _tabW * _forEachIndex, _tabY, _tabW - 1 * pixelW, _tabH];
 			_tabBtn ctrlSetText _iconPath;
 			_tabBtn ctrlSetTooltip (str _catIdx);
-			_tabBtn ctrlSetBackgroundColor [0.25, 0.25, 0.25, 1];
+            // Default color (inactive) - Greyish
+			_tabBtn ctrlSetTextColor [0.6, 0.6, 0.6, 1];
 			_tabBtn ctrlAddEventHandler ["ButtonClick", format [
 				"['EditorSelectCat', [ctrlParent (_this select 0), %1]] call jn_fnc_arsenal;",
 				_catIdx
@@ -3838,9 +3841,11 @@ switch _mode do {
 			private _idc = 90100 + _forEachIndex;
 			private _ctrl = _display displayCtrl _idc;
 			if (_x == _catIdx) then {
-				_ctrl ctrlSetBackgroundColor [0.4, 0.4, 0.1, 1];
+                // Active: White/Bright
+				_ctrl ctrlSetTextColor [1, 1, 1, 1];
 			} else {
-				_ctrl ctrlSetBackgroundColor [0.25, 0.25, 0.25, 1];
+                // Inactive: Grey
+				_ctrl ctrlSetTextColor [0.6, 0.6, 0.6, 1];
 			};
 			_ctrl ctrlCommit 0;
 		} forEach _categories;
