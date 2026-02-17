@@ -300,18 +300,18 @@ switch (_mode) do {
 
     case "SAVE": {
         _params params ["_object"];
-        
+
         if (isNull _object) exitWith {};
-        
+
         private _id = _object getVariable ["A3A_Arsenal_ID", "Default"];
         private _counts = _object getVariable ["A3A_Arsenal_Counts", createHashMap];
-        
+
         // Save in JNA-compatible format: 27 sub-arrays indexed by arsenal tab
         // Each sub-array contains [["className", count], ...] pairs
         // Items whose tab index cannot be determined go into CARGOMISC (index 26)
         private _dataToSave = [];
         for "_i" from 0 to 26 do { _dataToSave pushBack [] };
-        
+
         {
             private _cls = _x;
             private _cnt = _y;
@@ -319,11 +319,37 @@ switch (_mode) do {
             if (_tabIndex < 0 || _tabIndex > 26) then { _tabIndex = 26 }; // fallback to CARGOMISC
             (_dataToSave select _tabIndex) pushBack [_cls, _cnt];
         } forEach _counts;
-        
+
         private _profileKey = format ["A3A_ArsenalData_%1", _id];
         profileNamespace setVariable [_profileKey, _dataToSave];
         saveProfileNamespace;
-        
+
         diag_log format ["Antistasi Arsenal Saved: %1 (%2 unique items)", _id, count _counts];
+    };
+
+    // Called from client EditorSave: receives full JNA data array (27 sub-arrays) and saves it
+    case "SAVE_JNA": {
+        diag_log format ["A3A_arsenalLogic SAVE_JNA: RECEIVED (isServer=%1, _params count=%2)", isServer, count _params];
+        if (!isServer) exitWith {};
+        _params params [["_arsenalID", "Base", [""]], ["_dataList", [], [[]]]];
+
+        if (count _dataList != 27) exitWith {
+            diag_log format ["A3A_arsenalLogic SAVE_JNA: invalid data (count=%1), expected 27", count _dataList];
+        };
+
+        private _serverKey = format ["jna_dataList_%1", _arsenalID];
+        private _profileKey = format ["A3A_ArsenalData_%1", _arsenalID];
+
+        // Update server runtime storage
+        server setVariable [_serverKey, _dataList, true];
+
+        // Persist to profileNamespace
+        profileNamespace setVariable [_profileKey, _dataList];
+        saveProfileNamespace;
+
+        // Count items for log
+        private _itemCount = 0;
+        { _itemCount = _itemCount + count _x } forEach _dataList;
+        diag_log format ["A3A_arsenalLogic SAVE_JNA: Arsenal '%1' saved (%2 items)", _arsenalID, _itemCount];
     };
 };

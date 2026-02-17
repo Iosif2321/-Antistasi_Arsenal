@@ -3401,13 +3401,13 @@ switch _mode do {
 	// Usage: ["ExportData"] call jn_fnc_arsenal;              — to clipboard + RPT
 	//        ["ExportData", [true]] call jn_fnc_arsenal;      — RPT only (silent)
 	case "ExportData": {
-		private _rptOnly = param [0, false];
+		private _rptOnly = _params param [0, false];
 		private _arsenalID = (missionNamespace getVariable ["jna_object", objNull]) getVariable ["A3A_Arsenal_ID", "Base"];
 
-		// Category names (ASCII only — safe for RPT log)
+		// Category names indexed by BIS IDC tab order (0=PrimaryWeapon, 1=Launcher, ..., 26=Misc)
 		private _catNames = [
-			"Uniform","Vest","Backpack","Headgear","Goggles","NVG","Binoculars",
-			"PrimaryWeapon","SecondaryWeapon","Handgun","Map","GPS","Radio",
+			"PrimaryWeapon","SecondaryWeapon","Handgun","Uniform","Vest","Backpack",
+			"Headgear","Goggles","NVG","Binoculars","Map","GPS","Radio",
 			"Compass","Watch","Face","Voice","Insignia","Optic","Muzzle",
 			"Pointer","Bipod","CargoMag","Magazines","Grenades","Mines","Misc"
 		];
@@ -3590,26 +3590,27 @@ switch _mode do {
 			uiNamespace setVariable ["jna_editor_savedCounts", createHashMap];
 		};
 
-		// --- Category definitions: [index, iconPath] ---
+		// --- Category definitions: [BIS IDC index, iconPath] ---
+		// Icons MUST match the BIS IDC tab indices used by jn_fnc_arsenal_itemType
 		private _categories = [
-			[0,  "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\uniform_ca.paa"],
-			[1,  "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\vest_ca.paa"],
-			[2,  "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\backpack_ca.paa"],
-			[3,  "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\headgear_ca.paa"],
-			[4,  "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\goggles_ca.paa"],
-			[5,  "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\nvgs_ca.paa"],
-			[6,  "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\binoculars_ca.paa"],
-			[7,  "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\primaryWeapon_ca.paa"],
-			[8,  "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\secondaryWeapon_ca.paa"],
-			[9,  "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\handgun_ca.paa"],
-			[18, "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\itemOptic_ca.paa"],
-			[19, "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\itemMuzzle_ca.paa"],
-			[20, "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\itemAcc_ca.paa"],
-			[21, "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\itemBipod_ca.paa"],
-			[23, "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\cargoMagAll_ca.paa"],
-			[24, "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\cargoThrow_ca.paa"],
-			[25, "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\cargoPut_ca.paa"],
-			[26, "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\cargoMisc_ca.paa"]
+			[0,  "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\primaryWeapon_ca.paa"],    // IDC 0 = Primary Weapon
+			[1,  "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\secondaryWeapon_ca.paa"],  // IDC 1 = Launcher
+			[2,  "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\handgun_ca.paa"],          // IDC 2 = Handgun
+			[3,  "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\uniform_ca.paa"],          // IDC 3 = Uniform
+			[4,  "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\vest_ca.paa"],             // IDC 4 = Vest
+			[5,  "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\backpack_ca.paa"],         // IDC 5 = Backpack
+			[6,  "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\headgear_ca.paa"],         // IDC 6 = Headgear
+			[7,  "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\goggles_ca.paa"],          // IDC 7 = Goggles/Facewear
+			[8,  "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\nvgs_ca.paa"],             // IDC 8 = NVG
+			[9,  "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\binoculars_ca.paa"],       // IDC 9 = Binoculars
+			[18, "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\itemOptic_ca.paa"],        // IDC 18 = Optic
+			[19, "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\itemMuzzle_ca.paa"],       // IDC 19 = Muzzle
+			[20, "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\itemAcc_ca.paa"],          // IDC 20 = Flashlight/Laser
+			[21, "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\itemBipod_ca.paa"],        // IDC 21 = Bipod
+			[23, "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\cargoMagAll_ca.paa"],      // IDC 23 = Magazines
+			[24, "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\cargoThrow_ca.paa"],       // IDC 24 = Grenades
+			[25, "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\cargoPut_ca.paa"],         // IDC 25 = Explosives
+			[26, "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\cargoMisc_ca.paa"]         // IDC 26 = Misc
 		];
 
 		// --- Layout constants (safezone-relative) ---
@@ -3784,18 +3785,15 @@ switch _mode do {
 		private _arsenalMap = createHashMap;
 		{ _arsenalMap set [_x select 0, _x select 1] } forEach _arsenalItems;
 
-		// Helper: get config for item
+		// Helper: get config for item based on category IDC index
 		private _getItemConfig = {
 			params ["_cls", "_idx"];
-			switch _idx do {
-				case 2: { configFile >> "CfgVehicles" >> _cls };
-				case 4: { configFile >> "CfgGlasses" >> _cls };
-				case 22;
-				case 23;
-				case 24;
-				case 25: { configFile >> "CfgMagazines" >> _cls };
-				default { configFile >> "CfgWeapons" >> _cls };
-			};
+			// Try all config sources, return first valid match
+			private _cfg = configFile >> "CfgWeapons" >> _cls;
+			if (!isClass _cfg) then { _cfg = configFile >> "CfgMagazines" >> _cls };
+			if (!isClass _cfg) then { _cfg = configFile >> "CfgVehicles" >> _cls };
+			if (!isClass _cfg) then { _cfg = configFile >> "CfgGlasses" >> _cls };
+			_cfg
 		};
 
 		// First: items already in arsenal (count > 0 or INF)
@@ -3971,18 +3969,28 @@ switch _mode do {
 	///////////////////////////////////////////////////////////////////////////////////////////
 	case "EditorSave": {
 		private _display = _this select 0;
-		private _arsenalID = (missionNamespace getVariable ["jna_object", objNull]) getVariable ["A3A_Arsenal_ID", "Base"];
+		private _arsenalObj = missionNamespace getVariable ["jna_object", objNull];
+		private _arsenalID = _arsenalObj getVariable ["A3A_Arsenal_ID", "Base"];
+		private _serverKey = format ["jna_dataList_%1", _arsenalID];
+		private _profileKey = format ["A3A_ArsenalData_%1", _arsenalID];
 
-		// Save to server per-arsenal storage and profileNamespace
+		// Count items for log
+		private _totalItems = 0;
+		{ _totalItems = _totalItems + count _x } forEach jna_dataList;
+		diag_log format ["A3A_EditorSave: Arsenal '%1' — %2 items, isServer=%3", _arsenalID, _totalItems, isServer];
+
 		if (isServer) then {
-			server setVariable [format ["jna_dataList_%1", _arsenalID], jna_dataList, true];
-			profileNamespace setVariable [format ["A3A_ArsenalData_%1", _arsenalID], jna_dataList];
+			// Direct save on server (listen server / singleplayer)
+			server setVariable [_serverKey, jna_dataList, true];
+			profileNamespace setVariable [_profileKey, jna_dataList];
 			saveProfileNamespace;
 			systemChat format ["Arsenal '%1' saved.", _arsenalID];
+			diag_log format ["A3A_EditorSave: Saved locally (server). Key='%1'", _profileKey];
 		} else {
-			// Send to server for saving
-			["UpdateItemAdd", [0, "", 0, true]] remoteExecCall ["jn_fnc_arsenal", 2];
+			// Dedicated server: send full jna_dataList to server via arsenalLogic
+			["SAVE_JNA", [_arsenalID, jna_dataList]] remoteExecCall ["A3A_fnc_arsenalLogic", 2];
 			systemChat format ["Arsenal '%1' sent to server for saving.", _arsenalID];
+			diag_log format ["A3A_EditorSave: remoteExecCall SAVE_JNA sent to server for '%1'", _arsenalID];
 		};
 		hint parseText format ["<t size='1.2' color='#00cc00'>SAVED '%1'</t>", _arsenalID];
 	};
