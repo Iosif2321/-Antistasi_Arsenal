@@ -292,6 +292,15 @@ switch _mode do {
 		} foreach ("isclass _x" configclasses (configfile >> "cfgmagazines"));
 
 		missionnamespace setvariable ["bis_fnc_arsenal_data",_data];
+		// DEBUG: Preload summary
+		private _preloadTotal = 0;
+		private _preloadSummary = [];
+		{
+			private _cnt = count _x;
+			_preloadTotal = _preloadTotal + _cnt;
+			if (_cnt > 0) then { _preloadSummary pushBack format ["%1:%2", _forEachIndex, _cnt] };
+		} forEach _data;
+		diag_log format ["A3A_Preload: DONE — %1 total items. Per-IDC: %2", _preloadTotal, _preloadSummary];
 		_data;
 	};
 
@@ -3749,6 +3758,9 @@ switch _mode do {
 		}];
 
 		// Populate first category
+		diag_log format ["A3A_EditorOpen: %1 categories created, jna_dataList defined=%2 (count=%3), bis_fnc_arsenal_data defined=%4",
+			count _categories, !isNil "jna_dataList", count (jna_dataList param [0, []]),
+			!isNil {missionNamespace getVariable "bis_fnc_arsenal_data"}];
 		["EditorSelectCat", [_display, (_categories select 0) select 0]] call jn_fnc_arsenal;
 	};
 
@@ -3776,10 +3788,15 @@ switch _mode do {
 		lbClear _list;
 
 		// Get all available items for this category from preloaded config data
-		private _allConfigItems = (missionNamespace getVariable ["bis_fnc_arsenal_data", []]) param [_catIdx, []];
+		private _allConfigData = missionNamespace getVariable ["bis_fnc_arsenal_data", []];
+		private _allConfigItems = _allConfigData param [_catIdx, []];
 
 		// Get current arsenal items for this category
 		private _arsenalItems = jna_dataList param [_catIdx, []];
+
+		// DEBUG: diagnose empty lists
+		diag_log format ["A3A_EditorSelectCat: catIdx=%1 | configItems=%2 | arsenalItems=%3 | bis_data defined=%4 (count=%5)",
+			_catIdx, count _allConfigItems, count _arsenalItems, !isNil {missionNamespace getVariable "bis_fnc_arsenal_data"}, count _allConfigData];
 
 		// Build hashmap of arsenal items for quick lookup: className -> count
 		private _arsenalMap = createHashMap;
