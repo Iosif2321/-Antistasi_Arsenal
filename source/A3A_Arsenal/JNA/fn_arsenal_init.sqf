@@ -74,18 +74,32 @@ if (isServer) then {
     // One-time: register CBA server events for Zeus and EditorSave
     if (isNil "A3A_cbaEventsRegistered") then {
         A3A_cbaEventsRegistered = true;
+        diag_log "A3A_Arsenal: CBA registration starting...";
 
-        ["A3A_assignZeusRequest", {
-            params ["_player"];
-            diag_log format ["A3A_Arsenal: CBA assignZeus request from %1", name _player];
-            [_player] call A3A_fnc_assignZeus;
-        }] call CBA_fnc_addEventHandler;
+        private _cbaAvailable = !isNil "CBA_fnc_addEventHandler";
+        diag_log format ["A3A_Arsenal: CBA_fnc_addEventHandler available = %1", _cbaAvailable];
 
-        ["A3A_editorSaveRequest", {
-            ["SAVE_JNA", _this] call A3A_fnc_arsenalLogic;
-        }] call CBA_fnc_addEventHandler;
+        if (_cbaAvailable) then {
+            private _r1 = ["A3A_assignZeusRequest", {
+                params ["_player"];
+                diag_log format ["A3A_Arsenal: CBA assignZeus request from %1", name _player];
+                [_player] call A3A_fnc_assignZeus;
+            }] call CBA_fnc_addEventHandler;
+            diag_log format ["A3A_Arsenal: CBA assignZeus handler registered (id=%1)", _r1];
 
-        diag_log "A3A_Arsenal: CBA server events registered (from arsenal_init).";
+            private _r2 = ["A3A_editorSaveRequest", {
+                diag_log format ["A3A_Arsenal: CBA editorSave request received: %1", _this];
+                ["SAVE_JNA", _this] call A3A_fnc_arsenalLogic;
+            }] call CBA_fnc_addEventHandler;
+            diag_log format ["A3A_Arsenal: CBA editorSave handler registered (id=%1)", _r2];
+
+            diag_log "A3A_Arsenal: CBA server events registered (from arsenal_init).";
+        } else {
+            diag_log "A3A_Arsenal: ERROR - CBA_fnc_addEventHandler NOT available! CBA events will NOT work.";
+            diag_log "A3A_Arsenal: Falling back to remoteExec for Zeus (may be blocked by CfgRemoteExec).";
+        };
+    } else {
+        diag_log "A3A_Arsenal: CBA events already registered (skipping).";
     };
 
     // One-time check: ensure A3A_fnc_assignZeus is allowed for remoteExec (Zeus key sequence)

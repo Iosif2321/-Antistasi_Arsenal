@@ -3410,7 +3410,7 @@ switch _mode do {
 	// Usage: ["ExportData"] call jn_fnc_arsenal;              — to clipboard + RPT
 	//        ["ExportData", [true]] call jn_fnc_arsenal;      — RPT only (silent)
 	case "ExportData": {
-		private _rptOnly = _params param [0, false];
+		private _rptOnly = _this param [0, false];
 		private _arsenalID = (missionNamespace getVariable ["jna_object", objNull]) getVariable ["A3A_Arsenal_ID", "Base"];
 
 		// Category names indexed by BIS IDC tab order (0=PrimaryWeapon, 1=Launcher, ..., 26=Misc)
