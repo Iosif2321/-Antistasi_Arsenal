@@ -3649,6 +3649,11 @@ switch _mode do {
 			[IDC_RSCDISPLAYARSENAL_TAB_GOGGLES,         "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\goggles_ca.paa"],         // Goggles/Facewear
 			[IDC_RSCDISPLAYARSENAL_TAB_NVGS,            "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\nvgs_ca.paa"],            // NVG
 			[IDC_RSCDISPLAYARSENAL_TAB_BINOCULARS,      "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\binoculars_ca.paa"],      // Binoculars
+			[IDC_RSCDISPLAYARSENAL_TAB_MAP,             "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\map_ca.paa"],             // Map
+			[IDC_RSCDISPLAYARSENAL_TAB_GPS,             "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\gps_ca.paa"],             // GPS
+			[IDC_RSCDISPLAYARSENAL_TAB_RADIO,           "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\radio_ca.paa"],           // Radio
+			[IDC_RSCDISPLAYARSENAL_TAB_COMPASS,         "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\compass_ca.paa"],         // Compass
+			[IDC_RSCDISPLAYARSENAL_TAB_WATCH,           "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\watch_ca.paa"],           // Watch
 			[IDC_RSCDISPLAYARSENAL_TAB_ITEMOPTIC,   "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\itemOptic_ca.paa"],   // Optic
 			[IDC_RSCDISPLAYARSENAL_TAB_ITEMACC,     "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\itemAcc_ca.paa"],     // Pointer/Flashlight
 			[IDC_RSCDISPLAYARSENAL_TAB_ITEMMUZZLE,  "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\itemMuzzle_ca.paa"],  // Muzzle/Suppressor
@@ -3903,6 +3908,9 @@ switch _mode do {
 			IDC_RSCDISPLAYARSENAL_TAB_VEST, IDC_RSCDISPLAYARSENAL_TAB_BACKPACK,
 			IDC_RSCDISPLAYARSENAL_TAB_HEADGEAR, IDC_RSCDISPLAYARSENAL_TAB_GOGGLES,
 			IDC_RSCDISPLAYARSENAL_TAB_NVGS, IDC_RSCDISPLAYARSENAL_TAB_BINOCULARS,
+			IDC_RSCDISPLAYARSENAL_TAB_MAP, IDC_RSCDISPLAYARSENAL_TAB_GPS,
+			IDC_RSCDISPLAYARSENAL_TAB_RADIO, IDC_RSCDISPLAYARSENAL_TAB_COMPASS,
+			IDC_RSCDISPLAYARSENAL_TAB_WATCH,
 			IDC_RSCDISPLAYARSENAL_TAB_ITEMOPTIC, IDC_RSCDISPLAYARSENAL_TAB_ITEMACC,
 			IDC_RSCDISPLAYARSENAL_TAB_ITEMMUZZLE, IDC_RSCDISPLAYARSENAL_TAB_ITEMBIPOD,
 			IDC_RSCDISPLAYARSENAL_TAB_CARGOMAGALL, IDC_RSCDISPLAYARSENAL_TAB_CARGOTHROW,

@@ -867,6 +867,17 @@ switch _mode do {
 
 		private _objectSelected = uiNamespace getVariable "jn_object_selected";
 
+		// DEBUG: log what is being unloaded to arsenal
+		private _unloadTotal = 0;
+		private _unloadSummary = [];
+		{
+			if (count _x > 0) then {
+				_unloadTotal = _unloadTotal + count _x;
+				_unloadSummary pushBack format ["%1:%2", _forEachIndex, count _x];
+			};
+		} forEach jnva_loadout;
+		diag_log format ["A3A_VehicleArsenal Unload: %1 item groups from %2. Per-IDC: %3", _unloadTotal, typeOf _objectSelected, _unloadSummary];
+
 		jnva_loadout_mass = 0;
         jnva_loadout remoteExecCall ["jn_fnc_arsenal_addItem",2];
 

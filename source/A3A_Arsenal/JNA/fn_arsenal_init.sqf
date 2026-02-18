@@ -191,7 +191,7 @@ if(hasInterface)then{
 		("<img image='" + QPATHTOFOLDER(Pictures\unloadvehicle.paa) + "' size='1.6' shadow=2/>" + format["<t size='1'> %1</t>", localize "STR_JNA_ACT_CONTAINER_OPEN"]),
         {
 			private _object = _this select 0;
-			
+
 			private _script =  {
 				params ["_object"];
 				
@@ -260,7 +260,7 @@ if(hasInterface)then{
         true,
         false,
         "",
-        "alive _target && {_target distance _this < 5 && {vehicle player == player}}"
+        "alive _target && {_target distance _this < 5} && {vehicle player == player} && {(missionNamespace getVariable ['A3A_Arsenal_ContainerAccess', 0]) != 2} && {(missionNamespace getVariable ['A3A_Arsenal_ContainerAccess', 0]) != 1 || {[_this] call A3A_fnc_arsenal_isZeus}}"
     ];
 
     //add export arsenal data button (clipboard + RPT log) — Zeus only
@@ -287,7 +287,6 @@ if(hasInterface)then{
         "alive _target && {_target distance _this < 5} && {vehicle player == player} && {[_this] call A3A_fnc_arsenal_isZeus}"
     ];
 
-    //add quick equip button
     //add quick equip button - DISABLED FOR STANDALONE
     /*
     _object addAction [

@@ -206,6 +206,18 @@
             <Key ID="STR_JNA_OVERRIDE_CARGO">
                 <Original>Double-click an item in the list to save it into your custom loadout. Double-click again to unsave. Note that saving a cargo container (Uniform, Vest, or Backpack) also saves all of the contents of that container.</Original>
             </Key>
+            <Key ID="STR_JNA_ACT_TOGGLE_CARGO_LOAD">
+                <Original>Toggle: Load from vehicle</Original>
+                <Russian>Переключить: Загрузка из техники</Russian>
+            </Key>
+            <Key ID="STR_JNA_ACT_CARGO_LOAD_ENABLED">
+                <Original>Loading from vehicle/crate: ENABLED</Original>
+                <Russian>Загрузка из техники/ящика: ВКЛЮЧЕНА</Russian>
+            </Key>
+            <Key ID="STR_JNA_ACT_CARGO_LOAD_DISABLED">
+                <Original>Loading from vehicle/crate: DISABLED</Original>
+                <Russian>Загрузка из техники/ящика: ВЫКЛЮЧЕНА</Russian>
+            </Key>
         </Container>
     </Package>
 </Project>

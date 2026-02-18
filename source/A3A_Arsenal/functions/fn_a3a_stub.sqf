@@ -200,4 +200,21 @@ if (isNil "SCRT_fnc_arsenal_loadoutArsenal") then {
 // CBA server events are registered in fn_arsenal_init.sqf (isServer block)
 // — that path is guaranteed to execute on server during module init.
 
+// ========================================================================================
+// CBA Settings — addon options (ESC → Options → Game → Configure Addons → Antistasi Arsenal)
+// ========================================================================================
+if (!isNil "CBA_fnc_addSetting") then {
+    [
+        "A3A_Arsenal_ContainerAccess",
+        "LIST",
+        ["Container Arsenal Access", "Who can use 'Select vehicle to open arsenal' action"],
+        "Antistasi Arsenal",
+        [[0, 1, 2], ["Everyone", "Zeus Only", "Disabled"], 0]
+    ] call CBA_fnc_addSetting;
+    diag_log "A3A_Arsenal: CBA settings registered.";
+} else {
+    A3A_Arsenal_ContainerAccess = 0;
+    diag_log "A3A_Arsenal: CBA not available, using default settings.";
+};
+
 diag_log "A3A_Arsenal: Stubs initialized.";
