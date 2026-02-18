@@ -218,6 +218,14 @@
                 <Original>Loading from vehicle/crate: DISABLED</Original>
                 <Russian>Загрузка из техники/ящика: ВЫКЛЮЧЕНА</Russian>
             </Key>
+            <Key ID="STR_A3AP_vehArsenal_header">
+                <Original>Vehicle Arsenal</Original>
+                <Russian>Арсенал техники</Russian>
+            </Key>
+            <Key ID="STR_A3AP_vehArsenal_desc">
+                <Original>Look at a vehicle or crate and press Space to load its cargo into the arsenal.</Original>
+                <Russian>Посмотрите на технику или ящик и нажмите Пробел, чтобы загрузить его содержимое в арсенал.</Russian>
+            </Key>
         </Container>
     </Package>
 </Project>
