@@ -184,6 +184,7 @@ switch _mode do {
 
 	/////////////////////////////////////////////////////////////////////////////////////////// Externaly called
 	case "Preload": {
+		diag_log format ["A3A_Preload: START — bis_fnc_arsenal_data already defined=%1", !isNil {missionNamespace getVariable "bis_fnc_arsenal_data"}];
 		private ["_data"];
 
 		INITTYPES
@@ -3848,6 +3849,12 @@ switch _mode do {
 				_list lbSetColor [_lbIdx, [0.4, 0.4, 0.4, 0.7]];
 			};
 		} forEach _allConfigItems;
+
+		// Verify: how many items are now in the listbox?
+		diag_log format ["A3A_EditorSelectCat: DONE catIdx=%1 | lbSize=%2 | arsenalAdded=%3 | configAdded=%4 | sample=%5",
+			_catIdx, lbSize _list, count _arsenalItems,
+			(lbSize _list) - (count _arsenalItems),
+			if (count _allConfigItems > 0) then { [_allConfigItems select 0, typeName (_allConfigItems select 0)] } else { "EMPTY" }];
 
 		// Highlight active category tab
 		private _categories = [0,1,2,3,4,5,6,7,8,9,18,19,20,21,23,24,25,26];
