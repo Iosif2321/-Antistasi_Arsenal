@@ -71,6 +71,23 @@ if (isNil "jna_commonInitDone") then {
 
 // Per-arsenal server-side init: load data for THIS arsenal by its ID
 if (isServer) then {
+    // One-time: register CBA server events for Zeus and EditorSave
+    if (isNil "A3A_cbaEventsRegistered") then {
+        A3A_cbaEventsRegistered = true;
+
+        ["A3A_assignZeusRequest", {
+            params ["_player"];
+            diag_log format ["A3A_Arsenal: CBA assignZeus request from %1", name _player];
+            [_player] call A3A_fnc_assignZeus;
+        }] call CBA_fnc_addEventHandler;
+
+        ["A3A_editorSaveRequest", {
+            ["SAVE_JNA", _this] call A3A_fnc_arsenalLogic;
+        }] call CBA_fnc_addEventHandler;
+
+        diag_log "A3A_Arsenal: CBA server events registered (from arsenal_init).";
+    };
+
     // One-time check: ensure A3A_fnc_assignZeus is allowed for remoteExec (Zeus key sequence)
     if (isNil "A3A_remoteExecCheckDone") then {
         A3A_remoteExecCheckDone = true;
