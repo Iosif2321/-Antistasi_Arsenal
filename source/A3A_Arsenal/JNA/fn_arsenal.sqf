@@ -189,6 +189,14 @@ switch _mode do {
 
 		INITTYPES
 
+		// Log ACTUAL IDC constant values — verify they match expectations
+		diag_log format ["A3A_Preload IDC_CARGO: MAG=%1 MAGALL=%2 THROW=%3 PUT=%4 MISC=%5 | OPTIC=%6 ACC=%7 MUZZLE=%8 BIPOD=%9",
+			IDC_RSCDISPLAYARSENAL_TAB_CARGOMAG, IDC_RSCDISPLAYARSENAL_TAB_CARGOMAGALL,
+			IDC_RSCDISPLAYARSENAL_TAB_CARGOTHROW, IDC_RSCDISPLAYARSENAL_TAB_CARGOPUT,
+			IDC_RSCDISPLAYARSENAL_TAB_CARGOMISC,
+			IDC_RSCDISPLAYARSENAL_TAB_ITEMOPTIC, IDC_RSCDISPLAYARSENAL_TAB_ITEMACC,
+			IDC_RSCDISPLAYARSENAL_TAB_ITEMMUZZLE, IDC_RSCDISPLAYARSENAL_TAB_ITEMBIPOD];
+
 		_data = [[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]];
 
 		_configArray = (
@@ -293,6 +301,9 @@ switch _mode do {
 		} foreach ("isclass _x" configclasses (configfile >> "cfgmagazines"));
 
 		missionnamespace setvariable ["bis_fnc_arsenal_data",_data];
+		// Save a PRISTINE deep copy — BIS arsenal modifies bis_fnc_arsenal_data in-place
+		// (filters attachments by weapon compatibility, reshuffles cargo categories)
+		missionNamespace setVariable ["A3A_arsenal_configData", +_data];
 		// DEBUG: Preload summary
 		private _preloadTotal = 0;
 		private _preloadSummary = [];
@@ -302,6 +313,31 @@ switch _mode do {
 			if (_cnt > 0) then { _preloadSummary pushBack format ["%1:%2", _forEachIndex, _cnt] };
 		} forEach _data;
 		diag_log format ["A3A_Preload: DONE — %1 total items. Per-IDC: %2", _preloadTotal, _preloadSummary];
+		// Log ACTUAL IDC constant values — verify they match expectations
+		diag_log format ["A3A_Preload IDC_CARGO: MAG=%1 MAGALL=%2 THROW=%3 PUT=%4 MISC=%5 | OPTIC=%6 ACC=%7 MUZZLE=%8 BIPOD=%9",
+			IDC_RSCDISPLAYARSENAL_TAB_CARGOMAG, IDC_RSCDISPLAYARSENAL_TAB_CARGOMAGALL,
+			IDC_RSCDISPLAYARSENAL_TAB_CARGOTHROW, IDC_RSCDISPLAYARSENAL_TAB_CARGOPUT,
+			IDC_RSCDISPLAYARSENAL_TAB_CARGOMISC,
+			IDC_RSCDISPLAYARSENAL_TAB_ITEMOPTIC, IDC_RSCDISPLAYARSENAL_TAB_ITEMACC,
+			IDC_RSCDISPLAYARSENAL_TAB_ITEMMUZZLE, IDC_RSCDISPLAYARSENAL_TAB_ITEMBIPOD];
+		// Log samples for cargo categories to verify correct classification
+		{
+			private _idx = _x select 0;
+			private _name = _x select 1;
+			private _items = _data param [_idx, []];
+			private _sample = if (count _items > 0) then { _items select 0 } else { "EMPTY" };
+			diag_log format ["A3A_Preload CARGO[%1] %2: count=%3, sample=%4", _idx, _name, count _items, _sample];
+		} forEach [
+			[IDC_RSCDISPLAYARSENAL_TAB_CARGOMAG, "CARGOMAG"],
+			[IDC_RSCDISPLAYARSENAL_TAB_CARGOMAGALL, "CARGOMAGALL"],
+			[IDC_RSCDISPLAYARSENAL_TAB_CARGOTHROW, "CARGOTHROW"],
+			[IDC_RSCDISPLAYARSENAL_TAB_CARGOPUT, "CARGOPUT"],
+			[IDC_RSCDISPLAYARSENAL_TAB_CARGOMISC, "CARGOMISC"],
+			[IDC_RSCDISPLAYARSENAL_TAB_ITEMOPTIC, "ITEMOPTIC"],
+			[IDC_RSCDISPLAYARSENAL_TAB_ITEMACC, "ITEMACC"],
+			[IDC_RSCDISPLAYARSENAL_TAB_ITEMMUZZLE, "ITEMMUZZLE"],
+			[IDC_RSCDISPLAYARSENAL_TAB_ITEMBIPOD, "ITEMBIPOD"]
+		];
 		_data;
 	};
 
@@ -3603,25 +3639,28 @@ switch _mode do {
 		// --- Category definitions: [BIS IDC index, iconPath] ---
 		// Icons MUST match the BIS IDC tab indices used by jn_fnc_arsenal_itemType
 		private _categories = [
-			[0,  "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\primaryWeapon_ca.paa"],    // IDC 0 = Primary Weapon
-			[1,  "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\secondaryWeapon_ca.paa"],  // IDC 1 = Launcher
-			[2,  "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\handgun_ca.paa"],          // IDC 2 = Handgun
-			[3,  "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\uniform_ca.paa"],          // IDC 3 = Uniform
-			[4,  "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\vest_ca.paa"],             // IDC 4 = Vest
-			[5,  "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\backpack_ca.paa"],         // IDC 5 = Backpack
-			[6,  "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\headgear_ca.paa"],         // IDC 6 = Headgear
-			[7,  "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\goggles_ca.paa"],          // IDC 7 = Goggles/Facewear
-			[8,  "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\nvgs_ca.paa"],             // IDC 8 = NVG
-			[9,  "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\binoculars_ca.paa"],       // IDC 9 = Binoculars
-			[18, "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\itemOptic_ca.paa"],        // IDC 18 = Optic
-			[19, "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\itemAcc_ca.paa"],          // IDC 19 = Pointer/Flashlight (ITEMACC)
-			[20, "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\itemMuzzle_ca.paa"],       // IDC 20 = Muzzle/Suppressor (ITEMMUZZLE)
-			[21, "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\itemBipod_ca.paa"],        // IDC 21 = Bipod
-			[23, "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\cargoMagAll_ca.paa"],      // IDC 23 = Magazines
-			[24, "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\cargoThrow_ca.paa"],       // IDC 24 = Grenades
-			[25, "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\cargoPut_ca.paa"],         // IDC 25 = Explosives
-			[26, "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\cargoMisc_ca.paa"]         // IDC 26 = Misc
+			[IDC_RSCDISPLAYARSENAL_TAB_PRIMARYWEAPON,   "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\primaryWeapon_ca.paa"],   // Primary Weapon
+			[IDC_RSCDISPLAYARSENAL_TAB_SECONDARYWEAPON, "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\secondaryWeapon_ca.paa"], // Launcher
+			[IDC_RSCDISPLAYARSENAL_TAB_HANDGUN,         "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\handgun_ca.paa"],         // Handgun
+			[IDC_RSCDISPLAYARSENAL_TAB_UNIFORM,         "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\uniform_ca.paa"],         // Uniform
+			[IDC_RSCDISPLAYARSENAL_TAB_VEST,            "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\vest_ca.paa"],            // Vest
+			[IDC_RSCDISPLAYARSENAL_TAB_BACKPACK,        "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\backpack_ca.paa"],        // Backpack
+			[IDC_RSCDISPLAYARSENAL_TAB_HEADGEAR,        "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\headgear_ca.paa"],        // Headgear
+			[IDC_RSCDISPLAYARSENAL_TAB_GOGGLES,         "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\goggles_ca.paa"],         // Goggles/Facewear
+			[IDC_RSCDISPLAYARSENAL_TAB_NVGS,            "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\nvgs_ca.paa"],            // NVG
+			[IDC_RSCDISPLAYARSENAL_TAB_BINOCULARS,      "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\binoculars_ca.paa"],      // Binoculars
+			[IDC_RSCDISPLAYARSENAL_TAB_ITEMOPTIC,   "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\itemOptic_ca.paa"],   // Optic
+			[IDC_RSCDISPLAYARSENAL_TAB_ITEMACC,     "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\itemAcc_ca.paa"],     // Pointer/Flashlight
+			[IDC_RSCDISPLAYARSENAL_TAB_ITEMMUZZLE,  "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\itemMuzzle_ca.paa"],  // Muzzle/Suppressor
+			[IDC_RSCDISPLAYARSENAL_TAB_ITEMBIPOD,   "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\itemBipod_ca.paa"],   // Bipod
+			[IDC_RSCDISPLAYARSENAL_TAB_CARGOMAGALL, "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\cargoMagAll_ca.paa"], // Magazines
+			[IDC_RSCDISPLAYARSENAL_TAB_CARGOTHROW,  "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\cargoThrow_ca.paa"], // Grenades
+			[IDC_RSCDISPLAYARSENAL_TAB_CARGOPUT,    "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\cargoPut_ca.paa"],   // Explosives
+			[IDC_RSCDISPLAYARSENAL_TAB_CARGOMISC,   "\A3\ui_f\data\gui\rsc\rscdisplayarsenal\cargoMisc_ca.paa"]   // Misc
 		];
+
+		// DEBUG: log resolved IDC values for categories
+		diag_log format ["A3A_EditorOpen: category IDCs = %1", _categories apply { _x select 0 }];
 
 		// --- Layout constants (safezone-relative) ---
 		private _panelX = safeZoneX + safeZoneW * 0.15;
@@ -3788,16 +3827,17 @@ switch _mode do {
 		private _list = _display displayCtrl 90002;
 		lbClear _list;
 
-		// Get all available items for this category from preloaded config data
-		private _allConfigData = missionNamespace getVariable ["bis_fnc_arsenal_data", []];
+		// Use PRISTINE Preload data (A3A_arsenal_configData) — NOT bis_fnc_arsenal_data
+		// BIS arsenal modifies bis_fnc_arsenal_data in-place (filters attachments, reshuffles cargo)
+		private _allConfigData = missionNamespace getVariable ["A3A_arsenal_configData", []];
 		private _allConfigItems = _allConfigData param [_catIdx, []];
 
 		// Get current arsenal items for this category
 		private _arsenalItems = jna_dataList param [_catIdx, []];
 
-		// DEBUG: diagnose empty lists
-		diag_log format ["A3A_EditorSelectCat: catIdx=%1 | configItems=%2 | arsenalItems=%3 | bis_data defined=%4 (count=%5)",
-			_catIdx, count _allConfigItems, count _arsenalItems, !isNil {missionNamespace getVariable "bis_fnc_arsenal_data"}, count _allConfigData];
+		// DEBUG: diagnose
+		diag_log format ["A3A_EditorSelectCat: catIdx=%1 | configItems=%2 | arsenalItems=%3 | pristineData=%4",
+			_catIdx, count _allConfigItems, count _arsenalItems, !isNil {missionNamespace getVariable "A3A_arsenal_configData"}];
 
 		// Build hashmap of arsenal items for quick lookup: className -> count
 		private _arsenalMap = createHashMap;
@@ -3857,7 +3897,17 @@ switch _mode do {
 			if (count _allConfigItems > 0) then { [_allConfigItems select 0, typeName (_allConfigItems select 0)] } else { "EMPTY" }];
 
 		// Highlight active category tab
-		private _categories = [0,1,2,3,4,5,6,7,8,9,18,19,20,21,23,24,25,26];
+		private _categories = [
+			IDC_RSCDISPLAYARSENAL_TAB_PRIMARYWEAPON, IDC_RSCDISPLAYARSENAL_TAB_SECONDARYWEAPON,
+			IDC_RSCDISPLAYARSENAL_TAB_HANDGUN, IDC_RSCDISPLAYARSENAL_TAB_UNIFORM,
+			IDC_RSCDISPLAYARSENAL_TAB_VEST, IDC_RSCDISPLAYARSENAL_TAB_BACKPACK,
+			IDC_RSCDISPLAYARSENAL_TAB_HEADGEAR, IDC_RSCDISPLAYARSENAL_TAB_GOGGLES,
+			IDC_RSCDISPLAYARSENAL_TAB_NVGS, IDC_RSCDISPLAYARSENAL_TAB_BINOCULARS,
+			IDC_RSCDISPLAYARSENAL_TAB_ITEMOPTIC, IDC_RSCDISPLAYARSENAL_TAB_ITEMACC,
+			IDC_RSCDISPLAYARSENAL_TAB_ITEMMUZZLE, IDC_RSCDISPLAYARSENAL_TAB_ITEMBIPOD,
+			IDC_RSCDISPLAYARSENAL_TAB_CARGOMAGALL, IDC_RSCDISPLAYARSENAL_TAB_CARGOTHROW,
+			IDC_RSCDISPLAYARSENAL_TAB_CARGOPUT, IDC_RSCDISPLAYARSENAL_TAB_CARGOMISC
+		];
 		{
 			private _idc = 90100 + _forEachIndex;
 			private _ctrl = _display displayCtrl _idc;
