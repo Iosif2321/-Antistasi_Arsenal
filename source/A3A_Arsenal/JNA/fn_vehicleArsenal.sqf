@@ -506,7 +506,7 @@ switch _mode do {
 				_items = jnva_loadout select _idc;
 				for "_l" from 0 to ((lnbsize _ctrlList select 0) - 1) do {
 					_dataStr = _ctrlList lnbdata [_l,0];
-					_data = parseSimpleArray _dataStr;
+					_data = if (_dataStr select [0,1] == "[") then {call compile _dataStr} else {[_dataStr,0,"",""]};
 					_item = _data select 0;
 					_amount = 0;
 					{
@@ -576,7 +576,7 @@ switch _mode do {
 
 		for "_r" from 0 to (_rows - 1) do {
 			_dataStr = _ctrlList lnbData [_r,0];
-			_data = parseSimpleArray _dataStr;
+			_data = if (_dataStr select [0,1] == "[") then {call compile _dataStr} else {[_dataStr,0,"",""]};
 			_item = _data select 0;
 			_amount = _data select 1;
 			_grayout = false;
@@ -641,7 +641,7 @@ switch _mode do {
 
 
 		_dataStr = _ctrlList lnbData [_lbcursel,0];
-		_data = parseSimpleArray _dataStr;
+		_data = if (_dataStr select [0,1] == "[") then {call compile _dataStr} else {[_dataStr,0,"",""]};
 		_item = _data select 0;
 		_amount = _data select 1;
 
