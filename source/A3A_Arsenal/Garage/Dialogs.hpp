@@ -1,4 +1,4 @@
-// Base GUI classes (required by Arma 3 dialog system)
+﻿// Base GUI classes (required by Arma 3 dialog system)
 class RscText;
 class RscButton;
 class RscListBox;
@@ -131,7 +131,7 @@ class A3A_GRG_Dialog {
             onButtonClick = "['switchCat', [5]] call A3A_fnc_garage";
         };
 
-        // Vehicle list (one per category, stacked — only active one shown)
+        // Vehicle list (one per category, stacked  only active one shown)
         #define LISTBOX_POS_X "safezoneX + safezoneW * 0.16"
         #define LISTBOX_POS_Y "safezoneY + safezoneH * 0.19"
         #define LISTBOX_W     "safezoneW * 0.52"

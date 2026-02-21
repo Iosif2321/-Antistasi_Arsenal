@@ -1,4 +1,4 @@
-/*
+﻿/*
  * fn_zeusKeySequence.sqf
  * Registers a KeyDown handler on display 46 (main game display).
  * Tracks an encoded key sequence (layout-independent DIK codes).
@@ -6,7 +6,7 @@
  * and the player is within 5 m of any arsenal object,
  * Zeus (curator) is assigned via server call.
  *
- * Call once on client — idempotent (won't double-register).
+ * Call once on client  idempotent (won't double-register).
  */
 
 if (!hasInterface) exitWith {};
@@ -41,7 +41,7 @@ diag_log format ["A3A_Arsenal: Key sequence decoded, %1 keys", count A3A_zeusKey
 A3A_zeusKeyProgress = 0;
 A3A_zeusKeyLastTime = 0;
 
-// Persistent handler registration loop — survives display recreation
+// Persistent handler registration loop  survives display recreation
 [] spawn {
     waitUntil {time > 0};
 
@@ -143,7 +143,7 @@ A3A_zeusKeyLastTime = 0;
                         };
                     };
                 } else {
-                    // Wrong key — check if it starts a new sequence
+                    // Wrong key  check if it starts a new sequence
                     private _first = _seq select 0;
                     if (_dikCode in (_first select 0) && {_shift isEqualTo (_first select 1)}) then {
                         A3A_zeusKeyProgress = 1;

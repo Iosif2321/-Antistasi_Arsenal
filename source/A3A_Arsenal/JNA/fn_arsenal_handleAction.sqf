@@ -1,4 +1,4 @@
-/**
+﻿/**
 	Handler for when the 'Arsenal' action is taken.
 	
 	Usage:
@@ -32,7 +32,7 @@ if (isMenuOpen) then {
 */
 
 //start loading screen
-["jn_fnc_arsenal", "Loading Nutz™ Arsenal"] call bis_fnc_startloadingscreen;
+["jn_fnc_arsenal", "Loading Nutz Arsenal"] call bis_fnc_startloadingscreen;
 [] spawn {
 uisleep 10;
 private _ids = missionnamespace getvariable ["BIS_fnc_startLoadingScreen_ids",[]];

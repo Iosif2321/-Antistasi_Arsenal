@@ -26,9 +26,9 @@ if (hasInterface) then {
     systemChat format ["Antistasi Arsenal: Client Init for %1", _object];
 };
 
-// Set variables on object вЂ” but DON'T overwrite if already set by fn_arsenalInit.sqf
+// Set variables on object - but DON'T overwrite if already set by fn_arsenalInit.sqf
 // (fn_arsenalInit sets the correct ID from module params BEFORE calling this function,
-//  but only passes [_object] вЂ” so _arsenalID param here defaults to "Base")
+//  but only passes [_object] - so _arsenalID param here defaults to "Base")
 private _existingID = _object getVariable ["A3A_Arsenal_ID", ""];
 if (_existingID isEqualTo "") then {
     _object setVariable ["A3A_Arsenal_ID", _arsenalID, true];
@@ -50,7 +50,7 @@ if (isServer && {isNil "server"}) then {
     Info("JNA created server logic object");
 };
 
-// Common init (once per machine) вЂ” Preload, minItemMember
+// Common init (once per machine) - Preload, minItemMember
 if (isNil "jna_commonInitDone") then {
     jna_commonInitDone = true;
     missionNamespace setVariable ["jna_object", _object]; // default, overwritten on each open
@@ -227,7 +227,7 @@ if(hasInterface)then{
 				UINamespace setVariable ["jn_object_selected",_objectSelected];
 
                 //start loading screen and timer to close it if something breaks
-				["jn_fnc_arsenal", "Loading Nutzв„ў Arsenal"] call bis_fnc_startloadingscreen;
+				["jn_fnc_arsenal", "Loading Nutz Arsenal"] call bis_fnc_startloadingscreen;
 				[] spawn {
 					uisleep 5;
 					private _ids = missionnamespace getvariable ["BIS_fnc_startLoadingScreen_ids",[]];
@@ -275,7 +275,7 @@ if(hasInterface)then{
         "alive _target && {_target distance _this < 5} && {vehicle player == player} && {(missionNamespace getVariable ['A3A_Arsenal_ContainerAccess', 0]) != 2} && {(missionNamespace getVariable ['A3A_Arsenal_ContainerAccess', 0]) != 1 || {[_this] call A3A_fnc_arsenal_isZeus}}"
     ];
 
-    //add export arsenal data button (clipboard + RPT log) вЂ” Zeus only
+    //add export arsenal data button (clipboard + RPT log) - Zeus only
     _object addAction [
         "<t color='#80ff80'>Export Arsenal Data</t>",
         { ["ExportData"] call jn_fnc_arsenal },
@@ -287,7 +287,7 @@ if(hasInterface)then{
         "alive _target && {_target distance _this < 5} && {vehicle player == player} && {[_this] call A3A_fnc_arsenal_isZeus}"
     ];
 
-    //add import arsenal data button (from clipboard) вЂ” Zeus only
+    //add import arsenal data button (from clipboard) - Zeus only
     _object addAction [
         "<t color='#ffaa00'>Import Arsenal Data</t>",
         { ["ImportData"] call jn_fnc_arsenal },

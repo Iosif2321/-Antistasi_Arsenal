@@ -1,5 +1,5 @@
-/*
-    Antistasi Garage MVP — standalone multi-garage vehicle storage system
+﻿/*
+    Antistasi Garage MVP  standalone multi-garage vehicle storage system
     All-in-one function: called with ["mode", params] call A3A_fnc_garage
 
     Data model per garage (stored on `server` object as A3A_GRG_<garageID>):

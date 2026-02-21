@@ -1,4 +1,4 @@
-// Stub definitions for Jeroen Arsenal to work standalone
+﻿// Stub definitions for Jeroen Arsenal to work standalone
 // Defines functions and variables expected by JNA that are usually provided by Antistasi Core.
 // Based on original implementations from: Antistasi\A3A\addons\core\
 
@@ -198,10 +198,10 @@ if (isNil "SCRT_fnc_arsenal_loadoutArsenal") then {
 };
 
 // CBA server events are registered in fn_arsenal_init.sqf (isServer block)
-// — that path is guaranteed to execute on server during module init.
+//  that path is guaranteed to execute on server during module init.
 
 // ========================================================================================
-// CBA Settings — addon options (ESC → Options → Game → Configure Addons → Antistasi Arsenal)
+// CBA Settings  addon options (ESC  Options  Game  Configure Addons  Antistasi Arsenal)
 // ========================================================================================
 if (!isNil "CBA_fnc_addSetting") then {
     [

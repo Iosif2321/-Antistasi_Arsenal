@@ -1,4 +1,4 @@
-/*
+﻿/*
 	Author: Jeroen Notenbomer
 
 	Description:
@@ -37,7 +37,7 @@ _addToArray = {
 _unloadContainer = {
 	_container_sub = _this;
 
-	//magazines (excl. loaded in weapons) — magazinesAmmoCargo: [[class,ammo],...] per physical mag
+	//magazines (excl. loaded in weapons)  magazinesAmmoCargo: [[class,ammo],...] per physical mag
 	_mags = [magazinesAmmoCargo _container_sub, magazinesAmmo _container_sub] select (_isPlayer);
 	{
 		_item = _x select 0;
@@ -46,7 +46,7 @@ _unloadContainer = {
 		[_array,_index,_item,_amount]call _addToArray;
 	} forEach _mags;
 
-	//items — use getItemCargo [classes,counts] for correct counts
+	//items  use getItemCargo [classes,counts] for correct counts
 	if (_isPlayer) then {
 		_items = (items _container_sub) + (assignedItems player);
 		{
@@ -70,7 +70,7 @@ _unloadContainer = {
 		};
 	};
 
-	//backpacks — use getBackpackCargo [classes,counts] for correct counts
+	//backpacks  use getBackpackCargo [classes,counts] for correct counts
 	if (_isPlayer) then {
 		private _bp = backpack _container_sub;
 		if (_bp isNotEqualTo "") then {
@@ -94,7 +94,7 @@ _unloadContainer = {
 		};
 	};
 
-	//weapons — use getWeaponCargo for correct counts, weaponsItemsCargo for attachments & loaded mags
+	//weapons  use getWeaponCargo for correct counts, weaponsItemsCargo for attachments & loaded mags
 	if (_isPlayer) then {
 		_attItems = weaponsItems _container_sub;
 		{
@@ -153,7 +153,7 @@ _unloadContainer = {
 					if!(_x isEqualTo "")then{
 						_item = _x;
 						_index = _item call jn_fnc_arsenal_itemType;
-						// Skip base weapons — already added via getWeaponCargo
+						// Skip base weapons  already added via getWeaponCargo
 						if!(_index in [IDC_RSCDISPLAYARSENAL_TAB_PRIMARYWEAPON, IDC_RSCDISPLAYARSENAL_TAB_SECONDARYWEAPON, IDC_RSCDISPLAYARSENAL_TAB_HANDGUN])then{
 							_amount = 1;
 							if(_index != -1)then{

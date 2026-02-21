@@ -7,7 +7,7 @@
 
 #define VERSION MAJOR.MINOR.PATCHLVL
 
-// РњРёРЅРёРјР°Р»СЊРЅС‹Рµ РјР°РєСЂРѕСЃС‹ РґР»СЏ Р°РІС‚РѕРЅРѕРјРЅРѕРіРѕ РёСЃРїРѕР»СЊР·РѕРІР°РЅРёСЏ
+// Minimal macros for standalone usage
 #define QUOTE(var) #var
 #define QPATHTOFOLDER(var) QUOTE(\A3A_Arsenal\var)
 #define FIX_LINE_NUMBERS() 
