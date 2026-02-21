@@ -138,7 +138,19 @@ if (isServer) then {
     private _data = server getVariable [_serverKey, _defaultData];
     private _itemCount = 0;
     { _itemCount = _itemCount + count _x } forEach _data;
-    diag_log format ["A3A_Arsenal Storage: Arsenal '%1' key='%2' | %3 items | profile='%4'", _arsenalID, _profileKey, _itemCount, profileName];
+    diag_log format ["A3A_Arsenal Init: Arsenal '%1' key='%2' | %3 items loaded | profile='%4'", _arsenalID, _profileKey, _itemCount, profileName];
+    diag_log format ["A3A_Arsenal Init: --- Contents of Arsenal '%1' ---", _arsenalID];
+    {
+        private _tabIndex = _forEachIndex;
+        if (count _x > 0) then {
+            {
+                _x params ["_cls", "_amt"];
+                diag_log format ["A3A_Arsenal Init: [%1] Item: %2 | Amount: %3", _arsenalID, _cls, _amt];
+            } forEach _x;
+        };
+    } forEach _data;
+    diag_log format ["A3A_Arsenal Init: --- End of Arsenal '%1' ---", _arsenalID];
+    
     systemChat format ["A3A Arsenal '%1': %2 items loaded", _arsenalID, _itemCount];
 
     // Sync Zeus state to clients (getAssignedCuratorLogic unreliable on client in dedicated MP)

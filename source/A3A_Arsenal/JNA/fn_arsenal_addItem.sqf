@@ -42,8 +42,8 @@ if(typeName (_this select 0) isEqualTo "SCALAR")then{//[_index, _item] and [_ind
 				if!(_radioName isEqualTo "")then{_item = _radioName};
 
 				// Update server immediately if local. Avoids lag after unlockEquipment
-				if (isServer) then { ["UpdateItemAdd",[_index, _item, _amount,true]] call jn_fnc_arsenal }
-				else { ["UpdateItemAdd",[_index, _item, _amount,true]] remoteExecCall ["jn_fnc_arsenal",2] };
+				if (isServer) then { ["UpdateItemAdd",[_index, _item, _amount,true, name player, getPlayerUID player]] call jn_fnc_arsenal }
+				else { ["UpdateItemAdd",[_index, _item, _amount,true, name player, getPlayerUID player]] remoteExecCall ["jn_fnc_arsenal",2] };
 
 				// then update other players. Don't execute on server twice
 				if (!isNil "server") then {
@@ -51,7 +51,7 @@ if(typeName (_this select 0) isEqualTo "SCALAR")then{//[_index, _item] and [_ind
 					private _playersInArsenal = +(server getVariable [format ["jna_playersInArsenal_%1", _curArsenalID], []]) - [2];
 					if (0 in _playersInArsenal) then { _playersInArsenal = -2 };
 					if !(_playersInArsenal isEqualTo []) then {
-						["UpdateItemAdd",[_index, _item, _amount,true]] remoteExecCall ["jn_fnc_arsenal",_playersInArsenal];
+						["UpdateItemAdd",[_index, _item, _amount,true, name player, getPlayerUID player]] remoteExecCall ["jn_fnc_arsenal",_playersInArsenal];
 					};
 				};
 			};

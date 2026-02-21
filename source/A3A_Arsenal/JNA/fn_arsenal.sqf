@@ -1459,7 +1459,11 @@ switch _mode do {
 
 	///////////////////////////////////////////////////////////////////////////////////////////  GLOBAL
 	case "UpdateItemAdd":{
-		params ["_index","_item","_amount",["_updateDataList",false]];
+		params ["_index","_item","_amount",["_updateDataList",false],["_playerName",""],["_playerUID",""]];
+
+		if (isServer && {_playerName != ""}) then {
+			diag_log format ["A3A_Arsenal Log: Игрок %1 (UID: %2) ПОЛОЖИЛ предмет %3 в количестве %4", _playerName, _playerUID, _item, _amount];
+		};
 
 		//update datalist
 		if(_updateDataList) then {
@@ -1529,7 +1533,11 @@ switch _mode do {
 
 	///////////////////////////////////////////////////////////////////////////////////////////  GLOBAL
 	case "UpdateItemRemove":{
-		params ["_index","_item","_amount",["_updateDataList",false]];
+		params ["_index","_item","_amount",["_updateDataList",false],["_playerName",""],["_playerUID",""]];
+
+		if (isServer && {_playerName != ""}) then {
+			diag_log format ["A3A_Arsenal Log: Игрок %1 (UID: %2) ВЗЯЛ предмет %3 в количестве %4", _playerName, _playerUID, _item, _amount];
+		};
 
 		//update datalist
 		if(_updateDataList)then{
@@ -4068,9 +4076,10 @@ switch _mode do {
 			saveProfileNamespace;
 			systemChat format ["Arsenal '%1' saved.", _arsenalID];
 			diag_log format ["A3A_EditorSave: Saved locally (server). Key='%1'", _profileKey];
+			diag_log format ["A3A_Arsenal Log: Игрок %1 (UID: %2) СОХРАНИЛ Arsenal '%3' через Редактор", name player, getPlayerUID player, _arsenalID];
 		} else {
 			// Dedicated server: send full jna_dataList to server via CBA event
-			["A3A_editorSaveRequest", [_arsenalID, +jna_dataList]] call CBA_fnc_serverEvent;
+			["A3A_editorSaveRequest", [_arsenalID, +jna_dataList, name player, getPlayerUID player]] call CBA_fnc_serverEvent;
 			systemChat format ["Arsenal '%1' sent to server for saving.", _arsenalID];
 			diag_log format ["A3A_EditorSave: Sent save request for '%1' to server (CBA event).", _arsenalID];
 		};

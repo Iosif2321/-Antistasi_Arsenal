@@ -331,7 +331,7 @@ switch (_mode) do {
     case "SAVE_JNA": {
         diag_log format ["A3A_arsenalLogic SAVE_JNA: RECEIVED (isServer=%1, _params count=%2)", isServer, count _params];
         if (!isServer) exitWith {};
-        _params params [["_arsenalID", "Base", [""]], ["_dataList", [], [[]]]];
+        _params params [["_arsenalID", "Base", [""]], ["_dataList", [], [[]]], ["_playerName", ""], ["_playerUID", ""]];
 
         if (count _dataList != 27) exitWith {
             diag_log format ["A3A_arsenalLogic SAVE_JNA: invalid data (count=%1), expected 27", count _dataList];
@@ -351,5 +351,8 @@ switch (_mode) do {
         private _itemCount = 0;
         { _itemCount = _itemCount + count _x } forEach _dataList;
         diag_log format ["A3A_arsenalLogic SAVE_JNA: Arsenal '%1' saved (%2 items)", _arsenalID, _itemCount];
+        if (_playerName != "") then {
+            diag_log format ["A3A_Arsenal Log: Игрок %1 (UID: %2) СОХРАНИЛ Arsenal '%3' через Редактор (Save JNA Event)", _playerName, _playerUID, _arsenalID];
+        };
     };
 };
