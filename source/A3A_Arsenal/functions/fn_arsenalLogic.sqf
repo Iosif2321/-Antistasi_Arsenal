@@ -1,4 +1,4 @@
-params ["_mode", ["_params", []]];
+﻿params ["_mode", ["_params", []]];
 
 switch (_mode) do {
     case "INIT_SERVER": {
@@ -8,7 +8,7 @@ switch (_mode) do {
         private _id = _object getVariable ["A3A_Arsenal_ID", "Default"];
         private _profileKey = format ["A3A_ArsenalData_%1", _id];
         
-        // Load data from profile — supports both JNA format (27 sub-arrays) and flat format
+        // Load data from profile вЂ” supports both JNA format (27 sub-arrays) and flat format
         private _rawData = profileNamespace getVariable [_profileKey, []];
         
         // Convert to HashMap for runtime efficiency
@@ -352,7 +352,7 @@ switch (_mode) do {
         { _itemCount = _itemCount + count _x } forEach _dataList;
         diag_log format ["A3A_arsenalLogic SAVE_JNA: Arsenal '%1' saved (%2 items)", _arsenalID, _itemCount];
         if (_playerName != "") then {
-            diag_log format ["A3A_Arsenal Log: Игрок %1 (UID: %2) СОХРАНИЛ Arsenal '%3' через Редактор (Save JNA Event)", _playerName, _playerUID, _arsenalID];
+            diag_log format ["A3A_Arsenal Log: РРіСЂРѕРє %1 (UID: %2) РЎРћРҐР РђРќРР› Arsenal '%3' С‡РµСЂРµР· Р РµРґР°РєС‚РѕСЂ (Save JNA Event)", _playerName, _playerUID, _arsenalID];
         };
     };
 };

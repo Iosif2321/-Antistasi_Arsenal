@@ -1,4 +1,4 @@
-/*
+﻿/*
     By: Jeroen Notenbomer
 
 	overwrites default arsenal script, original arsenal needs to be running first in order to initilize the display.
@@ -184,12 +184,12 @@ switch _mode do {
 
 	/////////////////////////////////////////////////////////////////////////////////////////// Externaly called
 	case "Preload": {
-		diag_log format ["A3A_Preload: START — bis_fnc_arsenal_data already defined=%1", !isNil {missionNamespace getVariable "bis_fnc_arsenal_data"}];
+		diag_log format ["A3A_Preload: START вЂ” bis_fnc_arsenal_data already defined=%1", !isNil {missionNamespace getVariable "bis_fnc_arsenal_data"}];
 		private ["_data"];
 
 		INITTYPES
 
-		// Log ACTUAL IDC constant values — verify they match expectations
+		// Log ACTUAL IDC constant values вЂ” verify they match expectations
 		diag_log format ["A3A_Preload IDC_CARGO: MAG=%1 MAGALL=%2 THROW=%3 PUT=%4 MISC=%5 | OPTIC=%6 ACC=%7 MUZZLE=%8 BIPOD=%9",
 			IDC_RSCDISPLAYARSENAL_TAB_CARGOMAG, IDC_RSCDISPLAYARSENAL_TAB_CARGOMAGALL,
 			IDC_RSCDISPLAYARSENAL_TAB_CARGOTHROW, IDC_RSCDISPLAYARSENAL_TAB_CARGOPUT,
@@ -301,7 +301,7 @@ switch _mode do {
 		} foreach ("isclass _x" configclasses (configfile >> "cfgmagazines"));
 
 		missionnamespace setvariable ["bis_fnc_arsenal_data",_data];
-		// Save a PRISTINE deep copy — BIS arsenal modifies bis_fnc_arsenal_data in-place
+		// Save a PRISTINE deep copy вЂ” BIS arsenal modifies bis_fnc_arsenal_data in-place
 		// (filters attachments by weapon compatibility, reshuffles cargo categories)
 		missionNamespace setVariable ["A3A_arsenal_configData", +_data];
 		// DEBUG: Preload summary
@@ -312,8 +312,8 @@ switch _mode do {
 			_preloadTotal = _preloadTotal + _cnt;
 			if (_cnt > 0) then { _preloadSummary pushBack format ["%1:%2", _forEachIndex, _cnt] };
 		} forEach _data;
-		diag_log format ["A3A_Preload: DONE — %1 total items. Per-IDC: %2", _preloadTotal, _preloadSummary];
-		// Log ACTUAL IDC constant values — verify they match expectations
+		diag_log format ["A3A_Preload: DONE вЂ” %1 total items. Per-IDC: %2", _preloadTotal, _preloadSummary];
+		// Log ACTUAL IDC constant values вЂ” verify they match expectations
 		diag_log format ["A3A_Preload IDC_CARGO: MAG=%1 MAGALL=%2 THROW=%3 PUT=%4 MISC=%5 | OPTIC=%6 ACC=%7 MUZZLE=%8 BIPOD=%9",
 			IDC_RSCDISPLAYARSENAL_TAB_CARGOMAG, IDC_RSCDISPLAYARSENAL_TAB_CARGOMAGALL,
 			IDC_RSCDISPLAYARSENAL_TAB_CARGOTHROW, IDC_RSCDISPLAYARSENAL_TAB_CARGOPUT,
@@ -1462,7 +1462,7 @@ switch _mode do {
 		params ["_index","_item","_amount",["_updateDataList",false],["_playerName",""],["_playerUID",""]];
 
 		if (isServer && {_playerName != ""}) then {
-			diag_log format ["A3A_Arsenal Log: Игрок %1 (UID: %2) ПОЛОЖИЛ предмет %3 в количестве %4", _playerName, _playerUID, _item, _amount];
+			diag_log format ["A3A_Arsenal Log: РРіСЂРѕРє %1 (UID: %2) РџРћР›РћР–РР› РїСЂРµРґРјРµС‚ %3 РІ РєРѕР»РёС‡РµСЃС‚РІРµ %4", _playerName, _playerUID, _item, _amount];
 		};
 
 		//update datalist
@@ -1536,7 +1536,7 @@ switch _mode do {
 		params ["_index","_item","_amount",["_updateDataList",false],["_playerName",""],["_playerUID",""]];
 
 		if (isServer && {_playerName != ""}) then {
-			diag_log format ["A3A_Arsenal Log: Игрок %1 (UID: %2) ВЗЯЛ предмет %3 в количестве %4", _playerName, _playerUID, _item, _amount];
+			diag_log format ["A3A_Arsenal Log: РРіСЂРѕРє %1 (UID: %2) Р’Р—РЇР› РїСЂРµРґРјРµС‚ %3 РІ РєРѕР»РёС‡РµСЃС‚РІРµ %4", _playerName, _playerUID, _item, _amount];
 		};
 
 		//update datalist
@@ -1739,7 +1739,7 @@ switch _mode do {
 			_amount = _this;
 
 
-			if(_amount == -1)exitWith{"[   ∞  ]  ";};
+			if(_amount == -1)exitWith{"[   в€ћ  ]  ";};
 
 			_suffix = "";
 			_prefix = "";
@@ -3452,8 +3452,8 @@ switch _mode do {
 
 	///////////////////////////////////////////////////////////////////////////////////////////
 	// Export arsenal data as human-readable SQF text
-	// Usage: ["ExportData"] call jn_fnc_arsenal;              — to clipboard + RPT
-	//        ["ExportData", [true]] call jn_fnc_arsenal;      — RPT only (silent)
+	// Usage: ["ExportData"] call jn_fnc_arsenal;              вЂ” to clipboard + RPT
+	//        ["ExportData", [true]] call jn_fnc_arsenal;      вЂ” RPT only (silent)
 	case "ExportData": {
 		private _rptOnly = _this param [0, false];
 		private _arsenalID = (missionNamespace getVariable ["jna_object", objNull]) getVariable ["A3A_Arsenal_ID", "Base"];
@@ -3506,7 +3506,7 @@ switch _mode do {
 		_lines pushBack "// ============================================================";
 		_lines pushBack "";
 
-		// Per-category listing (clipboard — with displayName)
+		// Per-category listing (clipboard вЂ” with displayName)
 		{
 			private _catIndex = _forEachIndex;
 			private _catName = if (_catIndex < count _catNames) then { _catNames select _catIndex } else { format ["Category_%1", _catIndex] };
@@ -3515,7 +3515,7 @@ switch _mode do {
 				{
 					_x params ["_cls", "_cnt"];
 					private _cntStr = if (_cnt == -1) then { "INF" } else { str _cnt };
-					// No displayName in clipboard — Arma 3 corrupts Cyrillic/Unicode in copyToClipboard
+					// No displayName in clipboard вЂ” Arma 3 corrupts Cyrillic/Unicode in copyToClipboard
 					_lines pushBack format ["  %1  x%2", _cls, _cntStr];
 				} forEach _x;
 				_lines pushBack "";
@@ -3529,7 +3529,7 @@ switch _mode do {
 
 		private _text = _lines joinString toString [10];
 
-		// RPT log: ASCII only (no displayName — avoids Cyrillic encoding issues)
+		// RPT log: ASCII only (no displayName вЂ” avoids Cyrillic encoding issues)
 		diag_log "// ============================================================";
 		diag_log format ["// Antistasi Arsenal Export - '%1' - %2 unique items", _arsenalID, _uniqueItems];
 		{
@@ -3632,7 +3632,7 @@ switch _mode do {
 		private _display = _this select 0;
 		disableSerialization;
 
-		// Zeus only — prevent bypass via direct call
+		// Zeus only вЂ” prevent bypass via direct call
 		if (isNil "A3A_fnc_arsenal_isZeus" || {!([player] call A3A_fnc_arsenal_isZeus)}) exitWith {};
 
 		// Prevent double-open
@@ -3840,7 +3840,7 @@ switch _mode do {
 		private _list = _display displayCtrl 90002;
 		lbClear _list;
 
-		// Use PRISTINE Preload data (A3A_arsenal_configData) — NOT bis_fnc_arsenal_data
+		// Use PRISTINE Preload data (A3A_arsenal_configData) вЂ” NOT bis_fnc_arsenal_data
 		// BIS arsenal modifies bis_fnc_arsenal_data in-place (filters attachments, reshuffles cargo)
 		private _allConfigData = missionNamespace getVariable ["A3A_arsenal_configData", []];
 		private _allConfigItems = _allConfigData param [_catIdx, []];
@@ -4067,7 +4067,7 @@ switch _mode do {
 		// Count items for log
 		private _totalItems = 0;
 		{ _totalItems = _totalItems + count _x } forEach jna_dataList;
-		diag_log format ["A3A_EditorSave: Arsenal '%1' — %2 items, isServer=%3", _arsenalID, _totalItems, isServer];
+		diag_log format ["A3A_EditorSave: Arsenal '%1' вЂ” %2 items, isServer=%3", _arsenalID, _totalItems, isServer];
 
 		if (isServer) then {
 			// Direct save on server (listen server / singleplayer)
@@ -4076,7 +4076,7 @@ switch _mode do {
 			saveProfileNamespace;
 			systemChat format ["Arsenal '%1' saved.", _arsenalID];
 			diag_log format ["A3A_EditorSave: Saved locally (server). Key='%1'", _profileKey];
-			diag_log format ["A3A_Arsenal Log: Игрок %1 (UID: %2) СОХРАНИЛ Arsenal '%3' через Редактор", name player, getPlayerUID player, _arsenalID];
+			diag_log format ["A3A_Arsenal Log: РРіСЂРѕРє %1 (UID: %2) РЎРћРҐР РђРќРР› Arsenal '%3' С‡РµСЂРµР· Р РµРґР°РєС‚РѕСЂ", name player, getPlayerUID player, _arsenalID];
 		} else {
 			// Dedicated server: send full jna_dataList to server via CBA event
 			["A3A_editorSaveRequest", [_arsenalID, +jna_dataList, name player, getPlayerUID player]] call CBA_fnc_serverEvent;

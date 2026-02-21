@@ -1,4 +1,4 @@
-#define COMPONENT jeroen_arsenal
+﻿#define COMPONENT jeroen_arsenal
 #define PREFIX A3A_Arsenal
 
 #define MAJOR 0
@@ -7,7 +7,7 @@
 
 #define VERSION MAJOR.MINOR.PATCHLVL
 
-// Минимальные макросы для автономного использования
+// РњРёРЅРёРјР°Р»СЊРЅС‹Рµ РјР°РєСЂРѕСЃС‹ РґР»СЏ Р°РІС‚РѕРЅРѕРјРЅРѕРіРѕ РёСЃРїРѕР»СЊР·РѕРІР°РЅРёСЏ
 #define QUOTE(var) #var
 #define QPATHTOFOLDER(var) QUOTE(\A3A_Arsenal\var)
 #define FIX_LINE_NUMBERS() 
