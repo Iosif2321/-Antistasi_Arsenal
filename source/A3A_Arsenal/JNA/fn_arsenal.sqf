@@ -1459,21 +1459,32 @@ switch _mode do {
 
 	///////////////////////////////////////////////////////////////////////////////////////////  GLOBAL
 	case "UpdateItemAdd":{
-		params ["_index","_item","_amount",["_updateDataList",false],["_playerName",""],["_playerUID",""]];
+		params ["_index","_item","_amount",["_updateDataList",false],["_playerName",""],["_playerUID",""],["_arsenalID","Base"]];
 
 		if (isServer && {_playerName != ""}) then {
-			diag_log format ["A3A_Arsenal Log: РРіСЂРѕРє %1 (UID: %2) РџРћР›РћР–РР› РїСЂРµРґРјРµС‚ %3 РІ РєРѕР»РёС‡РµСЃС‚РІРµ %4", _playerName, _playerUID, _item, _amount];
+			diag_log format ["A3A_Arsenal Log: Игрок %1 (UID: %2) ПОЛОЖИЛ предмет %3 в количестве %4 в Арсенал '%5'", _playerName, _playerUID, _item, _amount, _arsenalID];
 		};
 
 		//update datalist
 		if(_updateDataList) then {
-			jna_dataList set [_index, [jna_dataList select _index, [_item, _amount]] call jn_fnc_arsenal_addToArray];
-			// Save to server per-arsenal storage and profileNamespace
 			if (isServer) then {
-				private _arsenalID = (missionNamespace getVariable ["jna_object", objNull]) getVariable ["A3A_Arsenal_ID", "Base"];
-				server setVariable [format ["jna_dataList_%1", _arsenalID], jna_dataList, true];
-				profileNamespace setVariable [format ["A3A_ArsenalData_%1", _arsenalID], jna_dataList];
+				// Server: update specific arsenal list and save
+				private _serverKey = format ["jna_dataList_%1", _arsenalID];
+				private _targetData = server getVariable [_serverKey, [[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]]];
+				_targetData set [_index, [_targetData select _index, [_item, _amount]] call jn_fnc_arsenal_addToArray];
+				
+				server setVariable [_serverKey, _targetData, true];
+				profileNamespace setVariable [format ["A3A_ArsenalData_%1", _arsenalID], _targetData];
 				saveProfileNamespace;
+
+				// if the server itself is viewing this arsenal, update its jna_dataList too
+				private _localArsenalID = (missionNamespace getVariable ["jna_object", objNull]) getVariable ["A3A_Arsenal_ID", "Base"];
+				if (!isDedicated && hasInterface && _localArsenalID == _arsenalID) then {
+					jna_dataList set [_index, [jna_dataList select _index, [_item, _amount]] call jn_fnc_arsenal_addToArray];
+				};
+			} else {
+				// Client: update local GUI data
+				jna_dataList set [_index, [jna_dataList select _index, [_item, _amount]] call jn_fnc_arsenal_addToArray];
 			};
 		};
 
@@ -1533,21 +1544,32 @@ switch _mode do {
 
 	///////////////////////////////////////////////////////////////////////////////////////////  GLOBAL
 	case "UpdateItemRemove":{
-		params ["_index","_item","_amount",["_updateDataList",false],["_playerName",""],["_playerUID",""]];
+		params ["_index","_item","_amount",["_updateDataList",false],["_playerName",""],["_playerUID",""],["_arsenalID","Base"]];
 
 		if (isServer && {_playerName != ""}) then {
-			diag_log format ["A3A_Arsenal Log: РРіСЂРѕРє %1 (UID: %2) Р’Р—РЇР› РїСЂРµРґРјРµС‚ %3 РІ РєРѕР»РёС‡РµСЃС‚РІРµ %4", _playerName, _playerUID, _item, _amount];
+			diag_log format ["A3A_Arsenal Log: Игрок %1 (UID: %2) ВЗЯЛ предмет %3 в количестве %4 из Арсенала '%5'", _playerName, _playerUID, _item, _amount, _arsenalID];
 		};
 
 		//update datalist
 		if(_updateDataList)then{
-			jna_dataList set [_index, [jna_dataList select _index, [_item, _amount]] call jn_fnc_arsenal_removeFromArray];
-			// Save to server per-arsenal storage and profileNamespace
 			if (isServer) then {
-				private _arsenalID = (missionNamespace getVariable ["jna_object", objNull]) getVariable ["A3A_Arsenal_ID", "Base"];
-				server setVariable [format ["jna_dataList_%1", _arsenalID], jna_dataList, true];
-				profileNamespace setVariable [format ["A3A_ArsenalData_%1", _arsenalID], jna_dataList];
+				// Server: update specific arsenal list and save
+				private _serverKey = format ["jna_dataList_%1", _arsenalID];
+				private _targetData = server getVariable [_serverKey, [[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]]];
+				_targetData set [_index, [_targetData select _index, [_item, _amount]] call jn_fnc_arsenal_removeFromArray];
+				
+				server setVariable [_serverKey, _targetData, true];
+				profileNamespace setVariable [format ["A3A_ArsenalData_%1", _arsenalID], _targetData];
 				saveProfileNamespace;
+
+				// if the server itself is viewing this arsenal, update its jna_dataList too
+				private _localArsenalID = (missionNamespace getVariable ["jna_object", objNull]) getVariable ["A3A_Arsenal_ID", "Base"];
+				if (!isDedicated && hasInterface && _localArsenalID == _arsenalID) then {
+					jna_dataList set [_index, [jna_dataList select _index, [_item, _amount]] call jn_fnc_arsenal_removeFromArray];
+				};
+			} else {
+				// Client: update local GUI data
+				jna_dataList set [_index, [jna_dataList select _index, [_item, _amount]] call jn_fnc_arsenal_removeFromArray];
 			};
 		};
 

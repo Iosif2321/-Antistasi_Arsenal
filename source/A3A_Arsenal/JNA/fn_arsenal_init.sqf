@@ -6,7 +6,7 @@ FIX_LINE_NUMBERS()
 ///////////////////////////////////////////////////////////////////////////////////////////
 scriptName "fn_arsenal_init.sqf";
 private _fileName = "fn_arsenal_init.sqf";
-[2,"JNA init started",_fileName] call A3A_fnc_log;
+[2,format["JNA init started (Version %1)", QUOTE(VERSION)],_fileName] call A3A_fnc_log;
 params [
     ["_object",objNull,[objNull]],
     ["_arsenalID", "Base", [""]],

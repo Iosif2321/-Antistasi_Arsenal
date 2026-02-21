@@ -37,7 +37,10 @@ clearItemCargoGlobal _object;
 clearweaponCargoGlobal _object;
 clearbackpackCargoGlobal _object;
 // Update datalist on server and client
+private _oldJna = missionNamespace getVariable ["jna_object", objNull];
+missionNamespace setVariable ["jna_object", _object];
 _array call jn_fnc_arsenal_addItem;
+missionNamespace setVariable ["jna_object", _oldJna];
 
 //updated unlocked weapons
 /*[] spawn {
