@@ -1,8 +1,8 @@
 ﻿#include "script_component.hpp"
 
 class CfgPatches {
-    class A3A_Arsenal {
-        units[] = {"A3A_ModuleArsenal", "A3A_ModuleGarage"};
+    class A4A_Arsenal {
+        units[] = {"A4A_ModuleArsenal", "A4A_ModuleGarage"};
         requiredVersion = 1.0;
         requiredAddons[] = {"A3_Modules_F", "A3_UI_F", "A3_Structures_F_Heli_Items_Electronics", "cba_main"};
         version = 0.47;
@@ -14,7 +14,7 @@ class CfgPatches {
 
 class CfgFactionClasses {
     class NO_CATEGORY;
-    class A3A_Arsenal_Category: NO_CATEGORY {
+    class A4A_Arsenal_Category: NO_CATEGORY {
         displayName = "Antistasi Arsenal";
     };
 };
@@ -23,15 +23,15 @@ class CfgRemoteExec {
     class Functions {
         mode = 2;
         jip = 1;
-        class A3A_fnc_arsenalInit { allowedTargets = 0; };
+        class A4A_fnc_arsenalInit { allowedTargets = 0; };
         class jn_fnc_arsenal { allowedTargets = 0; };
         class jn_fnc_arsenal_init { allowedTargets = 0; };
         class jn_fnc_arsenal_requestOpen { allowedTargets = 2; };
         class jn_fnc_arsenal_handleAction { allowedTargets = 0; };
-        class A3A_fnc_assignZeus { allowedTargets = 2; };
-        class A3A_fnc_arsenalLogic { allowedTargets = 2; };
-        class A3A_fnc_garage { allowedTargets = 0; };
-        class A3A_fnc_garageInit { allowedTargets = 0; };
+        class A4A_fnc_assignZeus { allowedTargets = 2; };
+        class A4A_fnc_arsenalLogic { allowedTargets = 2; };
+        class A4A_fnc_garage { allowedTargets = 0; };
+        class A4A_fnc_garageInit { allowedTargets = 0; };
     };
     // Allow engine commands (systemChat etc.) via remoteExec
     class Commands {
@@ -44,19 +44,19 @@ class CfgRemoteExec {
 #include "Garage\Dialogs.hpp"
 
 class CfgFunctions {
-    class A3A {
+    class A4A {
         class Arsenal {
-            file = "A3A_Arsenal\functions";
+            file = "A4A_Arsenal\functions";
             class moduleArsenal {};
             class arsenalInit {};
             class arsenalLogic {};
             class arsenal_isZeus {};
             class zeusKeySequence {};
             class assignZeus {};
-            class a3a_stub { preInit = 1; };
+            class A4A_stub { preInit = 1; };
         };
         class Garage {
-            file = "A3A_Arsenal\Garage";
+            file = "A4A_Arsenal\Garage";
             class garage {};
             class garageInit {};
             class moduleGarage {};
@@ -66,7 +66,7 @@ class CfgFunctions {
     // Ported Jeroen Arsenal Functions
     class JN {
         class Common {
-            file = "A3A_Arsenal\Common";
+            file = "A4A_Arsenal\Common";
             class common_addActionSelect {};
             class common_addActionCancel {};
             class common_updateActionCancel {};
@@ -75,19 +75,19 @@ class CfgFunctions {
         };
 
         class Common_Vehicle {
-            file = "A3A_Arsenal\Common\vehicle";
+            file = "A4A_Arsenal\Common\vehicle";
             class common_vehicle_getSeatNames {};
             class common_vehicle_getVehicleType {};
         };
 
         class Common_Array {
-            file = "A3A_Arsenal\Common\array";
+            file = "A4A_Arsenal\Common\array";
             class common_array_add {};
             class common_array_remove {};
         };
 
         class JNA {
-            file = "A3A_Arsenal\JNA";
+            file = "A4A_Arsenal\JNA";
             class arsenal {};
             class arsenal_addItem {};
             class arsenal_addToArray {};
@@ -125,12 +125,12 @@ class CfgVehicles {
         };
     };
 
-    class A3A_ModuleArsenal: Module_F {
+    class A4A_ModuleArsenal: Module_F {
         scope = 2;
         displayName = "Antistasi Arsenal";
         icon = "\A3\ui_f\data\igui\cfg\simpletasks\types\rearm_ca.paa";
-        category = "A3A_Arsenal_Category";
-        function = "A3A_fnc_moduleArsenal";
+        category = "A4A_Arsenal_Category";
+        function = "A4A_fnc_moduleArsenal";
         functionPriority = 1;
         isGlobal = 0;
         isTriggerActivated = 0;
@@ -139,13 +139,13 @@ class CfgVehicles {
 
         class Attributes: AttributesBase {
             class ArsenalID: Edit {
-                property = "A3A_Arsenal_ID";
+                property = "A4A_Arsenal_ID";
                 displayName = "Arsenal ID";
                 tooltip = "Unique ID for this arsenal (e.g., 'Base', 'Outpost'). Used for saving.";
                 defaultValue = "'Base'";
             };
             class UnlockThreshold: Edit {
-                property = "A3A_Arsenal_Threshold";
+                property = "A4A_Arsenal_Threshold";
                 displayName = "Unlock Threshold";
                 tooltip = "Number of items required to unlock infinite use.";
                 defaultValue = "25";
@@ -160,12 +160,12 @@ class CfgVehicles {
         };
     };
 
-    class A3A_ModuleGarage: Module_F {
+    class A4A_ModuleGarage: Module_F {
         scope = 2;
         displayName = "Antistasi Garage";
         icon = "\A3\ui_f\data\map\vehicleicons\iconCar_ca.paa";
-        category = "A3A_Arsenal_Category";
-        function = "A3A_fnc_moduleGarage";
+        category = "A4A_Arsenal_Category";
+        function = "A4A_fnc_moduleGarage";
         functionPriority = 1;
         isGlobal = 0;
         isTriggerActivated = 0;
@@ -174,7 +174,7 @@ class CfgVehicles {
 
         class Attributes: AttributesBase {
             class GarageID: Edit {
-                property = "A3A_Garage_ID";
+                property = "A4A_Garage_ID";
                 displayName = "Garage ID";
                 tooltip = "Unique ID for this garage (e.g., 'Base', 'Airfield'). Used for saving.";
                 defaultValue = "'Default'";

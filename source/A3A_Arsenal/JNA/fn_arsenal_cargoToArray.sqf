@@ -74,7 +74,7 @@ _unloadContainer = {
 	if (_isPlayer) then {
 		private _bp = backpack _container_sub;
 		if (_bp isNotEqualTo "") then {
-			_item = _bp call A3A_fnc_basicBackpack;
+			_item = _bp call A4A_fnc_basicBackpack;
 			if (_item isNotEqualTo "") then {
 				[_array, IDC_RSCDISPLAYARSENAL_TAB_BACKPACK, _item, 1] call _addToArray;
 			};
@@ -87,7 +87,7 @@ _unloadContainer = {
 			private _cls = _classes select _i;
 			private _cnt = if (_i < count _counts) then { _counts select _i } else { 1 };
 			if (_cls isNotEqualTo "" && _cnt > 0) then {
-				_item = _cls call A3A_fnc_basicBackpack;
+				_item = _cls call A4A_fnc_basicBackpack;
 				if (_item isEqualTo "") then { _item = _cls };
 				[_array, IDC_RSCDISPLAYARSENAL_TAB_BACKPACK, _item, _cnt] call _addToArray;
 			};

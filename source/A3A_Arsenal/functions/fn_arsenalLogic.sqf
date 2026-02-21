@@ -5,8 +5,8 @@ switch (_mode) do {
         _params params ["_object"];
         if (isNull _object) exitWith {};
 
-        private _id = _object getVariable ["A3A_Arsenal_ID", "Default"];
-        private _profileKey = format ["A3A_ArsenalData_%1", _id];
+        private _id = _object getVariable ["A4A_Arsenal_ID", "Default"];
+        private _profileKey = format ["A4A_ArsenalData_%1", _id];
         
         // Load data from profile - supports both JNA format (27 sub-arrays) and flat format
         private _rawData = profileNamespace getVariable [_profileKey, []];
@@ -27,7 +27,7 @@ switch (_mode) do {
                     };
                 } forEach _x;
             } forEach _rawData;
-            diag_log format ["A3A_arsenalLogic: Loaded JNA format data for '%1' (%2 unique items)", _id, count _counts];
+            diag_log format ["A4A_arsenalLogic: Loaded JNA format data for '%1' (%2 unique items)", _id, count _counts];
         } else {
             // Flat format: [["className", count], ...]
             {
@@ -36,13 +36,13 @@ switch (_mode) do {
                     _counts set [_cls, _cnt];
                 };
             } forEach _rawData;
-            diag_log format ["A3A_arsenalLogic: Loaded flat format data for '%1' (%2 items)", _id, count _counts];
+            diag_log format ["A4A_arsenalLogic: Loaded flat format data for '%1' (%2 items)", _id, count _counts];
         };
         
-        _object setVariable ["A3A_Arsenal_Counts", _counts, true];
+        _object setVariable ["A4A_Arsenal_Counts", _counts, true];
         
         // Initial update of virtual items
-        ["UPDATE_VIRTUAL", [_object]] call A3A_fnc_arsenalLogic;
+        ["UPDATE_VIRTUAL", [_object]] call A4A_fnc_arsenalLogic;
     };
 
     case "INIT_CLIENT": {
@@ -114,7 +114,7 @@ switch (_mode) do {
             "<t color='#00ff00'>Transfer Cargo to Arsenal</t>",
             {
                 params ["_target", "_caller"];
-                ["CARGO_TO_ARSENAL", [_target]] remoteExec ["A3A_fnc_arsenalLogic", 2];
+                ["CARGO_TO_ARSENAL", [_target]] remoteExec ["A4A_fnc_arsenalLogic", 2];
             },
             [],
             5,
@@ -129,7 +129,7 @@ switch (_mode) do {
             "<t color='#00ffff'>[Admin] Unlock All In Cargo</t>",
             {
                 params ["_target", "_caller"];
-                ["UNLOCK_CARGO", [_target]] remoteExec ["A3A_fnc_arsenalLogic", 2];
+                ["UNLOCK_CARGO", [_target]] remoteExec ["A4A_fnc_arsenalLogic", 2];
             },
             [],
             0,
@@ -146,8 +146,8 @@ switch (_mode) do {
         
         if (isNull _object) exitWith {};
         
-        private _counts = _object getVariable ["A3A_Arsenal_Counts", createHashMap];
-        private _threshold = _object getVariable ["A3A_Arsenal_Threshold", 25];
+        private _counts = _object getVariable ["A4A_Arsenal_Counts", createHashMap];
+        private _threshold = _object getVariable ["A4A_Arsenal_Threshold", 25];
         private _updated = false;
         
         {
@@ -163,9 +163,9 @@ switch (_mode) do {
         } forEach _itemsAndCounts;
         
         if (_updated) then {
-            _object setVariable ["A3A_Arsenal_Counts", _counts, true];
-            ["UPDATE_VIRTUAL", [_object]] call A3A_fnc_arsenalLogic;
-            ["SAVE", [_object]] call A3A_fnc_arsenalLogic;
+            _object setVariable ["A4A_Arsenal_Counts", _counts, true];
+            ["UPDATE_VIRTUAL", [_object]] call A4A_fnc_arsenalLogic;
+            ["SAVE", [_object]] call A4A_fnc_arsenalLogic;
         };
     };
 
@@ -174,8 +174,8 @@ switch (_mode) do {
         
         if (isNull _object) exitWith {};
         
-        private _counts = _object getVariable ["A3A_Arsenal_Counts", createHashMap];
-        private _threshold = _object getVariable ["A3A_Arsenal_Threshold", 25];
+        private _counts = _object getVariable ["A4A_Arsenal_Counts", createHashMap];
+        private _threshold = _object getVariable ["A4A_Arsenal_Threshold", 25];
         
         private _virtualItems = [];
         private _virtualWeapons = [];
@@ -256,7 +256,7 @@ switch (_mode) do {
         
         // Add to system
         if (count _itemsToAdd > 0) then {
-            ["ADD_ITEMS", [_object, _itemsToAdd]] call A3A_fnc_arsenalLogic;
+            ["ADD_ITEMS", [_object, _itemsToAdd]] call A4A_fnc_arsenalLogic;
             
             // Notification
             private _msg = format ["Added %1 items to Arsenal.", count _itemsToAdd];
@@ -293,7 +293,7 @@ switch (_mode) do {
         clearBackpackCargoGlobal _object;
         
         if (count _itemsToAdd > 0) then {
-             ["ADD_ITEMS", [_object, _itemsToAdd]] call A3A_fnc_arsenalLogic;
+             ["ADD_ITEMS", [_object, _itemsToAdd]] call A4A_fnc_arsenalLogic;
              "Selected items unlocked (infinite)." remoteExec ["hint", 0];
         };
     };
@@ -303,8 +303,8 @@ switch (_mode) do {
 
         if (isNull _object) exitWith {};
 
-        private _id = _object getVariable ["A3A_Arsenal_ID", "Default"];
-        private _counts = _object getVariable ["A3A_Arsenal_Counts", createHashMap];
+        private _id = _object getVariable ["A4A_Arsenal_ID", "Default"];
+        private _counts = _object getVariable ["A4A_Arsenal_Counts", createHashMap];
 
         // Save in JNA-compatible format: 27 sub-arrays indexed by arsenal tab
         // Each sub-array contains [["className", count], ...] pairs
@@ -320,7 +320,7 @@ switch (_mode) do {
             (_dataToSave select _tabIndex) pushBack [_cls, _cnt];
         } forEach _counts;
 
-        private _profileKey = format ["A3A_ArsenalData_%1", _id];
+        private _profileKey = format ["A4A_ArsenalData_%1", _id];
         profileNamespace setVariable [_profileKey, _dataToSave];
         saveProfileNamespace;
 
@@ -329,16 +329,16 @@ switch (_mode) do {
 
     // Called from client EditorSave: receives full JNA data array (27 sub-arrays) and saves it
     case "SAVE_JNA": {
-        diag_log format ["A3A_arsenalLogic SAVE_JNA: RECEIVED (isServer=%1, _params count=%2)", isServer, count _params];
+        diag_log format ["A4A_arsenalLogic SAVE_JNA: RECEIVED (isServer=%1, _params count=%2)", isServer, count _params];
         if (!isServer) exitWith {};
         _params params [["_arsenalID", "Base", [""]], ["_dataList", [], [[]]], ["_playerName", ""], ["_playerUID", ""]];
 
         if (count _dataList != 27) exitWith {
-            diag_log format ["A3A_arsenalLogic SAVE_JNA: invalid data (count=%1), expected 27", count _dataList];
+            diag_log format ["A4A_arsenalLogic SAVE_JNA: invalid data (count=%1), expected 27", count _dataList];
         };
 
         private _serverKey = format ["jna_dataList_%1", _arsenalID];
-        private _profileKey = format ["A3A_ArsenalData_%1", _arsenalID];
+        private _profileKey = format ["A4A_ArsenalData_%1", _arsenalID];
 
         // Update server runtime storage
         server setVariable [_serverKey, _dataList, true];
@@ -350,9 +350,9 @@ switch (_mode) do {
         // Count items for log
         private _itemCount = 0;
         { _itemCount = _itemCount + count _x } forEach _dataList;
-        diag_log format ["A3A_arsenalLogic SAVE_JNA: Arsenal '%1' saved (%2 items)", _arsenalID, _itemCount];
+        diag_log format ["A4A_arsenalLogic SAVE_JNA: Arsenal '%1' saved (%2 items)", _arsenalID, _itemCount];
         if (_playerName != "") then {
-            diag_log format ["A3A_Arsenal Log:  %1 (UID: %2)  Arsenal '%3'   (Save JNA Event)", _playerName, _playerUID, _arsenalID];
+            diag_log format ["A4A_Arsenal Log:  %1 (UID: %2)  Arsenal '%3'   (Save JNA Event)", _playerName, _playerUID, _arsenalID];
         };
     };
 };

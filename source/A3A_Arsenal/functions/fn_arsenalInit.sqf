@@ -8,10 +8,10 @@ if (isNil "_object" || isNull _object) exitWith {
 // Ensure variables are available globally (JIP)
 // Initialize JNA on the object
 if (isServer) then {
-    _object setVariable ["A3A_Arsenal_ID", _arsenalID, true];
-    _object setVariable ["A3A_Arsenal_Threshold", _unlockThreshold, true];
+    _object setVariable ["A4A_Arsenal_ID", _arsenalID, true];
+    _object setVariable ["A4A_Arsenal_Threshold", _unlockThreshold, true];
 
-    if (isNil "A3A_guestItemLimit") then { missionNamespace setVariable ["A3A_guestItemLimit", _unlockThreshold, true]; };
+    if (isNil "A4A_guestItemLimit") then { missionNamespace setVariable ["A4A_guestItemLimit", _unlockThreshold, true]; };
 
     [_object] remoteExec ["JN_fnc_arsenal_init", 0, _object]; // Execute everywhere (Server + Clients)
 };

@@ -1,5 +1,5 @@
 ﻿#define COMPONENT jeroen_arsenal
-#define PREFIX A3A_Arsenal
+#define PREFIX A4A_Arsenal
 
 #define MAJOR 0
 #define MINOR 4
@@ -9,7 +9,7 @@
 
 // Minimal macros for standalone usage
 #define QUOTE(var) #var
-#define QPATHTOFOLDER(var) QUOTE(\A3A_Arsenal\var)
+#define QPATHTOFOLDER(var) QUOTE(\A4A_Arsenal\var)
 #define FIX_LINE_NUMBERS() 
 #define TRACE_1(msg,arg1) diag_log format [msg, arg1]
 #define INFO(msg) diag_log format ["INFO: %1", msg]
@@ -31,5 +31,5 @@
 #define Debug(msg) diag_log format ["DEBUG: %1", msg]
 
 // Faction data access macros (from Antistasi core/Includes/common.inc)
-#define FactionGet(FAC, VAR) (A3A_faction_##FAC get VAR)
-#define FactionGetOrDefault(FAC, VAR, DEF) (A3A_faction_##FAC getOrDefault [VAR, DEF])
+#define FactionGet(FAC, VAR) (A4A_faction_##FAC get VAR)
+#define FactionGetOrDefault(FAC, VAR, DEF) (A4A_faction_##FAC getOrDefault [VAR, DEF])

@@ -17,7 +17,7 @@ if(!isServer)exitWith{};
 params ["_clientOwner", ["_arsenalObj", objNull, [objNull]]];
 
 // Determine arsenal ID from the object
-private _arsenalID = _arsenalObj getVariable ["A3A_Arsenal_ID", "Base"];
+private _arsenalID = _arsenalObj getVariable ["A4A_Arsenal_ID", "Base"];
 private _serverKey = format ["jna_dataList_%1", _arsenalID];
 private _playerListKey = format ["jna_playersInArsenal_%1", _arsenalID];
 private _defaultData = [[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]];

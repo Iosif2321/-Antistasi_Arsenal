@@ -143,7 +143,7 @@ private _minItemsMember = {
 	params ["_index", "_item"];					// Arsenal tab index, item classname
 	if (_index in [IDC_RSCDISPLAYARSENAL_TAB_LOADEDMAG, IDC_RSCDISPLAYARSENAL_TAB_LOADEDMAG2]) then { _index = IDC_RSCDISPLAYARSENAL_TAB_CARGOMAG };
 	private _min = jna_minItemMember select _index;
-	_min = A3A_arsenalLimits getOrDefault [_item, _min];
+	_min = A4A_arsenalLimits getOrDefault [_item, _min];
 	if (_index in [IDC_RSCDISPLAYARSENAL_TAB_CARGOMAG, IDC_RSCDISPLAYARSENAL_TAB_CARGOMAGALL]) then {
 		_min = _min * getNumber (configfile >> "CfgMagazines" >> _item >> "count");
 	};
@@ -184,13 +184,13 @@ switch _mode do {
 
 	/////////////////////////////////////////////////////////////////////////////////////////// Externaly called
 	case "Preload": {
-		diag_log format ["A3A_Preload: START  bis_fnc_arsenal_data already defined=%1", !isNil {missionNamespace getVariable "bis_fnc_arsenal_data"}];
+		diag_log format ["A4A_Preload: START  bis_fnc_arsenal_data already defined=%1", !isNil {missionNamespace getVariable "bis_fnc_arsenal_data"}];
 		private ["_data"];
 
 		INITTYPES
 
 		// Log ACTUAL IDC constant values  verify they match expectations
-		diag_log format ["A3A_Preload IDC_CARGO: MAG=%1 MAGALL=%2 THROW=%3 PUT=%4 MISC=%5 | OPTIC=%6 ACC=%7 MUZZLE=%8 BIPOD=%9",
+		diag_log format ["A4A_Preload IDC_CARGO: MAG=%1 MAGALL=%2 THROW=%3 PUT=%4 MISC=%5 | OPTIC=%6 ACC=%7 MUZZLE=%8 BIPOD=%9",
 			IDC_RSCDISPLAYARSENAL_TAB_CARGOMAG, IDC_RSCDISPLAYARSENAL_TAB_CARGOMAGALL,
 			IDC_RSCDISPLAYARSENAL_TAB_CARGOTHROW, IDC_RSCDISPLAYARSENAL_TAB_CARGOPUT,
 			IDC_RSCDISPLAYARSENAL_TAB_CARGOMISC,
@@ -303,7 +303,7 @@ switch _mode do {
 		missionnamespace setvariable ["bis_fnc_arsenal_data",_data];
 		// Save a PRISTINE deep copy  BIS arsenal modifies bis_fnc_arsenal_data in-place
 		// (filters attachments by weapon compatibility, reshuffles cargo categories)
-		missionNamespace setVariable ["A3A_arsenal_configData", +_data];
+		missionNamespace setVariable ["A4A_arsenal_configData", +_data];
 		// DEBUG: Preload summary
 		private _preloadTotal = 0;
 		private _preloadSummary = [];
@@ -312,9 +312,9 @@ switch _mode do {
 			_preloadTotal = _preloadTotal + _cnt;
 			if (_cnt > 0) then { _preloadSummary pushBack format ["%1:%2", _forEachIndex, _cnt] };
 		} forEach _data;
-		diag_log format ["A3A_Preload: DONE  %1 total items. Per-IDC: %2", _preloadTotal, _preloadSummary];
+		diag_log format ["A4A_Preload: DONE  %1 total items. Per-IDC: %2", _preloadTotal, _preloadSummary];
 		// Log ACTUAL IDC constant values  verify they match expectations
-		diag_log format ["A3A_Preload IDC_CARGO: MAG=%1 MAGALL=%2 THROW=%3 PUT=%4 MISC=%5 | OPTIC=%6 ACC=%7 MUZZLE=%8 BIPOD=%9",
+		diag_log format ["A4A_Preload IDC_CARGO: MAG=%1 MAGALL=%2 THROW=%3 PUT=%4 MISC=%5 | OPTIC=%6 ACC=%7 MUZZLE=%8 BIPOD=%9",
 			IDC_RSCDISPLAYARSENAL_TAB_CARGOMAG, IDC_RSCDISPLAYARSENAL_TAB_CARGOMAGALL,
 			IDC_RSCDISPLAYARSENAL_TAB_CARGOTHROW, IDC_RSCDISPLAYARSENAL_TAB_CARGOPUT,
 			IDC_RSCDISPLAYARSENAL_TAB_CARGOMISC,
@@ -326,7 +326,7 @@ switch _mode do {
 			private _name = _x select 1;
 			private _items = _data param [_idx, []];
 			private _sample = if (count _items > 0) then { _items select 0 } else { "EMPTY" };
-			diag_log format ["A3A_Preload CARGO[%1] %2: count=%3, sample=%4", _idx, _name, count _items, _sample];
+			diag_log format ["A4A_Preload CARGO[%1] %2: count=%3, sample=%4", _idx, _name, count _items, _sample];
 		} forEach [
 			[IDC_RSCDISPLAYARSENAL_TAB_CARGOMAG, "CARGOMAG"],
 			[IDC_RSCDISPLAYARSENAL_TAB_CARGOMAGALL, "CARGOMAGALL"],
@@ -434,7 +434,7 @@ switch _mode do {
 	case "SaveTFAR": {
 		jna_backpackRadioSettings = nil;
 		jna_swRadioSettings = nil;
-		if (A3A_hasTFAR) then {
+		if (A4A_hasTFAR) then {
 			private _backpackRadio = player call TFAR_fnc_backpackLr;
 			if (!isNil "_backpackRadio" && {count _backpackRadio >= 2}) then {
 				jna_backpackRadioSettings = _backpackRadio call TFAR_fnc_getLrSettings;
@@ -450,7 +450,7 @@ switch _mode do {
 	//Restore TFAR radio settings
 
 	case "RestoreTFAR": {
-		if (A3A_hasTFAR) then {
+		if (A4A_hasTFAR) then {
 			private _backpackRadio = player call TFAR_fnc_backpackLr;
 			if (!isNil "_backpackRadio" && {count _backpackRadio >= 2}) then {
 				if (isNil "jna_backpackRadioSettings" || {typeName jna_backpackRadioSettings != typeName []}) exitWith {
@@ -464,11 +464,11 @@ switch _mode do {
 			//Arsenal gives players base TFAR radio items. TFAR will, at some point, replace this with an 'instanced' version.
 			//This can cause freq to reset. To fix, check if we have a radio first, and wait around if we do, but TFAR isn't showing it.
 			//Spawn so we can sleep without bothering the arsenal.
-			private _hasRadio = player call A3A_fnc_hasARadio;
+			private _hasRadio = player call A4A_fnc_hasARadio;
 			if (_hasRadio) then {
 				[] spawn {
 					//Wait around until TFAR has done its work. Frequent checks - we shouldn't have to wait more than a handful of seconds for TFAR;
-					waitUntil {sleep 1; player call A3A_fnc_hasARadio && call TFAR_fnc_haveSWRadio};
+					waitUntil {sleep 1; player call A4A_fnc_hasARadio && call TFAR_fnc_haveSWRadio};
 					private _swRadio = if (call TFAR_fnc_haveSWRadio) then { call TFAR_fnc_activeSwRadio } else { nil };
 					//Doesn't hurt to be careful!
 					if (!isNil "_swRadio") then {
@@ -513,7 +513,7 @@ switch _mode do {
 
 		_ctrlButtonExport = _display displayctrl IDC_RSCDISPLAYARSENAL_CONTROLSBAR_BUTTONEXPORT;
 		_ctrlButtonExport ctrlRemoveAllEventHandlers "buttonclick";
-		if (!isNil "A3A_fnc_arsenal_isZeus" && {[player] call A3A_fnc_arsenal_isZeus}) then {
+		if (!isNil "A4A_fnc_arsenal_isZeus" && {[player] call A4A_fnc_arsenal_isZeus}) then {
 			_ctrlButtonExport ctrlSetText (localize "STR_JNA_ACT_EDIT_ARSENAL");
 			_ctrlButtonExport ctrlSetTooltip (localize "STR_JNA_ACT_EDIT_ARSENAL_TIP");
 			_ctrlButtonExport ctrlEnable true;
@@ -803,7 +803,7 @@ switch _mode do {
 
 			//Some mod backpacks have no empty variant
 			if (count _backpack > 0) then {
-				_backpack set [0,((_backpack select 0) call A3A_fnc_basicBackpack)];
+				_backpack set [0,((_backpack select 0) call A4A_fnc_basicBackpack)];
 			};
 
 			_uniformitems = [_unifrom,1,[]] call BIS_fnc_param;
@@ -1462,7 +1462,7 @@ switch _mode do {
 		params ["_index","_item","_amount",["_updateDataList",false],["_playerName",""],["_playerUID",""],["_arsenalID","Base"]];
 
 		if (isServer && {_playerName != ""}) then {
-			diag_log format ["A3A_Arsenal Log:  %1 (UID: %2)   %3   %4   '%5'", _playerName, _playerUID, _item, _amount, _arsenalID];
+			diag_log format ["A4A_Arsenal Log:  %1 (UID: %2)   %3   %4   '%5'", _playerName, _playerUID, _item, _amount, _arsenalID];
 		};
 
 		//update datalist
@@ -1474,11 +1474,11 @@ switch _mode do {
 				_targetData set [_index, [_targetData select _index, [_item, _amount]] call jn_fnc_arsenal_addToArray];
 				
 				server setVariable [_serverKey, _targetData, true];
-				profileNamespace setVariable [format ["A3A_ArsenalData_%1", _arsenalID], _targetData];
+				profileNamespace setVariable [format ["A4A_ArsenalData_%1", _arsenalID], _targetData];
 				saveProfileNamespace;
 
 				// if the server itself is viewing this arsenal, update its jna_dataList too
-				private _localArsenalID = (missionNamespace getVariable ["jna_object", objNull]) getVariable ["A3A_Arsenal_ID", "Base"];
+				private _localArsenalID = (missionNamespace getVariable ["jna_object", objNull]) getVariable ["A4A_Arsenal_ID", "Base"];
 				if (!isDedicated && hasInterface && _localArsenalID == _arsenalID) then {
 					jna_dataList set [_index, [jna_dataList select _index, [_item, _amount]] call jn_fnc_arsenal_addToArray];
 				};
@@ -1547,7 +1547,7 @@ switch _mode do {
 		params ["_index","_item","_amount",["_updateDataList",false],["_playerName",""],["_playerUID",""],["_arsenalID","Base"]];
 
 		if (isServer && {_playerName != ""}) then {
-			diag_log format ["A3A_Arsenal Log:  %1 (UID: %2)   %3   %4   '%5'", _playerName, _playerUID, _item, _amount, _arsenalID];
+			diag_log format ["A4A_Arsenal Log:  %1 (UID: %2)   %3   %4   '%5'", _playerName, _playerUID, _item, _amount, _arsenalID];
 		};
 
 		//update datalist
@@ -1559,11 +1559,11 @@ switch _mode do {
 				_targetData set [_index, [_targetData select _index, [_item, _amount]] call jn_fnc_arsenal_removeFromArray];
 				
 				server setVariable [_serverKey, _targetData, true];
-				profileNamespace setVariable [format ["A3A_ArsenalData_%1", _arsenalID], _targetData];
+				profileNamespace setVariable [format ["A4A_ArsenalData_%1", _arsenalID], _targetData];
 				saveProfileNamespace;
 
 				// if the server itself is viewing this arsenal, update its jna_dataList too
-				private _localArsenalID = (missionNamespace getVariable ["jna_object", objNull]) getVariable ["A3A_Arsenal_ID", "Base"];
+				private _localArsenalID = (missionNamespace getVariable ["jna_object", objNull]) getVariable ["A4A_Arsenal_ID", "Base"];
 				if (!isDedicated && hasInterface && _localArsenalID == _arsenalID) then {
 					jna_dataList set [_index, [jna_dataList select _index, [_item, _amount]] call jn_fnc_arsenal_removeFromArray];
 				};
@@ -1787,7 +1787,7 @@ switch _mode do {
 		_grayout = false;
 		_min = [_index, _item] call _minItemsMember;
 		_initialEquipment = FactionGet(reb,"initialRebelEquipment");
-		if (_amount <= _min && {_amount != -1 && {!([player] call A3A_fnc_isMember)}}) then{_grayout = true};
+		if (_amount <= _min && {_amount != -1 && {!([player] call A4A_fnc_isMember)}}) then{_grayout = true};
 
 		//grayout attachments
 		private _isIncompatible = if (_index in [
@@ -1894,41 +1894,41 @@ switch _mode do {
 
 				_strAmount = switch true do {
 					case (_amount == 0): {
-						localize "STR_A3AP_arsenal_scarcity_0"
+						localize "STR_A4AP_arsenal_scarcity_0"
 					};
 					case (_amount > 50): {
-						localize "STR_A3AP_arsenal_scarcity_1"
+						localize "STR_A4AP_arsenal_scarcity_1"
 					};
 					case (_amount > 10): {
-						localize "STR_A3AP_arsenal_scarcity_2"
+						localize "STR_A4AP_arsenal_scarcity_2"
 					};
 					case (_amount > 3): {
-						localize "STR_A3AP_arsenal_scarcity_3"
+						localize "STR_A4AP_arsenal_scarcity_3"
 					};
 					case (_amount > 1): {
-						localize "STR_A3AP_arsenal_scarcity_4"
+						localize "STR_A4AP_arsenal_scarcity_4"
 					};
 					case (_amount == 1): {
-						localize "STR_A3AP_arsenal_scarcity_5"
+						localize "STR_A4AP_arsenal_scarcity_5"
 					};
 					case (_amount == -1): {//TODO marker for changed entry
-						localize "STR_A3AP_arsenal_scarcity_1"
+						localize "STR_A4AP_arsenal_scarcity_1"
 					};
 					default{""};
 				};
 
 				_strAmmo = switch true do {
 					case (_colorMult == 0): {
-						localize "STR_A3AP_arsenal_scarcity_ammo_0"
+						localize "STR_A4AP_arsenal_scarcity_ammo_0"
 					};
 					case (_colorMult > 0.9): {
-						localize "STR_A3AP_arsenal_scarcity_ammo_1"
+						localize "STR_A4AP_arsenal_scarcity_ammo_1"
 					};
 					case (_colorMult > 0.2): {
-						localize "STR_A3AP_arsenal_scarcity_ammo_2"
+						localize "STR_A4AP_arsenal_scarcity_ammo_2"
 					};
 					case (_colorMult > 0): {
-						localize "STR_A3AP_arsenal_scarcity_ammo_3"
+						localize "STR_A4AP_arsenal_scarcity_ammo_3"
 					};
 					default{""};
 				};
@@ -2013,7 +2013,7 @@ switch _mode do {
 
 		//check if weapon is unlocked
 		private _min = [_index, _item] call _minItemsMember;
-		if ((_amount <= _min) AND (_amount != -1) AND (_item !="") AND !(player call A3A_fnc_isMember) AND !_type) exitWith{
+		if ((_amount <= _min) AND (_amount != -1) AND (_item !="") AND !(player call A4A_fnc_isMember) AND !_type) exitWith{
 			['showMessage',[_display,localize "STR_JNA_ACT_ONLY_MEMBERS"]] call jn_fnc_arsenal;
 
 			//reset _cursel
@@ -2569,7 +2569,7 @@ switch _mode do {
 			_grayout = false;
 
 			_min = [_index, _item] call _minItemsMember;
-			if ((_amount <= _min) AND (_amount != -1) AND (_amount !=0) AND !(player call A3A_fnc_isMember)) then{_grayout = true};
+			if ((_amount <= _min) AND (_amount != -1) AND (_amount !=0) AND !(player call A4A_fnc_isMember)) then{_grayout = true};
 
 			_isIncompatible = _ctrlList lnbvalue [_r,1];
 			_mass = _ctrlList lbvalue (_r * _columns);
@@ -2627,7 +2627,7 @@ switch _mode do {
 
 			if (_add > 0) then {//add
 				_min = [_index, _item] call _minItemsMember;
-				if((_amount <= _min) AND (_amount != -1) AND !(player call A3A_fnc_isMember)) exitWith{
+				if((_amount <= _min) AND (_amount != -1) AND !(player call A4A_fnc_isMember)) exitWith{
 					['showMessage',[_display, localize "STR_JNA_ACT_ONLY_MEMBERS"]] call jn_fnc_arsenal;
 				};
 				if(_index in [IDC_RSCDISPLAYARSENAL_TAB_CARGOMAG,IDC_RSCDISPLAYARSENAL_TAB_CARGOMAGALL])then{//magazines are handeld by bullet count
@@ -3078,7 +3078,7 @@ switch _mode do {
 			};
 			//--- Ctrl+V: Import arsenal data from clipboard (Zeus only)
 			case (_key == DIK_V): {
-				if (_ctrl && {!isNil "A3A_fnc_arsenal_isZeus"} && {[player] call A3A_fnc_arsenal_isZeus}) then {
+				if (_ctrl && {!isNil "A4A_fnc_arsenal_isZeus"} && {[player] call A4A_fnc_arsenal_isZeus}) then {
 					["ImportData"] call jn_fnc_arsenal;
 					_return = true;
 				};
@@ -3158,7 +3158,7 @@ switch _mode do {
 		/////////////////////////////////////////////////////////////////////////////////
 		// unifrom
 		_itemsUnifrom = [];
-		if(A3A_hasACEMedical)then{
+		if(A4A_hasACEMedical)then{
 			_itemsUnifrom pushBack ["ACE_elasticBandage",2];
 			_itemsUnifrom pushBack ["ACE_packingBandage",2];
 			_itemsUnifrom pushBack ["ACE_morphine",1];
@@ -3168,14 +3168,14 @@ switch _mode do {
 			_itemsUnifrom pushBack ["ACE_splint", 1];
 		}else{
 			_itemsUnifrom pushBack ["FirstAidKit",2];
-			if(A3A_hasACE) then {
+			if(A4A_hasACE) then {
 				_itemsUnifrom pushBack ["ACE_EarPlugs",1];
 				_itemsUnifrom pushBack ["ACE_MapTools",1];
 				_itemsUnifrom pushBack ["ACE_CableTie",2];
 			};
 		};
 
-		if ((A3A_hasACE) AND (sunOrMoon <1)) then {
+		if ((A4A_hasACE) AND (sunOrMoon <1)) then {
 			_itemsUnifrom pushback ["ACE_HandFlare_Red",1];
 			_itemsUnifrom pushback ["ACE_Chemlight_HiRed",1];
 			_itemsUnifrom pushBack ["ACE_Flashlight_MX991",1];
@@ -3203,9 +3203,9 @@ switch _mode do {
 		// backpack stuff
 		_itemsBackpack = [];
 
-		if([player] call A3A_fnc_isMedic)then{
+		if([player] call A4A_fnc_isMedic)then{
 
-			if(A3A_hasACEMedical) then { //Medic equipment
+			if(A4A_hasACEMedical) then { //Medic equipment
 				_itemsBackpack pushBack ["ACE_elasticBandage",15];
 				_itemsBackpack pushBack ["ACE_packingBandage",15];
 				_itemsBackpack pushBack ["ACE_tourniquet",5];
@@ -3218,7 +3218,7 @@ switch _mode do {
 				_itemsBackpack pushBack ["FirstAidKit",1];
 			};
 		} else {
-		 		if(A3A_hasACEMedical) then {
+		 		if(A4A_hasACEMedical) then {
 					_itemsBackpack pushBack ["ACE_fieldDressing",5];
 					_itemsBackpack pushBack ["ACE_packingBandage",5];
 					_itemsBackpack pushBack ["ACE_elasticBandage",5];
@@ -3232,9 +3232,9 @@ switch _mode do {
 			};
 		};
 
-		if(player call A3A_fnc_isEngineer) then {
+		if(player call A4A_fnc_isEngineer) then {
 					_itemsBackpack pushback ["ToolKit",1];
-					if(A3A_hasACE) then {
+					if(A4A_hasACE) then {
 						_itemsbackpack pushback ["ACE_Clacker",1];
 						_itemsbackpack pushback ["ACE_SpraypaintRed",4];
 					};
@@ -3478,7 +3478,7 @@ switch _mode do {
 	//        ["ExportData", [true]] call jn_fnc_arsenal;       RPT only (silent)
 	case "ExportData": {
 		private _rptOnly = _this param [0, false];
-		private _arsenalID = (missionNamespace getVariable ["jna_object", objNull]) getVariable ["A3A_Arsenal_ID", "Base"];
+		private _arsenalID = (missionNamespace getVariable ["jna_object", objNull]) getVariable ["A4A_Arsenal_ID", "Base"];
 
 		// Category names indexed by BIS IDC tab order (0=PrimaryWeapon, 1=Launcher, ..., 26=Misc)
 		private _catNames = [
@@ -3626,9 +3626,9 @@ switch _mode do {
 
 		// Save to server per-arsenal storage and profileNamespace
 		if (isServer) then {
-			private _arsenalID = (missionNamespace getVariable ["jna_object", objNull]) getVariable ["A3A_Arsenal_ID", "Base"];
+			private _arsenalID = (missionNamespace getVariable ["jna_object", objNull]) getVariable ["A4A_Arsenal_ID", "Base"];
 			server setVariable [format ["jna_dataList_%1", _arsenalID], jna_dataList, true];
-			profileNamespace setVariable [format ["A3A_ArsenalData_%1", _arsenalID], jna_dataList];
+			profileNamespace setVariable [format ["A4A_ArsenalData_%1", _arsenalID], jna_dataList];
 			saveProfileNamespace;
 		};
 
@@ -3642,7 +3642,7 @@ switch _mode do {
 			_totalItems
 		];
 
-		diag_log format ["A3A_Arsenal: Imported %1 items from clipboard.", _totalItems];
+		diag_log format ["A4A_Arsenal: Imported %1 items from clipboard.", _totalItems];
 	};
 
 	///////////////////////////////////////////////////////////////////////////////////////////
@@ -3655,7 +3655,7 @@ switch _mode do {
 		disableSerialization;
 
 		// Zeus only  prevent bypass via direct call
-		if (isNil "A3A_fnc_arsenal_isZeus" || {!([player] call A3A_fnc_arsenal_isZeus)}) exitWith {};
+		if (isNil "A4A_fnc_arsenal_isZeus" || {!([player] call A4A_fnc_arsenal_isZeus)}) exitWith {};
 
 		// Prevent double-open
 		if (!isNil {uiNamespace getVariable "jna_editor_open"}) exitWith {};
@@ -3695,7 +3695,7 @@ switch _mode do {
 		];
 
 		// DEBUG: log resolved IDC values for categories
-		diag_log format ["A3A_EditorOpen: category IDCs = %1", _categories apply { _x select 0 }];
+		diag_log format ["A4A_EditorOpen: category IDCs = %1", _categories apply { _x select 0 }];
 
 		// --- Layout constants (safezone-relative) ---
 		private _panelX = safeZoneX + safeZoneW * 0.15;
@@ -3833,7 +3833,7 @@ switch _mode do {
 		}];
 
 		// Populate first category
-		diag_log format ["A3A_EditorOpen: %1 categories created, jna_dataList defined=%2 (count=%3), bis_fnc_arsenal_data defined=%4",
+		diag_log format ["A4A_EditorOpen: %1 categories created, jna_dataList defined=%2 (count=%3), bis_fnc_arsenal_data defined=%4",
 			count _categories, !isNil "jna_dataList", count (jna_dataList param [0, []]),
 			!isNil {missionNamespace getVariable "bis_fnc_arsenal_data"}];
 		["EditorSelectCat", [_display, (_categories select 0) select 0]] call jn_fnc_arsenal;
@@ -3862,17 +3862,17 @@ switch _mode do {
 		private _list = _display displayCtrl 90002;
 		lbClear _list;
 
-		// Use PRISTINE Preload data (A3A_arsenal_configData)  NOT bis_fnc_arsenal_data
+		// Use PRISTINE Preload data (A4A_arsenal_configData)  NOT bis_fnc_arsenal_data
 		// BIS arsenal modifies bis_fnc_arsenal_data in-place (filters attachments, reshuffles cargo)
-		private _allConfigData = missionNamespace getVariable ["A3A_arsenal_configData", []];
+		private _allConfigData = missionNamespace getVariable ["A4A_arsenal_configData", []];
 		private _allConfigItems = _allConfigData param [_catIdx, []];
 
 		// Get current arsenal items for this category
 		private _arsenalItems = jna_dataList param [_catIdx, []];
 
 		// DEBUG: diagnose
-		diag_log format ["A3A_EditorSelectCat: catIdx=%1 | configItems=%2 | arsenalItems=%3 | pristineData=%4",
-			_catIdx, count _allConfigItems, count _arsenalItems, !isNil {missionNamespace getVariable "A3A_arsenal_configData"}];
+		diag_log format ["A4A_EditorSelectCat: catIdx=%1 | configItems=%2 | arsenalItems=%3 | pristineData=%4",
+			_catIdx, count _allConfigItems, count _arsenalItems, !isNil {missionNamespace getVariable "A4A_arsenal_configData"}];
 
 		// Build hashmap of arsenal items for quick lookup: className -> count
 		private _arsenalMap = createHashMap;
@@ -3926,7 +3926,7 @@ switch _mode do {
 		} forEach _allConfigItems;
 
 		// Verify: how many items are now in the listbox?
-		diag_log format ["A3A_EditorSelectCat: DONE catIdx=%1 | lbSize=%2 | arsenalAdded=%3 | configAdded=%4 | sample=%5",
+		diag_log format ["A4A_EditorSelectCat: DONE catIdx=%1 | lbSize=%2 | arsenalAdded=%3 | configAdded=%4 | sample=%5",
 			_catIdx, lbSize _list, count _arsenalItems,
 			(lbSize _list) - (count _arsenalItems),
 			if (count _allConfigItems > 0) then { [_allConfigItems select 0, typeName (_allConfigItems select 0)] } else { "EMPTY" }];
@@ -4082,14 +4082,14 @@ switch _mode do {
 	case "EditorSave": {
 		private _display = _this select 0;
 		private _arsenalObj = missionNamespace getVariable ["jna_object", objNull];
-		private _arsenalID = _arsenalObj getVariable ["A3A_Arsenal_ID", "Base"];
+		private _arsenalID = _arsenalObj getVariable ["A4A_Arsenal_ID", "Base"];
 		private _serverKey = format ["jna_dataList_%1", _arsenalID];
-		private _profileKey = format ["A3A_ArsenalData_%1", _arsenalID];
+		private _profileKey = format ["A4A_ArsenalData_%1", _arsenalID];
 
 		// Count items for log
 		private _totalItems = 0;
 		{ _totalItems = _totalItems + count _x } forEach jna_dataList;
-		diag_log format ["A3A_EditorSave: Arsenal '%1'  %2 items, isServer=%3", _arsenalID, _totalItems, isServer];
+		diag_log format ["A4A_EditorSave: Arsenal '%1'  %2 items, isServer=%3", _arsenalID, _totalItems, isServer];
 
 		if (isServer) then {
 			// Direct save on server (listen server / singleplayer)
@@ -4097,13 +4097,13 @@ switch _mode do {
 			profileNamespace setVariable [_profileKey, jna_dataList];
 			saveProfileNamespace;
 			systemChat format ["Arsenal '%1' saved.", _arsenalID];
-			diag_log format ["A3A_EditorSave: Saved locally (server). Key='%1'", _profileKey];
-			diag_log format ["A3A_Arsenal Log:  %1 (UID: %2)  Arsenal '%3'  ", name player, getPlayerUID player, _arsenalID];
+			diag_log format ["A4A_EditorSave: Saved locally (server). Key='%1'", _profileKey];
+			diag_log format ["A4A_Arsenal Log:  %1 (UID: %2)  Arsenal '%3'  ", name player, getPlayerUID player, _arsenalID];
 		} else {
 			// Dedicated server: send full jna_dataList to server via CBA event
-			["A3A_editorSaveRequest", [_arsenalID, +jna_dataList, name player, getPlayerUID player]] call CBA_fnc_serverEvent;
+			["A4A_editorSaveRequest", [_arsenalID, +jna_dataList, name player, getPlayerUID player]] call CBA_fnc_serverEvent;
 			systemChat format ["Arsenal '%1' sent to server for saving.", _arsenalID];
-			diag_log format ["A3A_EditorSave: Sent save request for '%1' to server (CBA event).", _arsenalID];
+			diag_log format ["A4A_EditorSave: Sent save request for '%1' to server (CBA event).", _arsenalID];
 		};
 		hint parseText format ["<t size='1.2' color='#00cc00'>SAVED '%1'</t>", _arsenalID];
 	};

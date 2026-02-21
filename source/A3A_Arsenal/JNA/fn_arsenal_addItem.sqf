@@ -42,7 +42,7 @@ if(typeName (_this select 0) isEqualTo "SCALAR")then{//[_index, _item] and [_ind
 				if!(_radioName isEqualTo "")then{_item = _radioName};
 
 				// Determine Arsenal ID for this specific interaction
-				private _curArsenalID = (missionNamespace getVariable ["jna_object", objNull]) getVariable ["A3A_Arsenal_ID", "Base"];
+				private _curArsenalID = (missionNamespace getVariable ["jna_object", objNull]) getVariable ["A4A_Arsenal_ID", "Base"];
 
 				// Update server immediately if local. Avoids lag after unlockEquipment
 				if (isServer) then { ["UpdateItemAdd",[_index, _item, _amount,true, name player, getPlayerUID player, _curArsenalID]] call jn_fnc_arsenal }

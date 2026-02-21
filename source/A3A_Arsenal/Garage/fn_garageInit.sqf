@@ -1,6 +1,6 @@
 /*
     Initialize garage on an object.
-    Call: [_object, _garageID] call A3A_fnc_garageInit;
+    Call: [_object, _garageID] call A4A_fnc_garageInit;
     Or via 3DEN module: automatically called for synced objects.
 */
 params [
@@ -9,22 +9,22 @@ params [
 ];
 
 if (isNull _object) exitWith {
-    diag_log "A3A_Garage: Error - null object in garageInit";
+    diag_log "A4A_Garage: Error - null object in garageInit";
 };
 
 // Don't re-init
-if (_object getVariable ["A3A_Garage_Initialized", false]) exitWith {};
-_object setVariable ["A3A_Garage_Initialized", true];
+if (_object getVariable ["A4A_Garage_Initialized", false]) exitWith {};
+_object setVariable ["A4A_Garage_Initialized", true];
 
 // Set ID on object (don't overwrite if already set by module)
-private _existingID = _object getVariable ["A3A_Garage_ID", ""];
+private _existingID = _object getVariable ["A4A_Garage_ID", ""];
 if (_existingID isEqualTo "") then {
-    _object setVariable ["A3A_Garage_ID", _garageID, true];
+    _object setVariable ["A4A_Garage_ID", _garageID, true];
 } else {
     _garageID = _existingID;
 };
 
-diag_log format ["A3A_Garage: Init object %1 with ID '%2'", _object, _garageID];
+diag_log format ["A4A_Garage: Init object %1 with ID '%2'", _object, _garageID];
 
 // Server: init garage data
 if (isServer) then {
@@ -33,7 +33,7 @@ if (isServer) then {
         server = (createGroup sideLogic) createUnit ["Logic", [0,0,0], [], 0, "NONE"];
         publicVariable "server";
     };
-    ["initServer", [_garageID]] call A3A_fnc_garage;
+    ["initServer", [_garageID]] call A4A_fnc_garage;
 };
 
 // Client: add actions
@@ -43,8 +43,8 @@ if (hasInterface) then {
         "<t color='#80d0ff'>Garage</t>",
         {
             params ["_target"];
-            missionNamespace setVariable ["A3A_GRG_object", _target];
-            ["open"] call A3A_fnc_garage;
+            missionNamespace setVariable ["A4A_GRG_object", _target];
+            ["open"] call A4A_fnc_garage;
         },
         [],
         6,

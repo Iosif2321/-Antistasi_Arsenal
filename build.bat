@@ -1,6 +1,6 @@
 @echo off
 set "BUILDER=C:\Program Files (x86)\Steam\steamapps\common\Arma 3 Tools\AddonBuilder\AddonBuilder.exe"
-set "SOURCE=%~dp0source\A3A_Arsenal"
+set "SOURCE=%~dp0source\A4A_Arsenal"
 set "DEST=%~dp0addons"
 
 echo Checking for AddonBuilder...
@@ -11,7 +11,7 @@ if not exist "%BUILDER%" (
     exit /b 1
 )
 
-echo Building A3A_Arsenal...
+echo Building A4A_Arsenal...
 "%BUILDER%" "%SOURCE%" "%DEST%" -clear -packonly
 
 if %ERRORLEVEL% NEQ 0 (

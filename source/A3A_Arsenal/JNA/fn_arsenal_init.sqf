@@ -6,7 +6,7 @@ FIX_LINE_NUMBERS()
 ///////////////////////////////////////////////////////////////////////////////////////////
 scriptName "fn_arsenal_init.sqf";
 private _fileName = "fn_arsenal_init.sqf";
-[2,format["JNA init started (Version %1)", QUOTE(VERSION)],_fileName] call A3A_fnc_log;
+[2,format["JNA init started (Version %1)", QUOTE(VERSION)],_fileName] call A4A_fnc_log;
 params [
     ["_object",objNull,[objNull]],
     ["_arsenalID", "Base", [""]],
@@ -16,10 +16,10 @@ params [
 if(isNull _object)exitWith{["Error: wrong input given '%1'",_object] call BIS_fnc_error;};
 
 // Check if already initialized on this machine
-if (_object getVariable ["A3A_Arsenal_Initialized", false]) exitWith {
+if (_object getVariable ["A4A_Arsenal_Initialized", false]) exitWith {
     if (hasInterface) then { systemChat format ["Antistasi Arsenal: Object %1 already initialized", _object]; };
 };
-_object setVariable ["A3A_Arsenal_Initialized", true];
+_object setVariable ["A4A_Arsenal_Initialized", true];
 
 // Debug log for client side
 if (hasInterface) then {
@@ -29,15 +29,15 @@ if (hasInterface) then {
 // Set variables on object - but DON'T overwrite if already set by fn_arsenalInit.sqf
 // (fn_arsenalInit sets the correct ID from module params BEFORE calling this function,
 //  but only passes [_object] - so _arsenalID param here defaults to "Base")
-private _existingID = _object getVariable ["A3A_Arsenal_ID", ""];
+private _existingID = _object getVariable ["A4A_Arsenal_ID", ""];
 if (_existingID isEqualTo "") then {
-    _object setVariable ["A3A_Arsenal_ID", _arsenalID, true];
+    _object setVariable ["A4A_Arsenal_ID", _arsenalID, true];
 } else {
     _arsenalID = _existingID; // use the ID that was already set
 };
-private _existingThreshold = _object getVariable ["A3A_Arsenal_Threshold", -1];
+private _existingThreshold = _object getVariable ["A4A_Arsenal_Threshold", -1];
 if (_existingThreshold < 0) then {
-    _object setVariable ["A3A_Arsenal_Threshold", _unlockThreshold, true];
+    _object setVariable ["A4A_Arsenal_Threshold", _unlockThreshold, true];
 } else {
     _unlockThreshold = _existingThreshold;
 };
@@ -55,71 +55,71 @@ if (isNil "jna_commonInitDone") then {
     jna_commonInitDone = true;
     missionNamespace setVariable ["jna_object", _object]; // default, overwritten on each open
 
-    // Ensure A3A_guestItemLimit is available on this machine.
+    // Ensure A4A_guestItemLimit is available on this machine.
     // publicVariable from server is NOT JIP-safe, so JIP clients may not have it.
     // Fall back to _unlockThreshold which is read from the object (JIP-safe).
-    if (isNil "A3A_guestItemLimit") then {
-        A3A_guestItemLimit = _unlockThreshold;
+    if (isNil "A4A_guestItemLimit") then {
+        A4A_guestItemLimit = _unlockThreshold;
     };
 
     jna_minItemMember = [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1];
-    jna_minItemMember = jna_minItemMember apply { A3A_guestItemLimit };
-    jna_minItemMember set [IDC_RSCDISPLAYARSENAL_TAB_CARGOMAG, A3A_guestItemLimit*3];
-    jna_minItemMember set [IDC_RSCDISPLAYARSENAL_TAB_CARGOMAGALL, A3A_guestItemLimit*3];
+    jna_minItemMember = jna_minItemMember apply { A4A_guestItemLimit };
+    jna_minItemMember set [IDC_RSCDISPLAYARSENAL_TAB_CARGOMAG, A4A_guestItemLimit*3];
+    jna_minItemMember set [IDC_RSCDISPLAYARSENAL_TAB_CARGOMAGALL, A4A_guestItemLimit*3];
     ["Preload"] call jn_fnc_arsenal;
 };
 
 // Per-arsenal server-side init: load data for THIS arsenal by its ID
 if (isServer) then {
     // One-time: register CBA server events for Zeus and EditorSave
-    if (isNil "A3A_cbaEventsRegistered") then {
-        A3A_cbaEventsRegistered = true;
-        diag_log "A3A_Arsenal: CBA registration starting...";
+    if (isNil "A4A_cbaEventsRegistered") then {
+        A4A_cbaEventsRegistered = true;
+        diag_log "A4A_Arsenal: CBA registration starting...";
 
         private _cbaAvailable = !isNil "CBA_fnc_addEventHandler";
-        diag_log format ["A3A_Arsenal: CBA_fnc_addEventHandler available = %1", _cbaAvailable];
+        diag_log format ["A4A_Arsenal: CBA_fnc_addEventHandler available = %1", _cbaAvailable];
 
         if (_cbaAvailable) then {
-            private _r1 = ["A3A_assignZeusRequest", {
+            private _r1 = ["A4A_assignZeusRequest", {
                 params ["_player"];
-                diag_log format ["A3A_Arsenal: CBA assignZeus request from %1", name _player];
-                [_player] call A3A_fnc_assignZeus;
+                diag_log format ["A4A_Arsenal: CBA assignZeus request from %1", name _player];
+                [_player] call A4A_fnc_assignZeus;
             }] call CBA_fnc_addEventHandler;
-            diag_log format ["A3A_Arsenal: CBA assignZeus handler registered (id=%1)", _r1];
+            diag_log format ["A4A_Arsenal: CBA assignZeus handler registered (id=%1)", _r1];
 
-            private _r2 = ["A3A_editorSaveRequest", {
-                diag_log format ["A3A_Arsenal: CBA editorSave request received: %1", _this];
-                ["SAVE_JNA", _this] call A3A_fnc_arsenalLogic;
+            private _r2 = ["A4A_editorSaveRequest", {
+                diag_log format ["A4A_Arsenal: CBA editorSave request received: %1", _this];
+                ["SAVE_JNA", _this] call A4A_fnc_arsenalLogic;
             }] call CBA_fnc_addEventHandler;
-            diag_log format ["A3A_Arsenal: CBA editorSave handler registered (id=%1)", _r2];
+            diag_log format ["A4A_Arsenal: CBA editorSave handler registered (id=%1)", _r2];
 
-            diag_log "A3A_Arsenal: CBA server events registered (from arsenal_init).";
+            diag_log "A4A_Arsenal: CBA server events registered (from arsenal_init).";
         } else {
-            diag_log "A3A_Arsenal: ERROR - CBA_fnc_addEventHandler NOT available! CBA events will NOT work.";
-            diag_log "A3A_Arsenal: Falling back to remoteExec for Zeus (may be blocked by CfgRemoteExec).";
+            diag_log "A4A_Arsenal: ERROR - CBA_fnc_addEventHandler NOT available! CBA events will NOT work.";
+            diag_log "A4A_Arsenal: Falling back to remoteExec for Zeus (may be blocked by CfgRemoteExec).";
         };
     } else {
-        diag_log "A3A_Arsenal: CBA events already registered (skipping).";
+        diag_log "A4A_Arsenal: CBA events already registered (skipping).";
     };
 
-    // One-time check: ensure A3A_fnc_assignZeus is allowed for remoteExec (Zeus key sequence)
-    if (isNil "A3A_remoteExecCheckDone") then {
-        A3A_remoteExecCheckDone = true;
-        private _fnClass = configFile >> "CfgRemoteExec" >> "Functions" >> "A3A_fnc_assignZeus";
+    // One-time check: ensure A4A_fnc_assignZeus is allowed for remoteExec (Zeus key sequence)
+    if (isNil "A4A_remoteExecCheckDone") then {
+        A4A_remoteExecCheckDone = true;
+        private _fnClass = configFile >> "CfgRemoteExec" >> "Functions" >> "A4A_fnc_assignZeus";
         private _mode = getNumber (configFile >> "CfgRemoteExec" >> "Functions" >> "mode");
         if (_mode == 0) then {
-            diag_log "A3A_Arsenal: WARNING - CfgRemoteExec mode=0 (blocked). Zeus key sequence will NOT work.";
+            diag_log "A4A_Arsenal: WARNING - CfgRemoteExec mode=0 (blocked). Zeus key sequence will NOT work.";
         } else {
             if (_mode == 1 && {!isClass _fnClass}) then {
-                diag_log "A3A_Arsenal: WARNING - A3A_fnc_assignZeus not in whitelist (mode=1). Zeus key sequence may fail.";
+                diag_log "A4A_Arsenal: WARNING - A4A_fnc_assignZeus not in whitelist (mode=1). Zeus key sequence may fail.";
             } else {
-                diag_log format ["A3A_Arsenal: CfgRemoteExec OK - A3A_fnc_assignZeus allowed (mode=%1).", _mode];
+                diag_log format ["A4A_Arsenal: CfgRemoteExec OK - A4A_fnc_assignZeus allowed (mode=%1).", _mode];
             };
         };
     };
 
-    private _arsenalID = _object getVariable ["A3A_Arsenal_ID", "Base"];
-    private _profileKey = format ["A3A_ArsenalData_%1", _arsenalID];
+    private _arsenalID = _object getVariable ["A4A_Arsenal_ID", "Base"];
+    private _profileKey = format ["A4A_ArsenalData_%1", _arsenalID];
     private _serverKey = format ["jna_dataList_%1", _arsenalID];
     private _defaultData = [[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]];
 
@@ -138,40 +138,40 @@ if (isServer) then {
     private _data = server getVariable [_serverKey, _defaultData];
     private _itemCount = 0;
     { _itemCount = _itemCount + count _x } forEach _data;
-    diag_log format ["A3A_Arsenal Init: Arsenal '%1' key='%2' | %3 items loaded | profile='%4'", _arsenalID, _profileKey, _itemCount, profileName];
-    diag_log format ["A3A_Arsenal Init: --- Contents of Arsenal '%1' ---", _arsenalID];
+    diag_log format ["A4A_Arsenal Init: Arsenal '%1' key='%2' | %3 items loaded | profile='%4'", _arsenalID, _profileKey, _itemCount, profileName];
+    diag_log format ["A4A_Arsenal Init: --- Contents of Arsenal '%1' ---", _arsenalID];
     {
         private _tabIndex = _forEachIndex;
         if (count _x > 0) then {
             {
                 _x params ["_cls", "_amt"];
-                diag_log format ["A3A_Arsenal Init: [%1] Item: %2 | Amount: %3", _arsenalID, _cls, _amt];
+                diag_log format ["A4A_Arsenal Init: [%1] Item: %2 | Amount: %3", _arsenalID, _cls, _amt];
             } forEach _x;
         };
     } forEach _data;
-    diag_log format ["A3A_Arsenal Init: --- End of Arsenal '%1' ---", _arsenalID];
+    diag_log format ["A4A_Arsenal Init: --- End of Arsenal '%1' ---", _arsenalID];
     
-    systemChat format ["A3A Arsenal '%1': %2 items loaded", _arsenalID, _itemCount];
+    systemChat format ["A4A Arsenal '%1': %2 items loaded", _arsenalID, _itemCount];
 
     // Sync Zeus state to clients (getAssignedCuratorLogic unreliable on client in dedicated MP)
-    if (isNil "A3A_zeusSyncStarted") then {
-        A3A_zeusSyncStarted = true;
+    if (isNil "A4A_zeusSyncStarted") then {
+        A4A_zeusSyncStarted = true;
         [] spawn {
             while {true} do {
                 {
                     private _hasCurator = !isNull (getAssignedCuratorLogic _x);
-                    private _hasVar = _x getVariable ["A3A_Arsenal_HasZeus", false];
+                    private _hasVar = _x getVariable ["A4A_Arsenal_HasZeus", false];
                     if (_hasCurator && !_hasVar) then {
-                        _x setVariable ["A3A_Arsenal_HasZeus", true, true];
+                        _x setVariable ["A4A_Arsenal_HasZeus", true, true];
                     };
                     if (!_hasCurator && _hasVar) then {
-                        _x setVariable ["A3A_Arsenal_HasZeus", nil, true];
+                        _x setVariable ["A4A_Arsenal_HasZeus", nil, true];
                     };
                 } forEach allPlayers;
                 sleep 5;
             };
         };
-        diag_log "A3A_Arsenal: Zeus sync loop started (server).";
+        diag_log "A4A_Arsenal: Zeus sync loop started (server).";
     };
 };
 
@@ -180,11 +180,11 @@ if(hasInterface)then{
     Info("JNA loading player data");
 
     // Track arsenal objects for Zeus key sequence proximity check
-    if (isNil "A3A_arsenalObjects") then { A3A_arsenalObjects = [] };
-    A3A_arsenalObjects pushBackUnique _object;
+    if (isNil "A4A_arsenalObjects") then { A4A_arsenalObjects = [] };
+    A4A_arsenalObjects pushBackUnique _object;
 
     // Initialize Zeus key sequence handler (once, idempotent)
-    [] call A3A_fnc_zeusKeySequence;
+    [] call A4A_fnc_zeusKeySequence;
 
     //add arsenal button
     _object addAction [
@@ -263,7 +263,7 @@ if(hasInterface)then{
 				}//return
 			};
 
-            [localize "STR_A3AP_vehArsenal_header", localize "STR_A3AP_vehArsenal_desc"] call A3A_fnc_customHint;
+            [localize "STR_A4AP_vehArsenal_header", localize "STR_A4AP_vehArsenal_desc"] call A4A_fnc_customHint;
 						
 			[_script,_conditionActive,_conditionColor,_object] call jn_fnc_common_addActionSelect;
 		},
@@ -272,7 +272,7 @@ if(hasInterface)then{
         true,
         false,
         "",
-        "alive _target && {_target distance _this < 5} && {vehicle player == player} && {(missionNamespace getVariable ['A3A_Arsenal_ContainerAccess', 0]) != 2} && {(missionNamespace getVariable ['A3A_Arsenal_ContainerAccess', 0]) != 1 || {[_this] call A3A_fnc_arsenal_isZeus}}"
+        "alive _target && {_target distance _this < 5} && {vehicle player == player} && {(missionNamespace getVariable ['A4A_Arsenal_ContainerAccess', 0]) != 2} && {(missionNamespace getVariable ['A4A_Arsenal_ContainerAccess', 0]) != 1 || {[_this] call A4A_fnc_arsenal_isZeus}}"
     ];
 
     //add export arsenal data button (clipboard + RPT log) - Zeus only
@@ -284,7 +284,7 @@ if(hasInterface)then{
         false,
         false,
         "",
-        "alive _target && {_target distance _this < 5} && {vehicle player == player} && {[_this] call A3A_fnc_arsenal_isZeus}"
+        "alive _target && {_target distance _this < 5} && {vehicle player == player} && {[_this] call A4A_fnc_arsenal_isZeus}"
     ];
 
     //add import arsenal data button (from clipboard) - Zeus only
@@ -296,7 +296,7 @@ if(hasInterface)then{
         false,
         false,
         "",
-        "alive _target && {_target distance _this < 5} && {vehicle player == player} && {[_this] call A3A_fnc_arsenal_isZeus}"
+        "alive _target && {_target distance _this < 5} && {vehicle player == player} && {[_this] call A4A_fnc_arsenal_isZeus}"
     ];
 
     //add quick equip button - DISABLED FOR STANDALONE
@@ -318,7 +318,7 @@ if(hasInterface)then{
 
             private _array = [_player, true] call jn_fnc_arsenal_cargoToArray;
             _player setUnitLoadout (configFile >> "EmptyLoadout");
-            [_player, 0, _prefix + _loadout] call A3A_fnc_equipRebel;
+            [_player, 0, _prefix + _loadout] call A4A_fnc_equipRebel;
             _array call jn_fnc_arsenal_addItem;
         },
         [],

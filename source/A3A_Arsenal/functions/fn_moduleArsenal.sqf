@@ -28,7 +28,7 @@ if (count _syncedObjects == 0) then {
     // Initialize arsenal on each synchronized object
     // We pass the object, ID, and threshold
     // IMPORTANT: remoteExec to run on all clients!
-    [_object, _arsenalID, _unlockThreshold] remoteExec ["A3A_fnc_arsenalInit", 0, true]; 
+    [_object, _arsenalID, _unlockThreshold] remoteExec ["A4A_fnc_arsenalInit", 0, true]; 
 } forEach _syncedObjects;
 
 // Delete the module logic object to clean up (as requested)

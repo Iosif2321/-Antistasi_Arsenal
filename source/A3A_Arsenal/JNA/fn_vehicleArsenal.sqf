@@ -118,7 +118,7 @@ disableserialization;
 private _minItemsMember = {
 	params ["_index", "_item"];					// Arsenal tab index, item classname
 	private _min = jna_minItemMember select _index;
-	_min = A3A_arsenalLimits getOrDefault [_item, _min];
+	_min = A4A_arsenalLimits getOrDefault [_item, _min];
 	if (_index == IDC_RSCDISPLAYARSENAL_TAB_CARGOMAG || _index == IDC_RSCDISPLAYARSENAL_TAB_CARGOMAGALL) then {
 		_min = _min * getNumber (configfile >> "CfgMagazines" >> _item >> "count");
 	};
@@ -372,7 +372,7 @@ switch _mode do {
 
 			// Add compatible vehicle magazines for 3CB-style ammunition systems
 			private _cfgVehicle = configFile >> "cfgVehicles" >> typeof _objectSelected;
-			private _vehMagTypes = _cfgVehicle call A3A_fnc_allMagazines;
+			private _vehMagTypes = _cfgVehicle call A4A_fnc_allMagazines;
 			{ _usableMagazines pushBackUnique toLower _x } forEach _vehMagTypes;
 
 
@@ -582,7 +582,7 @@ switch _mode do {
 			_grayout = false;
 
 			_min = [_index, _item] call _minItemsMember;
-			if ((_amount <= _min) AND (_amount != -1) AND (_amount !=0) AND !(player call A3A_fnc_isMember)) then{_grayout = true};
+			if ((_amount <= _min) AND (_amount != -1) AND (_amount !=0) AND !(player call A4A_fnc_isMember)) then{_grayout = true};
 
 			_isIncompatible = _ctrlList lnbvalue [_r,1];
 			_mass = _ctrlList lbvalue (_r * _columns);
@@ -679,7 +679,7 @@ switch _mode do {
 
 				//non-member limits
 				_min = [_index, _item] call _minItemsMember;
-				if((_amount <= _min) AND (_amount != -1) AND !(player call A3A_fnc_isMember)) exitWith{
+				if((_amount <= _min) AND (_amount != -1) AND !(player call A4A_fnc_isMember)) exitWith{
 					['showMessage',[_display,(localize "STR_JNA_ACT_ONLY_MEMBERS")]] call jn_fnc_arsenal;
 				};
 
@@ -876,7 +876,7 @@ switch _mode do {
 				_unloadSummary pushBack format ["%1:%2", _forEachIndex, count _x];
 			};
 		} forEach jnva_loadout;
-		diag_log format ["A3A_VehicleArsenal Unload: %1 item groups from %2. Per-IDC: %3", _unloadTotal, typeOf _objectSelected, _unloadSummary];
+		diag_log format ["A4A_VehicleArsenal Unload: %1 item groups from %2. Per-IDC: %3", _unloadTotal, typeOf _objectSelected, _unloadSummary];
 
 		jnva_loadout_mass = 0;
         jnva_loadout remoteExecCall ["jn_fnc_arsenal_addItem",2];

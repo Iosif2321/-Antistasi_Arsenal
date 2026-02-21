@@ -150,7 +150,7 @@ removebackpack player;
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////  ADD
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-_isMember = player call A3A_fnc_isMember;
+_isMember = player call A4A_fnc_isMember;
 _availableItems = [jna_dataList, _arrayPlaced] call _addArrays;
 _itemCounts =+ _availableItems;
 // reduce available items by guest limits for non-members
@@ -163,7 +163,7 @@ _itemCounts =+ _availableItems;
 		_item = _x select 0;
 		_amount = (_x select 1);
 		if (_amount != -1 && !_isMember) then {
-			_itemMin = A3A_arsenalLimits getOrDefault [_item, _arrayMin];
+			_itemMin = A4A_arsenalLimits getOrDefault [_item, _arrayMin];
 			if (_isMagArray) then { _itemMin = _itemMin * getNumber (configfile >> "CfgMagazines" >> _item >> "count") };
 			_subArray set [_foreachindex, [_item, (_amount - _itemMin) max 0]];
 		};

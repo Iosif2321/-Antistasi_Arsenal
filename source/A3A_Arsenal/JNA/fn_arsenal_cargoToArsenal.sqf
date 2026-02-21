@@ -21,10 +21,10 @@ params [["_object",objNull,[objNull]]];
 if (isNull _object) exitWith {["Error: wrong input given '%1'",_object] call BIS_fnc_error;};
 
 if (isNil { // Run in unschedule scope.
-    if (_object getVariable ["A3A_JNA_cargoToArsenal_busy",false]) then {
+    if (_object getVariable ["A4A_JNA_cargoToArsenal_busy",false]) then {
         nil;  // will lead to exit.
     } else {
-        _object setVariable ["A3A_JNA_cargoToArsenal_busy",true];
+        _object setVariable ["A4A_JNA_cargoToArsenal_busy",true];
         0;  // not nil, will allow script to continue.
     };
 }) exitWith {};  //  // Silent exit, likely due to spamming
@@ -48,5 +48,5 @@ missionNamespace setVariable ["jna_object", _oldJna];
     [unlockedWeapons,true] call AS_fnc_weaponsCheck;
 };*/
 if (!isNull _object) then {
-    _object setVariable ["A3A_JNA_cargoToArsenal_busy",false];
+    _object setVariable ["A4A_JNA_cargoToArsenal_busy",false];
 };

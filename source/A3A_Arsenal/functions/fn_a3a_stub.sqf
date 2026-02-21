@@ -1,53 +1,53 @@
 ﻿// Stub definitions for Jeroen Arsenal to work standalone
 // Defines functions and variables expected by JNA that are usually provided by Antistasi Core.
-// Based on original implementations from: Antistasi\A3A\addons\core\
+// Based on original implementations from: Antistasi\A4A\addons\core\
 
 // ========================================================================================
 // Global variables - Mod detection (from fn_initVarCommon.sqf)
 // ========================================================================================
 
-if (isNil "A3A_hasTFAR") then {
-    A3A_hasTFAR = isClass (configFile >> "CfgPatches" >> "task_force_radio");
+if (isNil "A4A_hasTFAR") then {
+    A4A_hasTFAR = isClass (configFile >> "CfgPatches" >> "task_force_radio");
 };
-if (isNil "A3A_hasACRE") then {
-    A3A_hasACRE = isClass (configFile >> "cfgPatches" >> "acre_main");
+if (isNil "A4A_hasACRE") then {
+    A4A_hasACRE = isClass (configFile >> "cfgPatches" >> "acre_main");
 };
-if (isNil "A3A_hasTFARBeta") then {
-    A3A_hasTFARBeta = isClass (configFile >> "CfgPatches" >> "tfar_static_radios");
-    if (A3A_hasTFARBeta) then { A3A_hasTFAR = false };
+if (isNil "A4A_hasTFARBeta") then {
+    A4A_hasTFARBeta = isClass (configFile >> "CfgPatches" >> "tfar_static_radios");
+    if (A4A_hasTFARBeta) then { A4A_hasTFAR = false };
 };
-if (isNil "A3A_hasACE") then {
-    A3A_hasACE = !isNil "ace_common_fnc_isModLoaded";
+if (isNil "A4A_hasACE") then {
+    A4A_hasACE = !isNil "ace_common_fnc_isModLoaded";
 };
-if (isNil "A3A_hasACEMedical") then {
-    A3A_hasACEMedical = isClass (configFile >> "CfgSounds" >> "ACE_heartbeat_fast_3");
+if (isNil "A4A_hasACEMedical") then {
+    A4A_hasACEMedical = isClass (configFile >> "CfgSounds" >> "ACE_heartbeat_fast_3");
 };
-if (isNil "A3A_hasACEHearing") then {
-    A3A_hasACEHearing = isClass (configFile >> "CfgSounds" >> "ACE_EarRinging_Weak");
+if (isNil "A4A_hasACEHearing") then {
+    A4A_hasACEHearing = isClass (configFile >> "CfgSounds" >> "ACE_EarRinging_Weak");
 };
 
 // ========================================================================================
 // Faction data - HashMap for rebel faction (used by FactionGet macro)
-// FactionGet(reb,"initialRebelEquipment") expands to (A3A_faction_reb get "initialRebelEquipment")
+// FactionGet(reb,"initialRebelEquipment") expands to (A4A_faction_reb get "initialRebelEquipment")
 // ========================================================================================
 
-if (isNil "A3A_faction_reb") then {
-    A3A_faction_reb = createHashMap;
+if (isNil "A4A_faction_reb") then {
+    A4A_faction_reb = createHashMap;
 
     // Build initialRebelEquipment based on loaded mods (from template files)
     private _initialRebelEquipment = [];
 
-    if (A3A_hasTFAR) then {
+    if (A4A_hasTFAR) then {
         _initialRebelEquipment append ["tf_microdagr", "tf_anprc154"];
     };
-    if (A3A_hasTFARBeta) then {
+    if (A4A_hasTFARBeta) then {
         _initialRebelEquipment append ["TFAR_microdagr", "TFAR_anprc154"];
     };
     _initialRebelEquipment append [
         "Chemlight_blue", "Chemlight_green", "Chemlight_red", "Chemlight_yellow"
     ];
 
-    A3A_faction_reb set ["initialRebelEquipment", _initialRebelEquipment];
+    A4A_faction_reb set ["initialRebelEquipment", _initialRebelEquipment];
 };
 
 // ========================================================================================
@@ -58,19 +58,19 @@ if (isNil "A3A_faction_reb") then {
 if (isNil "membershipEnabled") then { membershipEnabled = false };
 if (isNil "membersX") then { membersX = [] };
 
-A3A_fnc_isMember = {
+A4A_fnc_isMember = {
     // Standalone: no membership restrictions, always allow
     if !(membershipEnabled) exitWith { true };
     params ["_player"];
     if (_player getVariable ["owner", _player] != _player) exitWith { false };
-    (_player getVariable ["A3A_playerUID", getPlayerUID _player]) in membersX;
+    (_player getVariable ["A4A_playerUID", getPlayerUID _player]) in membersX;
 };
 
 // ========================================================================================
 // Medic check - Original: fn_isMedic.sqf
 // ========================================================================================
 
-A3A_fnc_isMedic = {
+A4A_fnc_isMedic = {
     private _unit = _this select 0;
     if (_unit getUnitTrait "Medic") exitWith { true };
     if (getNumber (configFile >> "CfgVehicles" >> (typeOf _unit) >> "attendant") == 2) exitWith { true };
@@ -81,7 +81,7 @@ A3A_fnc_isMedic = {
 // Engineer check - Original: fn_isEngineer.sqf
 // ========================================================================================
 
-A3A_fnc_isEngineer = {
+A4A_fnc_isEngineer = {
     params ["_unit"];
     if (!isNil {_unit getVariable "ace_isEngineer"}) exitWith {
         !(_unit getVariable "ace_isEngineer" in [0, false])
@@ -93,7 +93,7 @@ A3A_fnc_isEngineer = {
 // Radio check - Original: fn_hasARadio.sqf
 // ========================================================================================
 
-A3A_fnc_hasARadio = {
+A4A_fnc_hasARadio = {
     assignedItems _this findIf {
         _x == "ItemRadio" || {"tf_" in _x} || {"TFAR" in _x} || {"item_radio" in _x}
     } > -1
@@ -104,7 +104,7 @@ A3A_fnc_hasARadio = {
 // Basic backpack - Original: fn_basicBackpack.sqf
 // ========================================================================================
 
-A3A_fnc_basicBackpack = {
+A4A_fnc_basicBackpack = {
     params ["_backpack"];
     if (_backpack isEqualTo "") exitWith { "" };
     private _basicBackpack = _backpack call BIS_fnc_basicBackpack;
@@ -117,7 +117,7 @@ A3A_fnc_basicBackpack = {
 // Retrieves all compatible magazines from CfgWeapons or CfgVehicles config
 // ========================================================================================
 
-A3A_fnc_allMagazines = {
+A4A_fnc_allMagazines = {
     params ["_config"];
     if (!isClass _config) exitWith { [] };
 
@@ -158,16 +158,16 @@ A3A_fnc_allMagazines = {
 // Logging - Original: uses CBA logging macros, simplified here
 // ========================================================================================
 
-A3A_fnc_log = {
+A4A_fnc_log = {
     params ["_level", "_text", ["_file", ""]];
-    diag_log format ["A3A_Ars Log: %1 - %2 (%3)", _level, _text, _file];
+    diag_log format ["A4A_Ars Log: %1 - %2 (%3)", _level, _text, _file];
 };
 
 // ========================================================================================
-// Custom hint - Original: A3A UI hint system
+// Custom hint - Original: A4A UI hint system
 // ========================================================================================
 
-A3A_fnc_customHint = {
+A4A_fnc_customHint = {
     params ["_header", "_text"];
     hint parseText format ["<t size='1.2' color='#d04f00'>%1</t><br/>%2", _header, _text];
 };
@@ -176,7 +176,7 @@ A3A_fnc_customHint = {
 // Equip Rebel - Original: complex loadout system, disabled in standalone
 // ========================================================================================
 
-A3A_fnc_equipRebel = {
+A4A_fnc_equipRebel = {
     params ["_unit", "_index", "_loadoutName"];
     systemChat "Quick Equip not available in standalone mode.";
 };
@@ -185,8 +185,8 @@ A3A_fnc_equipRebel = {
 // Arsenal limits HashMap
 // ========================================================================================
 
-if (isNil "A3A_arsenalLimits") then {
-    A3A_arsenalLimits = createHashMap;
+if (isNil "A4A_arsenalLimits") then {
+    A4A_arsenalLimits = createHashMap;
 };
 
 // ========================================================================================
@@ -205,16 +205,16 @@ if (isNil "SCRT_fnc_arsenal_loadoutArsenal") then {
 // ========================================================================================
 if (!isNil "CBA_fnc_addSetting") then {
     [
-        "A3A_Arsenal_ContainerAccess",
+        "A4A_Arsenal_ContainerAccess",
         "LIST",
         ["Container Arsenal Access", "Who can use 'Select vehicle to open arsenal' action"],
         "Antistasi Arsenal",
         [[0, 1, 2], ["Everyone", "Zeus Only", "Disabled"], 0]
     ] call CBA_fnc_addSetting;
-    diag_log "A3A_Arsenal: CBA settings registered.";
+    diag_log "A4A_Arsenal: CBA settings registered.";
 } else {
-    A3A_Arsenal_ContainerAccess = 0;
-    diag_log "A3A_Arsenal: CBA not available, using default settings.";
+    A4A_Arsenal_ContainerAccess = 0;
+    diag_log "A4A_Arsenal: CBA not available, using default settings.";
 };
 
-diag_log "A3A_Arsenal: Stubs initialized.";
+diag_log "A4A_Arsenal: Stubs initialized.";

@@ -5,12 +5,12 @@ class RscListBox;
 class RscStructuredText;
 
 // Garage Vehicle Select Dialog
-class A3A_GRG_Dialog {
+class A4A_GRG_Dialog {
     idd = 18001;
     movingEnable = 0;
     enableSimulation = 1;
-    onLoad = "['onLoad', _this] call A3A_fnc_garage";
-    onUnload = "['onUnload', _this] call A3A_fnc_garage";
+    onLoad = "['onLoad', _this] call A4A_fnc_garage";
+    onUnload = "['onUnload', _this] call A4A_fnc_garage";
 
     class controlsBackground {
         // Dark overlay behind dialog
@@ -66,7 +66,7 @@ class A3A_GRG_Dialog {
             h = "safezoneH * 0.04";
             text = "X";
             colorBackground[] = {0.5, 0.1, 0.1, 1};
-            onButtonClick = "['close'] call A3A_fnc_garage";
+            onButtonClick = "['close'] call A4A_fnc_garage";
         };
 
         // Category buttons row
@@ -78,7 +78,7 @@ class A3A_GRG_Dialog {
             h = "safezoneH * 0.04";
             text = "Cars";
             colorBackground[] = {0.3, 0.3, 0.1, 1};
-            onButtonClick = "['switchCat', [0]] call A3A_fnc_garage";
+            onButtonClick = "['switchCat', [0]] call A4A_fnc_garage";
         };
         class BtnArmor: RscButton {
             idc = 1800201;
@@ -88,7 +88,7 @@ class A3A_GRG_Dialog {
             h = "safezoneH * 0.04";
             text = "Armor";
             colorBackground[] = {0.2, 0.2, 0.2, 1};
-            onButtonClick = "['switchCat', [1]] call A3A_fnc_garage";
+            onButtonClick = "['switchCat', [1]] call A4A_fnc_garage";
         };
         class BtnHeli: RscButton {
             idc = 1800202;
@@ -98,7 +98,7 @@ class A3A_GRG_Dialog {
             h = "safezoneH * 0.04";
             text = "Heli";
             colorBackground[] = {0.2, 0.2, 0.2, 1};
-            onButtonClick = "['switchCat', [2]] call A3A_fnc_garage";
+            onButtonClick = "['switchCat', [2]] call A4A_fnc_garage";
         };
         class BtnPlane: RscButton {
             idc = 1800203;
@@ -108,7 +108,7 @@ class A3A_GRG_Dialog {
             h = "safezoneH * 0.04";
             text = "Plane";
             colorBackground[] = {0.2, 0.2, 0.2, 1};
-            onButtonClick = "['switchCat', [3]] call A3A_fnc_garage";
+            onButtonClick = "['switchCat', [3]] call A4A_fnc_garage";
         };
         class BtnBoat: RscButton {
             idc = 1800204;
@@ -118,7 +118,7 @@ class A3A_GRG_Dialog {
             h = "safezoneH * 0.04";
             text = "Boat";
             colorBackground[] = {0.2, 0.2, 0.2, 1};
-            onButtonClick = "['switchCat', [4]] call A3A_fnc_garage";
+            onButtonClick = "['switchCat', [4]] call A4A_fnc_garage";
         };
         class BtnStatic: RscButton {
             idc = 1800205;
@@ -128,7 +128,7 @@ class A3A_GRG_Dialog {
             h = "safezoneH * 0.04";
             text = "Static";
             colorBackground[] = {0.2, 0.2, 0.2, 1};
-            onButtonClick = "['switchCat', [5]] call A3A_fnc_garage";
+            onButtonClick = "['switchCat', [5]] call A4A_fnc_garage";
         };
 
         // Vehicle list (one per category, stacked  only active one shown)
@@ -141,7 +141,7 @@ class A3A_GRG_Dialog {
             idc = 1800100;
             x = LISTBOX_POS_X; y = LISTBOX_POS_Y; w = LISTBOX_W; h = LISTBOX_H;
             colorBackground[] = {0.1, 0.1, 0.1, 0.9};
-            onLBSelChanged = "['selChanged', _this] call A3A_fnc_garage";
+            onLBSelChanged = "['selChanged', _this] call A4A_fnc_garage";
         };
         class ListArmor: ListCars { idc = 1800101; };
         class ListHeli: ListCars { idc = 1800102; };
@@ -169,7 +169,7 @@ class A3A_GRG_Dialog {
             h = "safezoneH * 0.05";
             text = "STORE VEHICLE";
             colorBackground[] = {0.1, 0.35, 0.1, 1};
-            onButtonClick = "['storeVehicle'] call A3A_fnc_garage";
+            onButtonClick = "['storeVehicle'] call A4A_fnc_garage";
         };
         // Retrieve button (spawn vehicle from garage)
         class BtnRetrieve: RscButton {
@@ -180,7 +180,7 @@ class A3A_GRG_Dialog {
             h = "safezoneH * 0.05";
             text = "RETRIEVE";
             colorBackground[] = {0.1, 0.1, 0.5, 1};
-            onButtonClick = "['retrieveVehicle'] call A3A_fnc_garage";
+            onButtonClick = "['retrieveVehicle'] call A4A_fnc_garage";
         };
     };
 };
