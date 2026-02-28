@@ -8,7 +8,7 @@
 		Same as any 'addAction' handler
 **/
 
-if (!arsenalInit) exitWith {};
+if !(missionNamespace getVariable ["arsenalInit", false]) exitWith {};
 missionNamespace setVariable ["jna_object", _this select 0];
 
 // Antistasi UI dependencies removed
@@ -54,16 +54,16 @@ missionNamespace setVariable ["jna_magazines_init",  [
 ]];
 
 //Save attachments in containers, because BIS arsenal removes them
-_attachmentsContainers = [[],[],[]];
+private _attachmentsContainers = [[],[],[]];
 {
-	_container = _x;
-	_weaponAtt = weaponsItemsCargo _x;
-	_attachments = [];
+	private _container = _x;
+	private _weaponAtt = weaponsItemsCargo _x;
+	private _attachments = [];
 
 	if!(isNil "_weaponAtt")then{
 
 		{
-			_atts = [_x select 1,_x select 2,_x select 3,_x select 6];
+			private _atts = [_x select 1,_x select 2,_x select 3,_x select 6];
 			_atts = _atts - [""];
 			_attachments = _attachments + _atts;
 		} forEach _weaponAtt;

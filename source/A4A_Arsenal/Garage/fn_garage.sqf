@@ -109,7 +109,7 @@ case "addvehicle": {
     };
 
     // Check if crewed
-    if (count (crew _vehicle - [player]) > 0) exitWith {
+    if (count crew _vehicle > 0) exitWith {
         ["Garage: vehicle has crew, cannot store"] remoteExecCall ["systemChat", _clientOwner];
     };
 

@@ -29,17 +29,19 @@ if(typeName (_this select 0) isEqualTo "SCALAR")then{//[_index, _item] and [_ind
 				private _radioName = getText(configfile >> "CfgWeapons" >> _item >> "tf_parent");
 				if!(_radioName isEqualTo "")then{_item = _radioName};
 
-				//Weapon Stack fix
-				private _weaponname = getText(configfile >> "CfgWeapons" >> _item >> "baseWeapon");
-				if!(_weaponname isEqualTo "")then{_item = _weaponname};
+				//Weapon Stack fix (only for actual weapons with muzzles, not GPS/misc items)
+				if (isArray (configfile >> "CfgWeapons" >> _item >> "muzzles")) then {
+					private _weaponname = getText(configfile >> "CfgWeapons" >> _item >> "baseWeapon");
+					if!(_weaponname isEqualTo "")then{_item = _weaponname};
+				};
 
 				//RHS Sight Stack fix
 				private _sightname = getText(configfile >> "CfgWeapons" >> _item >> "rhs_optic_base");
 				if!(_sightname isEqualTo "")then{_item = _sightname};
 				
 				//ACRE fix
-				private _radioName = getText(configfile >> "CfgVehicles" >> _item >> "acre_baseClass");
-				if!(_radioName isEqualTo "")then{_item = _radioName};
+				private _radioName2 = getText(configfile >> "CfgVehicles" >> _item >> "acre_baseClass");
+				if!(_radioName2 isEqualTo "")then{_item = _radioName2};
 
 				// Determine Arsenal ID for this specific interaction
 				private _curArsenalID = (missionNamespace getVariable ["jna_object", objNull]) getVariable ["A4A_Arsenal_ID", "Base"];
@@ -59,5 +61,5 @@ if(typeName (_this select 0) isEqualTo "SCALAR")then{//[_index, _item] and [_ind
 			};
 		};
 	} forEach _x;
-}foreach _array;
+} forEach _array;
 

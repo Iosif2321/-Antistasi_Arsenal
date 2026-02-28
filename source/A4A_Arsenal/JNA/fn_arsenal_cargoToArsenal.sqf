@@ -15,9 +15,12 @@ Example:
     [_object] remoteExec ["jn_fnc_arsenal_cargoToArsenal",2];
 */
 
+#include "..\defineCommon.inc"
+#include "..\script_component.hpp"
+
 if (!isServer) exitWith {};
 
-params [["_object",objNull,[objNull]]];
+params [["_object",objNull,[objNull]], ["_arsenalObj",objNull,[objNull]]];
 if (isNull _object) exitWith {["Error: wrong input given '%1'",_object] call BIS_fnc_error;};
 
 if (isNil { // Run in unschedule scope.
@@ -29,24 +32,65 @@ if (isNil { // Run in unschedule scope.
     };
 }) exitWith {};  //  // Silent exit, likely due to spamming
 
+// Determine arsenal ID from the arsenal object (NOT from jna_object which points to the crate)
+private _arsenalID = if (!isNull _arsenalObj) then {
+    _arsenalObj getVariable ["A4A_Arsenal_ID", "Base"]
+} else {
+    (missionNamespace getVariable ["jna_object", objNull]) getVariable ["A4A_Arsenal_ID", "Base"]
+};
+
 // Grab contents before being cleared.
 private _array = _object call jn_fnc_arsenal_cargoToArray;
 // Clear cargo
 clearMagazineCargoGlobal _object;
 clearItemCargoGlobal _object;
-clearweaponCargoGlobal _object;
-clearbackpackCargoGlobal _object;
-// Update datalist on server and client
-private _oldJna = missionNamespace getVariable ["jna_object", objNull];
-missionNamespace setVariable ["jna_object", _object];
-_array call jn_fnc_arsenal_addItem;
-missionNamespace setVariable ["jna_object", _oldJna];
+clearWeaponCargoGlobal _object;
+clearBackpackCargoGlobal _object;
 
-//updated unlocked weapons
-/*[] spawn {
-    sleep 3;
-    [unlockedWeapons,true] call AS_fnc_weaponsCheck;
-};*/
+// Add items directly to the correct arsenal using explicit arsenal ID
+// Instead of swapping jna_object (which is local and doesn't work on server),
+// we iterate the array and call UpdateItemAdd with the correct arsenalID.
+{
+    private _index = _forEachIndex;
+    {
+        private _item = _x select 0;
+        private _amount = _x select 1;
+        if (_item isEqualType "" && {!(_item isEqualTo "")} && {_index != -1}) then {
+            if (_index == IDC_RSCDISPLAYARSENAL_TAB_CARGOMAG) then { _index = IDC_RSCDISPLAYARSENAL_TAB_CARGOMAGALL };
+
+            // TFAR fix
+            private _radioName = getText(configfile >> "CfgWeapons" >> _item >> "tf_parent");
+            if !(_radioName isEqualTo "") then { _item = _radioName };
+
+            // Weapon Stack fix (only for actual weapons with muzzles)
+            if (isArray (configfile >> "CfgWeapons" >> _item >> "muzzles")) then {
+                private _weaponname = getText(configfile >> "CfgWeapons" >> _item >> "baseWeapon");
+                if !(_weaponname isEqualTo "") then { _item = _weaponname };
+            };
+
+            // RHS Sight Stack fix
+            private _sightname = getText(configfile >> "CfgWeapons" >> _item >> "rhs_optic_base");
+            if !(_sightname isEqualTo "") then { _item = _sightname };
+
+            // ACRE fix
+            private _radioName2 = getText(configfile >> "CfgVehicles" >> _item >> "acre_baseClass");
+            if !(_radioName2 isEqualTo "") then { _item = _radioName2 };
+
+            // Update server storage with explicit arsenalID
+            ["UpdateItemAdd", [_index, _item, _amount, true, "CargoToArsenal", "", _arsenalID]] call jn_fnc_arsenal;
+
+            // Broadcast to clients viewing this arsenal
+            if (!isNil "server") then {
+                private _playersInArsenal = +(server getVariable [format ["jna_playersInArsenal_%1", _arsenalID], []]) - [2];
+                if (0 in _playersInArsenal) then { _playersInArsenal = -2 };
+                if !(_playersInArsenal isEqualTo []) then {
+                    ["UpdateItemAdd", [_index, _item, _amount, true, "CargoToArsenal", "", _arsenalID]] remoteExecCall ["jn_fnc_arsenal", _playersInArsenal];
+                };
+            };
+        };
+    } forEach _x;
+} forEach _array;
+
 if (!isNull _object) then {
     _object setVariable ["A4A_JNA_cargoToArsenal_busy",false];
 };

@@ -2720,8 +2720,8 @@ switch _mode do {
 	case "buttonInvToJNA": {
 		//_display = _this select 0;
 		private _object = missionnamespace getVariable ["jna_object",objNull];
-		//update server
-		[_object] remoteExec ["jn_fnc_arsenal_cargoToArsenal",2];
+		//update server - pass both the cargo source (same object) and arsenal object for ID lookup
+		[_object, _object] remoteExec ["jn_fnc_arsenal_cargoToArsenal",2];
 	};
 
 	///////////////////////////////////////////////////////////////////////////////////////////
