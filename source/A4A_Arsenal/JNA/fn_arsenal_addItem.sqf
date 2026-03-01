@@ -38,10 +38,15 @@ if(typeName (_this select 0) isEqualTo "SCALAR")then{//[_index, _item] and [_ind
 				//RHS Sight Stack fix
 				private _sightname = getText(configfile >> "CfgWeapons" >> _item >> "rhs_optic_base");
 				if!(_sightname isEqualTo "")then{_item = _sightname};
-				
+
 				//ACRE fix
 				private _radioName2 = getText(configfile >> "CfgVehicles" >> _item >> "acre_baseClass");
 				if!(_radioName2 isEqualTo "")then{_item = _radioName2};
+
+				// Update LOCAL jna_dataList immediately to prevent desync/duplication
+				if (!isNil "jna_dataList") then {
+					jna_dataList set [_index, [jna_dataList select _index, [_item, _amount]] call jn_fnc_arsenal_addToArray];
+				};
 
 				// Determine Arsenal ID for this specific interaction
 				private _curArsenalID = (missionNamespace getVariable ["jna_object", objNull]) getVariable ["A4A_Arsenal_ID", "Base"];
@@ -50,10 +55,9 @@ if(typeName (_this select 0) isEqualTo "SCALAR")then{//[_index, _item] and [_ind
 				if (isServer) then { ["UpdateItemAdd",[_index, _item, _amount,true, name player, getPlayerUID player, _curArsenalID]] call jn_fnc_arsenal }
 				else { ["UpdateItemAdd",[_index, _item, _amount,true, name player, getPlayerUID player, _curArsenalID]] remoteExecCall ["jn_fnc_arsenal",2] };
 
-				// then update other players. Don't execute on server twice
+				// then update other players. Don't execute on server twice or on ourselves (already updated locally)
 				if (!isNil "server") then {
-					private _playersInArsenal = +(server getVariable [format ["jna_playersInArsenal_%1", _curArsenalID], []]) - [2];
-					if (0 in _playersInArsenal) then { _playersInArsenal = -2 };
+					private _playersInArsenal = +(server getVariable [format ["jna_playersInArsenal_%1", _curArsenalID], []]) - [2, clientOwner];
 					if !(_playersInArsenal isEqualTo []) then {
 						["UpdateItemAdd",[_index, _item, _amount,true, name player, getPlayerUID player, _curArsenalID]] remoteExecCall ["jn_fnc_arsenal",_playersInArsenal];
 					};

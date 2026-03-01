@@ -28,9 +28,13 @@ _addToArray = {
 	_item = _this select 2;
 	_amount = _this select 3;
 
-	if!(_index == -1 || _item isEqualTo ""|| _amount == 0)then{
-		_array set [_index,[_array select _index,[_item,_amount]] call jn_fnc_arsenal_addToArray];
+	if (_item isEqualTo "" || _amount == 0) exitWith {};
+	if (_index == -1) then {
+		// Unknown item type — fall back to CARGOMISC to avoid losing items
+		diag_log format ["A4A_cargoToArray WARNING: Unknown itemType for '%1' (qty %2), placing in CARGOMISC", _item, _amount];
+		_index = IDC_RSCDISPLAYARSENAL_TAB_CARGOMISC;
 	};
+	_array set [_index,[_array select _index,[_item,_amount]] call jn_fnc_arsenal_addToArray];
 };
 
 //recursion function to check all sub containers

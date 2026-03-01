@@ -209,11 +209,23 @@ if (!isNil "CBA_fnc_addSetting") then {
         "LIST",
         ["Container Arsenal Access", "Who can use 'Select vehicle to open arsenal' action"],
         "Antistasi Arsenal",
-        [[0, 1, 2], ["Everyone", "Zeus Only", "Disabled"], 0]
+        [[0, 1, 2], ["Everyone", "Zeus Only", "Disabled"], 0],
+        1
     ] call CBA_fnc_addSetting;
+
+    [
+        "A4A_Arsenal_UnlockThreshold",
+        "SLIDER",
+        ["Unlock Threshold", "Number of items required for unlimited use. Applies to new arsenals and overrides module setting."],
+        "Antistasi Arsenal",
+        [1, 200, 25, 0],
+        1
+    ] call CBA_fnc_addSetting;
+
     diag_log "A4A_Arsenal: CBA settings registered.";
 } else {
     A4A_Arsenal_ContainerAccess = 0;
+    A4A_Arsenal_UnlockThreshold = 25;
     diag_log "A4A_Arsenal: CBA not available, using default settings.";
 };
 

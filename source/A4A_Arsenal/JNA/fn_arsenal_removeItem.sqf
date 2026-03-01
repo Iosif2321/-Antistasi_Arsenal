@@ -22,14 +22,19 @@ if(typeName (_this select 0) isEqualTo "SCALAR")then{//[_index, _item] or [_inde
 			if(_index == -1)exitWith{["ERROR in additemarsenal: %1", _this] call BIS_fnc_error};
 			if(_index == IDC_RSCDISPLAYARSENAL_TAB_CARGOMAG)then{_index = IDC_RSCDISPLAYARSENAL_TAB_CARGOMAGALL};
 
-			//update
+			// Update LOCAL jna_dataList immediately to prevent desync/duplication
+			if (!isNil "jna_dataList") then {
+				jna_dataList set [_index, [jna_dataList select _index, [_item, _amount]] call jn_fnc_arsenal_removeFromArray];
+			};
+
+			//update server and other players (exclude self - already updated locally)
 			private _curArsenalID = (missionNamespace getVariable ["jna_object", objNull]) getVariable ["A4A_Arsenal_ID", "Base"];
 			if (!isNil "server") then {
-				private _playersInArsenal = +(server getVariable [format ["jna_playersInArsenal_%1", _curArsenalID], []]);
+				private _playersInArsenal = +(server getVariable [format ["jna_playersInArsenal_%1", _curArsenalID], []]) - [clientOwner];
 				if!(0 in _playersInArsenal)then{_playersInArsenal pushBackUnique 2;};
 				["UpdateItemRemove",[_index, _item, _amount,true, name player, getPlayerUID player, _curArsenalID]] remoteExecCall ["jn_fnc_arsenal",_playersInArsenal];
 			} else {
-				// server object not ready  update locally + server
+				// server object not ready  update server only
 				if (isServer) then { ["UpdateItemRemove",[_index, _item, _amount,true, name player, getPlayerUID player, _curArsenalID]] call jn_fnc_arsenal }
 				else { ["UpdateItemRemove",[_index, _item, _amount,true, name player, getPlayerUID player, _curArsenalID]] remoteExecCall ["jn_fnc_arsenal",2] };
 			};

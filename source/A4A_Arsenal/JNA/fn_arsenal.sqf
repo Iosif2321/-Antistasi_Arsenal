@@ -107,7 +107,7 @@ FIX_LINE_NUMBERS()
 		_types set [IDC_RSCDISPLAYARSENAL_TAB_CARGOMAGALL,[]];\
 		_types set [IDC_RSCDISPLAYARSENAL_TAB_CARGOTHROW,[/*"Grenade","SmokeShell"*/]];\
 		_types set [IDC_RSCDISPLAYARSENAL_TAB_CARGOPUT,[/*"Mine","MineBounding","MineDirectional"*/]];\
-		_types set [IDC_RSCDISPLAYARSENAL_TAB_CARGOMISC,["FirstAidKit","Medikit","MineDetector","ToolKit"]];
+		_types set [IDC_RSCDISPLAYARSENAL_TAB_CARGOMISC,["MiscItem"]];
 
 #define STATS_WEAPONS\
 	["reloadtime","dispersion","maxzeroing","hit","mass","initSpeed"],\
@@ -211,21 +211,11 @@ switch _mode do {
 			_scope = if (isnumber (_class >> "scopeArsenal")) then {getnumber (_class >> "scopeArsenal")} else {getnumber (_class >> "scope")};
 			_isBase = if (isarray (_x >> "muzzles")) then {(_className call bis_fnc_baseWeapon == _className)} else {true}; //-- Check if base weapon (true for all entity types)
 			if (_scope == 2 && {gettext (_class >> "model") != ""} && _isBase) then {
-				private ["_weaponType","_weaponTypeCategory"];
-				_weaponType = (_className call bis_fnc_itemType);
-				_weaponTypeCategory = _weaponType select 0;
-				if (_weaponTypeCategory != "VehicleWeapon") then {
-					private ["_weaponTypeSpecific","_weaponTypeID"];
-					_weaponTypeSpecific = _weaponType select 1;
-					_weaponTypeID = -1;
-					{
-						if (_weaponTypeSpecific in _x) exitwith {_weaponTypeID = _foreachindex;};
-					} foreach _types;
-					if (_weaponTypeID >= 0) then {
-						private ["_items"];
-						_items = _data select _weaponTypeID;
-						_items set [count _items,configname _class];
-					};
+				// Use jn_fnc_arsenal_itemType for accurate classification of mod items (ACE, CBA)
+				private _weaponTypeID = _className call jn_fnc_arsenal_itemType;
+				if (_weaponTypeID >= 0) then {
+					private _items = _data select _weaponTypeID;
+					_items pushBack (configname _class);
 				};
 			};
 		} foreach _configArray;
@@ -345,7 +335,12 @@ switch _mode do {
 	case "Open": {
 		Verbose("JNA open arsenal");
 		jna_dataList = _this select 0;
-		if (isNil "jna_dataList") then { Error("JNA open arsenal: jna_dataList is nil!"); };
+		if (isNil "jna_dataList") exitWith {
+			Error("JNA open arsenal: jna_dataList is nil! Arsenal NOT opened to prevent full-config fallback.");
+			private _lsIds = missionNamespace getVariable ["BIS_fnc_startLoadingScreen_ids", []];
+			if ("jn_fnc_arsenal" in _lsIds) then { ["jn_fnc_arsenal"] call BIS_fnc_endLoadingScreen };
+			hint "Arsenal data not received from server. Try again.";
+		};
 		["SaveTFAR"] call jn_fnc_arsenal;
 		Verbose("JNA TFAR saved");
 		private _object = missionnamespace getVariable ["jna_object",objNull];
@@ -1256,6 +1251,9 @@ switch _mode do {
 	///////////////////////////////////////////////////////////////////////////////////////////
 	case "CreateListAll":{
 		_display =  _this select 0;
+		if (isNil "jna_dataList") exitWith {
+			diag_log "A4A_Arsenal ERROR: CreateListAll called but jna_dataList is nil! BIS lists NOT replaced.";
+		};
 		_inventory_box_all = jna_dataList;
 		{
 			_inventory_box = _x;

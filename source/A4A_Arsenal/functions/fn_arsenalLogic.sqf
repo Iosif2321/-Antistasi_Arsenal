@@ -49,19 +49,16 @@ switch (_mode) do {
         _params params ["_object"];
         if (isNull _object) exitWith {};
 
-        // Add 'Open Arsenal' action
+        // Add 'Open Arsenal' action — uses JNA path (NOT BIS full arsenal)
         _object addAction [
-            "<t color='#f0d498'>Open Arsenal</t>", 
-            { 
-                params ["_target", "_caller", "_actionId", "_arguments"];
-                ["Open", [true]] call BIS_fnc_arsenal; 
-            }, 
-            [], 
-            6, 
-            true, 
-            true, 
-            "", 
-            "alive _target && {_target distance _this < 5}"
+            "<t color='#f0d498'>Open Arsenal</t>",
+            JN_fnc_arsenal_handleAction,
+            [],
+            6,
+            true,
+            true,
+            "",
+            "alive _target && {_target distance _this < 5} && {missionNamespace getVariable ['arsenalInit', false]}"
         ];
 
         // Add 'Deposit Inventory' action

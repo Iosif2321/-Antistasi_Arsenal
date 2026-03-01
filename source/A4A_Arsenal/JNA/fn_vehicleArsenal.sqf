@@ -137,13 +137,25 @@ switch _mode do {
 
 		missionnamespace setVariable ["bis_fnc_arsenal_center",_objectSelected];
 
+		// Restore cargo from backup if previous session closed abnormally
+		private _cargoBackup = _objectSelected getVariable "jnva_cargo_backup";
+		if (!isNil "_cargoBackup") then {
+			diag_log "A4A_vehicleArsenal: Restoring cargo from backup (previous session closed abnormally)";
+			["restoreCargoFromArray", [_objectSelected, _cargoBackup]] call jn_fnc_vehicleArsenal;
+			_objectSelected setVariable ["jnva_cargo_backup", nil, true];
+		};
+
 		//save crap in array
 		jnva_loadout = (_objectSelected call jn_fnc_arsenal_cargoToArray);
 		jnva_loadout_mass = ["getMass"] call jn_fnc_vehicleArsenal;
-       	clearMagazineCargoGlobal _objectSelected;
-        clearItemCargoGlobal _objectSelected;
-        clearweaponCargoGlobal _objectSelected;
-        clearbackpackCargoGlobal _objectSelected;
+
+		// Backup cargo on object before clearing — safety net for abnormal close
+		_objectSelected setVariable ["jnva_cargo_backup", +jnva_loadout, true];
+
+		clearMagazineCargoGlobal _objectSelected;
+		clearItemCargoGlobal _objectSelected;
+		clearweaponCargoGlobal _objectSelected;
+		clearbackpackCargoGlobal _objectSelected;
 
 		["customGUI",[_display]] call jn_fnc_vehicleArsenal;
 		["customEvents",[_display]] call jn_fnc_vehicleArsenal;
@@ -895,13 +907,26 @@ switch _mode do {
 		jnva_loadout_mass = nil;
 		private _objectSelected = uiNamespace getVariable "jn_object_selected";
 		jnca_tab_selected = nil;
+
+		// Restore cargo from jnva_loadout via shared helper
+		["restoreCargoFromArray", [_objectSelected, jnva_loadout]] call jn_fnc_vehicleArsenal;
+
+		// Clear backup — normal close succeeded
+		_objectSelected setVariable ["jnva_cargo_backup", nil, true];
+		jnva_loadout = nil;
+	};
+
+	///////////////////////////////////////////////////////////////////////////////////////////
+	case "restoreCargoFromArray": {
+		params ["_obj", "_loadout"];
+
 		//weapons
 		{
-			_list = jnva_loadout select _x;
+			private _list = _loadout select _x;
 			{
-				_item = _x select 0;
-				_amount = _x select 1;
-				_objectSelected addWeaponCargoGlobal [_item,_amount];
+				private _item = _x select 0;
+				private _amount = _x select 1;
+				_obj addWeaponCargoGlobal [_item,_amount];
 			} forEach _list;
 		} forEach [
 			IDC_RSCDISPLAYARSENAL_TAB_PRIMARYWEAPON,
@@ -911,11 +936,11 @@ switch _mode do {
 
 		//items
 		{
-			_list = jnva_loadout select _x;
+			private _list = _loadout select _x;
 			{
-				_item = _x select 0;
-				_amount = _x select 1;
-				_objectSelected addItemCargoGlobal [_item,_amount];
+				private _item = _x select 0;
+				private _amount = _x select 1;
+				_obj addItemCargoGlobal [_item,_amount];
 			} forEach _list;
 		} forEach [
 			IDC_RSCDISPLAYARSENAL_TAB_UNIFORM,
@@ -938,14 +963,14 @@ switch _mode do {
 
 		//magazines
 		{
-			_list = jnva_loadout select _x;
+			private _list = _loadout select _x;
 			{
-				_item = _x select 0;
-				_amount = _x select 1;
-				_count = getNumber (configfile >> "CfgMagazines" >> _item >> "count");
+				private _item = _x select 0;
+				private _amount = _x select 1;
+				private _count = getNumber (configfile >> "CfgMagazines" >> _item >> "count");
 
 				while{_amount>0}do{
-					_objectSelected addMagazineAmmoCargo [_item,1,_amount];
+					_obj addMagazineAmmoCargo [_item,1,_amount];
 					_amount = _amount - _count;
 				};
 			} forEach _list;
@@ -957,18 +982,15 @@ switch _mode do {
 
 		//backpack
 		{
-			_list = jnva_loadout select _x;
+			private _list = _loadout select _x;
 			{
-				_item = _x select 0;
-				_amount = _x select 1;
-				_objectSelected addBackpackCargoGlobal [_item,_amount];
+				private _item = _x select 0;
+				private _amount = _x select 1;
+				_obj addBackpackCargoGlobal [_item,_amount];
 			} forEach _list;
 		} forEach [
 			IDC_RSCDISPLAYARSENAL_TAB_BACKPACK
 		];
-
-
-		jnva_loadout = nil;
 	};
 
 	///////////////////////////////////////////////////////////////////////////////////////////

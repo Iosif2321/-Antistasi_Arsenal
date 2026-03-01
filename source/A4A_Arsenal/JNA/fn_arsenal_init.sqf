@@ -6,7 +6,7 @@ FIX_LINE_NUMBERS()
 ///////////////////////////////////////////////////////////////////////////////////////////
 scriptName "fn_arsenal_init.sqf";
 private _fileName = "fn_arsenal_init.sqf";
-[2,format["JNA init started (Version %1)", QUOTE(VERSION)],_fileName] call A4A_fnc_log;
+diag_log format ["A4A_Arsenal: JNA init started (Version %1)", QUOTE(VERSION)];
 params [
     ["_object",objNull,[objNull]],
     ["_arsenalID", "Base", [""]],
@@ -55,11 +55,14 @@ if (isNil "jna_commonInitDone") then {
     jna_commonInitDone = true;
     missionNamespace setVariable ["jna_object", _object]; // default, overwritten on each open
 
-    // Ensure A4A_guestItemLimit is available on this machine.
-    // publicVariable from server is NOT JIP-safe, so JIP clients may not have it.
-    // Fall back to _unlockThreshold which is read from the object (JIP-safe).
-    if (isNil "A4A_guestItemLimit") then {
-        A4A_guestItemLimit = _unlockThreshold;
+    // Determine unlock threshold: CBA setting > module param > default 25
+    // CBA setting (A4A_Arsenal_UnlockThreshold) is synced globally by CBA framework.
+    if (!isNil "A4A_Arsenal_UnlockThreshold") then {
+        A4A_guestItemLimit = A4A_Arsenal_UnlockThreshold;
+    } else {
+        if (isNil "A4A_guestItemLimit") then {
+            A4A_guestItemLimit = _unlockThreshold;
+        };
     };
 
     jna_minItemMember = [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1];
@@ -184,7 +187,7 @@ if(hasInterface)then{
     A4A_arsenalObjects pushBackUnique _object;
 
     // Initialize Zeus key sequence handler (once, idempotent)
-    [] call A4A_fnc_zeusKeySequence;
+    [] call A4A_fnc_inputHandler;
 
     //add arsenal button
     _object addAction [
@@ -330,28 +333,25 @@ if(hasInterface)then{
     ];
     */
 
-    //add open event
+    //add open event — CustomInit runs synchronously to prevent BIS full-arsenal fallback from showing
     [missionNamespace, "arsenalOpened", {
         disableSerialization;
         UINamespace setVariable ["arsenalDisplay",(_this select 0)];
 
-        //spawn this to make sure it doesnt freeze the game
-        [] spawn {
-            disableSerialization;
-            private _type = UINamespace getVariable ["jn_type",""];
+        private _display = _this select 0;
+        private _type = UINamespace getVariable ["jn_type",""];
 
-            switch (true) do {
-                case (uiNamespace getVariable ["isLoadoutArsenal", false]): {
-                    ["CustomInit", [uiNamespace getVariable "arsenalDisplay"]] call SCRT_fnc_arsenal_loadoutArsenal;
-                    UINamespace setVariable ["jn_type","loadoutArsenal"];
-                };
-                case (_type isEqualTo "containerArsenal"): {
-                    ["CustomInit", [uiNamespace getVariable "arsenalDisplay"]] call jn_fnc_vehicleArsenal;
-                    UINamespace setVariable ["jn_type","containerArsenal"];
-                };
-                default {
-                    ["CustomInit", [uiNamespace getVariable "arsenalDisplay"]] call jn_fnc_arsenal;
-                };
+        switch (true) do {
+            case (uiNamespace getVariable ["isLoadoutArsenal", false]): {
+                ["CustomInit", [_display]] call SCRT_fnc_arsenal_loadoutArsenal;
+                UINamespace setVariable ["jn_type","loadoutArsenal"];
+            };
+            case (_type isEqualTo "containerArsenal"): {
+                ["CustomInit", [_display]] call jn_fnc_vehicleArsenal;
+                UINamespace setVariable ["jn_type","containerArsenal"];
+            };
+            default {
+                ["CustomInit", [_display]] call jn_fnc_arsenal;
             };
         };
 
