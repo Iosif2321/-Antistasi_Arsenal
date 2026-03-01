@@ -2,8 +2,8 @@
 #define PREFIX A4A_Arsenal
 
 #define MAJOR 0
-#define MINOR 4
-#define PATCHLVL 7
+#define MINOR 5
+#define PATCHLVL 0
 
 #define VERSION MAJOR.MINOR.PATCHLVL
 
