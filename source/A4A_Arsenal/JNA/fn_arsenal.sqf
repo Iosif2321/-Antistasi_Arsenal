@@ -107,7 +107,7 @@ FIX_LINE_NUMBERS()
 		_types set [IDC_RSCDISPLAYARSENAL_TAB_CARGOMAGALL,[]];\
 		_types set [IDC_RSCDISPLAYARSENAL_TAB_CARGOTHROW,[/*"Grenade","SmokeShell"*/]];\
 		_types set [IDC_RSCDISPLAYARSENAL_TAB_CARGOPUT,[/*"Mine","MineBounding","MineDirectional"*/]];\
-		_types set [IDC_RSCDISPLAYARSENAL_TAB_CARGOMISC,["MiscItem"]];
+		_types set [IDC_RSCDISPLAYARSENAL_TAB_CARGOMISC,["MiscItem","FirstAidKit","Medikit","MineDetector","ToolKit"]];
 
 #define STATS_WEAPONS\
 	["reloadtime","dispersion","maxzeroing","hit","mass","initSpeed"],\
@@ -211,11 +211,25 @@ switch _mode do {
 			_scope = if (isnumber (_class >> "scopeArsenal")) then {getnumber (_class >> "scopeArsenal")} else {getnumber (_class >> "scope")};
 			_isBase = if (isarray (_x >> "muzzles")) then {(_className call bis_fnc_baseWeapon == _className)} else {true}; //-- Check if base weapon (true for all entity types)
 			if (_scope == 2 && {gettext (_class >> "model") != ""} && _isBase) then {
-				// Use jn_fnc_arsenal_itemType for accurate classification of mod items (ACE, CBA)
-				private _weaponTypeID = _className call jn_fnc_arsenal_itemType;
-				if (_weaponTypeID >= 0) then {
-					private _items = _data select _weaponTypeID;
-					_items pushBack (configname _class);
+				private ["_weaponType","_weaponTypeCategory"];
+				_weaponType = (_className call bis_fnc_itemType);
+				_weaponTypeCategory = _weaponType select 0;
+				if (_weaponTypeCategory != "VehicleWeapon") then {
+					private ["_weaponTypeSpecific","_weaponTypeID"];
+					_weaponTypeSpecific = _weaponType select 1;
+					_weaponTypeID = -1;
+					{
+						if (_weaponTypeSpecific in _x) exitwith {_weaponTypeID = _foreachindex;};
+					} foreach _types;
+					// Fallback: if bis_fnc_itemType returned empty type, try jn_fnc_arsenal_itemType (catches ACE/CBA items)
+					if (_weaponTypeID < 0) then {
+						_weaponTypeID = _className call jn_fnc_arsenal_itemType;
+					};
+					if (_weaponTypeID >= 0) then {
+						private ["_items"];
+						_items = _data select _weaponTypeID;
+						_items set [count _items,configname _class];
+					};
 				};
 			};
 		} foreach _configArray;
