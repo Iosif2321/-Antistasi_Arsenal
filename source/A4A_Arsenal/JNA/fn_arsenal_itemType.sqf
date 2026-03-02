@@ -189,6 +189,8 @@ private _itemCategory = switch true do {
 	case (isClass (configFile >> "CfgVehicles" >> _item)): {
 		if (getNumber (configFile >> "CfgVehicles" >> _item >> "isBackpack") == 1) then {
 			"Backpack";
+		} else {
+			"Junk";
 		};
 	};
 	case (isClass (configFile >> "CfgGlasses" >> _item)): {
@@ -197,7 +199,7 @@ private _itemCategory = switch true do {
 	default { "Junk" };			// Loadout code can send empty strings. Possibly other rubbish.
 };
 
-if (_itemCategory == "Junk") exitWith {-1};
+if (isNil "_itemCategory" || {_itemCategory == "Junk"}) exitWith {-1};
 
 INITTYPES
 
@@ -207,7 +209,7 @@ INITTYPES
 
 
 if(_return == -1)then{
-	private _data = (missionnamespace getvariable "bis_fnc_arsenal_data");
+	private _data = (missionnamespace getvariable ["bis_fnc_arsenal_data", []]);
 	{
 		private _index = _x;
 		private _dataSet = _data select _index;
