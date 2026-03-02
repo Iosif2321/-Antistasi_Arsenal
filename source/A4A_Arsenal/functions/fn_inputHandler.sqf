@@ -91,7 +91,8 @@ private _ignore = [
                         { if (player distance _x < 10) exitWith { _near = true } } forEach _objs;
 
                         if (_near) then {
-                            if (!isNull getAssignedCuratorLogic player) then {
+                            private _curator = getAssignedCuratorLogic player;
+                            if (!isNull _curator && {!isNull (getAssignedCuratorUnit _curator)}) then {
                                 systemChat "Zeus is already active.";
                             } else {
                                 if (!isNil "CBA_fnc_serverEvent") then {

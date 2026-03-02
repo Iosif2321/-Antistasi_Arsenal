@@ -2635,6 +2635,18 @@ switch _mode do {
 		//remove or add
 		_count = 1;
 
+		// Multipliers: Ctrl=×5, Shift=×10, Ctrl+Shift=×50
+		private _shift = uiNamespace getVariable ["arsenalShift", false];
+		private _ctrl = uiNamespace getVariable ["arsenalCtrl", false];
+		if (_ctrl && _shift) then {
+			_count = 50;
+		} else {
+			if (_ctrl) then { _count = 5; };
+			if (_shift) then { _count = 10; };
+		};
+
+		private _totalCount = 0;
+
 		if(((_amount > 0 || _amount == -1) || _add < 0) && (_add != 0))then{
 
 			if (_add > 0) then {//add
@@ -2643,25 +2655,56 @@ switch _mode do {
 					['showMessage',[_display, localize "STR_JNA_ACT_ONLY_MEMBERS"]] call jn_fnc_arsenal;
 				};
 				if(_index in [IDC_RSCDISPLAYARSENAL_TAB_CARGOMAG,IDC_RSCDISPLAYARSENAL_TAB_CARGOMAGALL])then{//magazines are handeld by bullet count
-					//check if full mag can be optaind
 					_count = getNumber (configfile >> "CfgMagazines" >> _item >> "count");
+					private _bulletCount = _count;
+					private _magsToAdd = 1;
+					private _shiftMod = uiNamespace getVariable ["arsenalShift", false];
+					private _ctrlMod = uiNamespace getVariable ["arsenalCtrl", false];
+					if (_ctrlMod && _shiftMod) then {
+						_magsToAdd = 50;
+					} else {
+						if (_ctrlMod) then { _magsToAdd = 5; };
+						if (_shiftMod) then { _magsToAdd = 10; };
+					};
+					// Limit by available amount
 					if(_amount != -1)then{
-						if(_amount<_count)then{_count = _amount};
+						private _maxMags = floor (_amount / _bulletCount);
+						if (_maxMags < 1 && _amount > 0) then {
+							_magsToAdd = 1;
+							_count = _amount;
+						} else {
+							if (_magsToAdd > _maxMags) then { _magsToAdd = _maxMags; };
+							_count = _bulletCount;
+						};
 					};
-					_canAdd = false;
-					_container = switch _selected do{
-						case IDC_RSCDISPLAYARSENAL_TAB_UNIFORM: {_canAdd = player canAddItemToUniform _item; uniformContainer player};
-						case IDC_RSCDISPLAYARSENAL_TAB_VEST: {_canAdd = player canAddItemToVest _item; vestContainer player;};
-						case IDC_RSCDISPLAYARSENAL_TAB_BACKPACK: {_canAdd = player canAddItemToBackpack _item; backpackContainer player;};
-					};
-					if(_canAdd)then{
+					for "_i" from 1 to _magsToAdd do {
+						_canAdd = false;
+						_container = switch _selected do{
+							case IDC_RSCDISPLAYARSENAL_TAB_UNIFORM: {_canAdd = player canAddItemToUniform _item; uniformContainer player};
+							case IDC_RSCDISPLAYARSENAL_TAB_VEST: {_canAdd = player canAddItemToVest _item; vestContainer player;};
+							case IDC_RSCDISPLAYARSENAL_TAB_BACKPACK: {_canAdd = player canAddItemToBackpack _item; backpackContainer player;};
+						};
+						if(!_canAdd) exitWith {};
 						_container addMagazineAmmoCargo [_item,1,_count];
+						_totalCount = _totalCount + _count;
 					};
 				}else{
-					switch _selected do{
-						case IDC_RSCDISPLAYARSENAL_TAB_UNIFORM: {player additemtouniform _item;};
-						case IDC_RSCDISPLAYARSENAL_TAB_VEST: {player additemtovest _item;};
-						case IDC_RSCDISPLAYARSENAL_TAB_BACKPACK: {player additemtobackpack _item;};
+					for "_i" from 1 to _count do {
+						private _canAdd = false;
+						switch _selected do{
+							case IDC_RSCDISPLAYARSENAL_TAB_UNIFORM: {_canAdd = player canAddItemToUniform _item;};
+							case IDC_RSCDISPLAYARSENAL_TAB_VEST: {_canAdd = player canAddItemToVest _item;};
+							case IDC_RSCDISPLAYARSENAL_TAB_BACKPACK: {_canAdd = player canAddItemToBackpack _item;};
+						};
+						if(!_canAdd) exitWith {};
+						// Check available amount
+						if(_amount != -1 && _totalCount >= _amount) exitWith {};
+						switch _selected do{
+							case IDC_RSCDISPLAYARSENAL_TAB_UNIFORM: {player additemtouniform _item;};
+							case IDC_RSCDISPLAYARSENAL_TAB_VEST: {player additemtovest _item;};
+							case IDC_RSCDISPLAYARSENAL_TAB_BACKPACK: {player additemtobackpack _item;};
+						};
+						_totalCount = _totalCount + 1;
 					};
 				};
 			} else {//remove
@@ -2678,26 +2721,31 @@ switch _mode do {
 					if (_mags findIf {(_x select 0) isEqualTo _item} == -1) exitWith {};
 					clearMagazineCargoGlobal _container;
 
-					//add back magazines exept the one that needs to be removed
-					_removed = false;
+					//add back magazines except the ones that need to be removed
+					private _removedCount = 0;
 					{
-						if((_x select 0) isEqualTo _item && !_removed)then{
-							_count = _x select 1;//this mag is removed
-							_removed = true;
+						if((_x select 0) isEqualTo _item && _removedCount < _count)then{
+							_totalCount = _totalCount + (_x select 1);
+							_removedCount = _removedCount + 1;
 						}else{
 							_container addMagazineAmmoCargo [(_x select 0),1,(_x select 1)];
 						};
 					} forEach _mags;
 
 				}else{
-					switch _selected do{
-						case IDC_RSCDISPLAYARSENAL_TAB_UNIFORM: {player removeitemfromuniform _item;};
-						case IDC_RSCDISPLAYARSENAL_TAB_VEST: {player removeitemfromvest _item;};
-						case IDC_RSCDISPLAYARSENAL_TAB_BACKPACK: {player removeitemfrombackpack _item;};
+					for "_i" from 1 to _count do {
+						switch _selected do{
+							case IDC_RSCDISPLAYARSENAL_TAB_UNIFORM: {player removeitemfromuniform _item;};
+							case IDC_RSCDISPLAYARSENAL_TAB_VEST: {player removeitemfromvest _item;};
+							case IDC_RSCDISPLAYARSENAL_TAB_BACKPACK: {player removeitemfrombackpack _item;};
+						};
+						_totalCount = _totalCount + 1;
 					};
 				};
 			};
 		};
+
+		_count = _totalCount;
 
 		//check if item was added
 		_load = switch _selected do{
