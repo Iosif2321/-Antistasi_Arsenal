@@ -275,10 +275,10 @@ if(hasInterface)then{
         true,
         false,
         "",
-        "alive _target && {_target distance _this < 5} && {vehicle player == player} && {(missionNamespace getVariable ['A4A_Arsenal_ContainerAccess', 0]) != 2} && {(missionNamespace getVariable ['A4A_Arsenal_ContainerAccess', 0]) != 1 || {[_this] call A4A_fnc_arsenal_isZeus}}"
+        "alive _target && {_target distance _this < 5} && {vehicle player == player} && {(missionNamespace getVariable ['A4A_Arsenal_ContainerAccess', 0]) != 2} && {(missionNamespace getVariable ['A4A_Arsenal_ContainerAccess', 0]) != 1 || {[_this] call A4A_fnc_arsenal_canEdit}}"
     ];
 
-    //add export arsenal data button (clipboard + RPT log) - Zeus only
+    //add export arsenal data button (clipboard + RPT log) - authorized editors only
     _object addAction [
         "<t color='#80ff80'>Export Arsenal Data</t>",
         { ["ExportData"] call jn_fnc_arsenal },
@@ -287,10 +287,10 @@ if(hasInterface)then{
         false,
         false,
         "",
-        "alive _target && {_target distance _this < 5} && {vehicle player == player} && {[_this] call A4A_fnc_arsenal_isZeus}"
+        "alive _target && {_target distance _this < 5} && {vehicle player == player} && {[_this] call A4A_fnc_arsenal_canEdit}"
     ];
 
-    //add import arsenal data button (from clipboard) - Zeus only
+    //add import arsenal data button (from clipboard) - authorized editors only
     _object addAction [
         "<t color='#ffaa00'>Import Arsenal Data</t>",
         { ["ImportData"] call jn_fnc_arsenal },
@@ -299,7 +299,7 @@ if(hasInterface)then{
         false,
         false,
         "",
-        "alive _target && {_target distance _this < 5} && {vehicle player == player} && {[_this] call A4A_fnc_arsenal_isZeus}"
+        "alive _target && {_target distance _this < 5} && {vehicle player == player} && {[_this] call A4A_fnc_arsenal_canEdit}"
     ];
 
     //add quick equip button - DISABLED FOR STANDALONE

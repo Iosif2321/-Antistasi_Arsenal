@@ -181,8 +181,8 @@
                 <Russian>Редактировать</Russian>
             </Key>
             <Key ID="STR_JNA_ACT_EDIT_ARSENAL_TIP">
-                <Original>Export arsenal contents to clipboard for editing (Zeus only)</Original>
-                <Russian>Экспорт содержимого арсенала в буфер обмена для редактирования (только Zeus)</Russian>
+                <Original>Export arsenal contents to clipboard for editing (authorized editors only)</Original>
+                <Russian>Экспорт содержимого арсенала в буфер обмена для редактирования (только авторизованные редакторы)</Russian>
             </Key>
             <Key ID="STR_JNA_ACT_IMPORT_FORMAT">
                 <Original>Import format: SQF array with 27 sub-arrays. Each sub-array: [["className",count],...]. Count: number or -1 for infinite. Use Export first to get valid data, or copy block between // === BEGIN DATA === and // === END DATA ===</Original>

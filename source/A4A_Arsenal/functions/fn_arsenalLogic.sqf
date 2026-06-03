@@ -330,6 +330,16 @@ switch (_mode) do {
         if (!isServer) exitWith {};
         _params params [["_arsenalID", "Base", [""]], ["_dataList", [], [[]]], ["_playerName", ""], ["_playerUID", ""]];
 
+        private _playerObj = objNull;
+        {
+            if ((getPlayerUID _x) isEqualTo _playerUID) exitWith {
+                _playerObj = _x;
+            };
+        } forEach allPlayers;
+        if (isNull _playerObj || {isNil "A4A_fnc_arsenal_canEdit"} || {!([_playerObj] call A4A_fnc_arsenal_canEdit)}) exitWith {
+            diag_log format ["A4A_arsenalLogic SAVE_JNA: denied for %1 (UID: %2) on arsenal '%3'", _playerName, _playerUID, _arsenalID];
+        };
+
         if (count _dataList != 27) exitWith {
             diag_log format ["A4A_arsenalLogic SAVE_JNA: invalid data (count=%1), expected 27", count _dataList];
         };

@@ -522,7 +522,7 @@ switch _mode do {
 
 		_ctrlButtonExport = _display displayctrl IDC_RSCDISPLAYARSENAL_CONTROLSBAR_BUTTONEXPORT;
 		_ctrlButtonExport ctrlRemoveAllEventHandlers "buttonclick";
-		if (!isNil "A4A_fnc_arsenal_isZeus" && {[player] call A4A_fnc_arsenal_isZeus}) then {
+		if (!isNil "A4A_fnc_arsenal_canEdit" && {[player] call A4A_fnc_arsenal_canEdit}) then {
 			_ctrlButtonExport ctrlSetText (localize "STR_JNA_ACT_EDIT_ARSENAL");
 			_ctrlButtonExport ctrlSetTooltip (localize "STR_JNA_ACT_EDIT_ARSENAL_TIP");
 			_ctrlButtonExport ctrlEnable true;
@@ -3136,9 +3136,9 @@ switch _mode do {
 			case (_key == DIK_O): {
 				if (_ctrl && (vehicle player isEqualTo player)) then {['buttonLoad',[_display]] call jn_fnc_arsenal;};
 			};
-			//--- Ctrl+V: Import arsenal data from clipboard (Zeus only)
+			//--- Ctrl+V: Import arsenal data from clipboard (authorized editor only)
 			case (_key == DIK_V): {
-				if (_ctrl && {!isNil "A4A_fnc_arsenal_isZeus"} && {[player] call A4A_fnc_arsenal_isZeus}) then {
+				if (_ctrl && {!isNil "A4A_fnc_arsenal_canEdit"} && {[player] call A4A_fnc_arsenal_canEdit}) then {
 					["ImportData"] call jn_fnc_arsenal;
 					_return = true;
 				};
@@ -3538,6 +3538,9 @@ switch _mode do {
 	//        ["ExportData", [true]] call jn_fnc_arsenal;       RPT only (silent)
 	case "ExportData": {
 		private _rptOnly = _this param [0, false];
+		if (!_rptOnly && {isNil "A4A_fnc_arsenal_canEdit" || {!([player] call A4A_fnc_arsenal_canEdit)}}) exitWith {
+			systemChat "Arsenal edit access denied.";
+		};
 		private _arsenalID = (missionNamespace getVariable ["jna_object", objNull]) getVariable ["A4A_Arsenal_ID", "Base"];
 
 		// Category names indexed by BIS IDC tab order (0=PrimaryWeapon, 1=Launcher, ..., 26=Misc)
@@ -3584,7 +3587,7 @@ switch _mode do {
 		_lines pushBack format ["// Date: %1", systemTime apply {if (_x < 10) then {format ["0%1",_x]} else {str _x}} joinString "-"];
 		_lines pushBack "// ============================================================";
 		_lines pushBack "// To import: copy lines between BEGIN DATA / END DATA markers,";
-		_lines pushBack "// then use Ctrl+V inside the arsenal (Zeus only).";
+		_lines pushBack "// then use Ctrl+V inside the arsenal (authorized editors only).";
 		_lines pushBack "// ============================================================";
 		_lines pushBack "";
 
@@ -3631,7 +3634,7 @@ switch _mode do {
 				"<t size='1.3' color='#d04f00'>Arsenal Export</t><br/><br/>" +
 				"<t size='0.9'>ID: %1<br/>Items: %2 / %3<br/><br/>" +
 				"<t color='#80ff80'>Import:</t> Copy block between // === BEGIN DATA === and // === END DATA ===<br/>" +
-				"Paste with Ctrl+V inside arsenal (Zeus only)<br/><br/>" +
+				"Paste with Ctrl+V inside arsenal (authorized editors only)<br/><br/>" +
 				"<t size='0.8' color='#aaaaaa'>Format: 27 arrays, each [""class"", count]. -1 = infinite. RPT: %%LOCALAPPDATA%%\Arma 3\*.rpt</t></t>",
 				_arsenalID, _uniqueItems, _totalItems
 			];
@@ -3644,6 +3647,9 @@ switch _mode do {
 	// Import arsenal data from clipboard (SQF array format)
 	// Usage: ["ImportData"] call jn_fnc_arsenal;
 	case "ImportData": {
+		if (isNil "A4A_fnc_arsenal_canEdit" || {!([player] call A4A_fnc_arsenal_canEdit)}) exitWith {
+			systemChat "Arsenal edit access denied.";
+		};
 		private _clipText = copyFromClipboard;
 		if (_clipText isEqualTo "") exitWith {
 			systemChat "Import failed: clipboard is empty.";
@@ -3714,8 +3720,8 @@ switch _mode do {
 		private _display = _this select 0;
 		disableSerialization;
 
-		// Zeus only  prevent bypass via direct call
-		if (isNil "A4A_fnc_arsenal_isZeus" || {!([player] call A4A_fnc_arsenal_isZeus)}) exitWith {};
+		// Authorized editors only; prevents bypass via direct call.
+		if (isNil "A4A_fnc_arsenal_canEdit" || {!([player] call A4A_fnc_arsenal_canEdit)}) exitWith {};
 
 		// Prevent double-open
 		if (!isNil {uiNamespace getVariable "jna_editor_open"}) exitWith {};
@@ -4047,6 +4053,7 @@ switch _mode do {
 	case "EditorModify": {
 		_this params ["_display", "_action"];
 		disableSerialization;
+		if (isNil "A4A_fnc_arsenal_canEdit" || {!([player] call A4A_fnc_arsenal_canEdit)}) exitWith {};
 
 		private _list = _display displayCtrl 90002;
 		private _sel = lbCurSel _list;
@@ -4140,6 +4147,9 @@ switch _mode do {
 
 	///////////////////////////////////////////////////////////////////////////////////////////
 	case "EditorSave": {
+		if (isNil "A4A_fnc_arsenal_canEdit" || {!([player] call A4A_fnc_arsenal_canEdit)}) exitWith {
+			systemChat "Arsenal edit access denied.";
+		};
 		private _display = _this select 0;
 		private _arsenalObj = missionNamespace getVariable ["jna_object", objNull];
 		private _arsenalID = _arsenalObj getVariable ["A4A_Arsenal_ID", "Base"];

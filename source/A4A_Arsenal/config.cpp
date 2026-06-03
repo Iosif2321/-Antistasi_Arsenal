@@ -51,6 +51,7 @@ class CfgFunctions {
             class arsenalInit {};
             class arsenalLogic {};
             class arsenal_isZeus {};
+            class arsenal_canEdit {};
             class inputHandler {};
             class assignZeus {};
             class A4A_stub { preInit = 1; };
