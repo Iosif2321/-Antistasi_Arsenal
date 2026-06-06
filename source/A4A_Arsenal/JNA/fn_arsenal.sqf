@@ -1482,7 +1482,7 @@ switch _mode do {
 			if (isServer) then {
 				// Server: update specific arsenal list and save
 				private _serverKey = format ["jna_dataList_%1", _arsenalID];
-				private _targetData = server getVariable [_serverKey, [[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]]];
+				private _targetData = +(server getVariable [_serverKey, [[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]]]);
 				_targetData set [_index, [_targetData select _index, [_item, _amount]] call jn_fnc_arsenal_addToArray];
 				
 				server setVariable [_serverKey, _targetData, true];
@@ -1567,7 +1567,7 @@ switch _mode do {
 			if (isServer) then {
 				// Server: update specific arsenal list and save
 				private _serverKey = format ["jna_dataList_%1", _arsenalID];
-				private _targetData = server getVariable [_serverKey, [[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]]];
+				private _targetData = +(server getVariable [_serverKey, [[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]]]);
 				_targetData set [_index, [_targetData select _index, [_item, _amount]] call jn_fnc_arsenal_removeFromArray];
 				
 				server setVariable [_serverKey, _targetData, true];

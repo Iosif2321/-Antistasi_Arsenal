@@ -22,8 +22,8 @@ if(typeName (_this select 0) isEqualTo "SCALAR")then{//[_index, _item] or [_inde
 			if(_index == -1)exitWith{["ERROR in additemarsenal: %1", _this] call BIS_fnc_error};
 			if(_index == IDC_RSCDISPLAYARSENAL_TAB_CARGOMAG)then{_index = IDC_RSCDISPLAYARSENAL_TAB_CARGOMAGALL};
 
-			// Update LOCAL jna_dataList immediately to prevent desync/duplication
-			if (!isNil "jna_dataList") then {
+			// Clients pre-apply for responsive UI. Hosted servers use the server path once.
+			if (!isServer && {!isNil "jna_dataList"}) then {
 				jna_dataList set [_index, [jna_dataList select _index, [_item, _amount]] call jn_fnc_arsenal_removeFromArray];
 			};
 

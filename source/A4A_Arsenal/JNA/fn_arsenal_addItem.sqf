@@ -43,8 +43,8 @@ if(typeName (_this select 0) isEqualTo "SCALAR")then{//[_index, _item] and [_ind
 				private _radioName2 = getText(configfile >> "CfgVehicles" >> _item >> "acre_baseClass");
 				if!(_radioName2 isEqualTo "")then{_item = _radioName2};
 
-				// Update LOCAL jna_dataList immediately to prevent desync/duplication
-				if (!isNil "jna_dataList") then {
+				// Clients pre-apply for responsive UI. Hosted servers use the server path once.
+				if (!isServer && {!isNil "jna_dataList"}) then {
 					jna_dataList set [_index, [jna_dataList select _index, [_item, _amount]] call jn_fnc_arsenal_addToArray];
 				};
 

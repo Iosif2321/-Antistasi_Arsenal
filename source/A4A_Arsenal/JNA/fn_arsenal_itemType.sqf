@@ -95,57 +95,23 @@ private _configCfgWeapons = configFile >> "CfgWeapons";
 private _weaponConfig = configFile >> "CfgWeapons" >> _item;
 private _itemInfoConfig = _weaponConfig >> "ItemInfo";
 private _magazineConfig = configFile >> "CfgMagazines" >> _item;
-private _itemType = switch true do {
-	case (isClass _weaponConfig): {getNumber (_weaponConfig >> "type")};
-	case (isClass _magazineConfig): {getNumber (_magazineConfig >> "type")};
-	default {-1};
+private _hasWeaponConfig = isClass _weaponConfig;
+private _hasMagazineConfig = isClass _magazineConfig;
+private _weaponItemType = if (_hasWeaponConfig) then {getNumber (_weaponConfig >> "type")} else {-1};
+private _magazineItemType = if (_hasMagazineConfig) then {getNumber (_magazineConfig >> "type")} else {-1};
+private _preferMagazineConfig = _hasMagazineConfig && {
+	!_hasWeaponConfig || {_weaponItemType == TYPE_DEFAULT && {_magazineItemType != TYPE_DEFAULT}}
+};
+private _itemType = if (_preferMagazineConfig) then {
+	_magazineItemType
+} else {
+	if (_hasWeaponConfig) then {_weaponItemType} else {-1}
 };
 private _itemInfoType =	if (isClass _itemInfoConfig) then {(getNumber (_itemInfoConfig >> "type"))} else {-1};
 private _simulationType = getText (_weaponConfig >> "simulation");
 
 private _itemCategory = switch true do {
-	case (isClass _weaponConfig): {
-		switch true do {
-			//Weapon accessories
-			case (_itemInfoType in [TYPE_MUZZLE, TYPE_OPTICS, TYPE_FLASHLIGHT, TYPE_BIPOD]
-			      && {!(_item isKindOf ["CBA_MiscItem", (_configCfgWeapons)])}): {
-				switch (_itemInfoType) do {
-					case TYPE_OPTICS: { "AccessorySights" };
-					case TYPE_FLASHLIGHT: { "AccessoryPointer" };
-					case TYPE_MUZZLE: { "AccessoryMuzzle" };
-					case TYPE_BIPOD: { "AccessoryBipod" };
-				};
-			};
-			case (_itemInfoType == TYPE_HEADGEAR): { "Headgear" };
-			case (_itemInfoType == TYPE_UNIFORM): { "Uniform" };
-			case (_itemInfoType == TYPE_VEST): { "Vest" };
-			case (_simulationType == "NVGoggles"): { "NVGoggles" };
-			//Binos after NVGs to avoid accidentally catching them;
-			case (_simulationType == "Binocular" ||	{_simulationType == "Weapon" && _itemType == TYPE_BINOCULAR_AND_NVG}): { "Binocular" };
-			case (_simulationType == "ItemMap"): { "Map" };
-			case (_simulationType == "ItemCompass"): { "Compass" };
-			case (_simulationType == "ItemRadio"): { "Radio" };
-			case (_simulationType == "ItemWatch"): { "Watch" };
-			case (_simulationType == "ItemGPS"): { "GPS" };
-			case (_itemInfoType == TYPE_UAV_TERMINAL): { "UAVTerminal" };
-			//Weapon, at the bottom to avoid adding binoculars
-			case (isClass (_weaponConfig >> "WeaponSlotsInfo") && _itemType != TYPE_BINOCULAR_AND_NVG): {
-				(_item call BIS_fnc_itemType) select 1;
-			};
-			//Community Base Addon Misc Items
-			case (_itemInfoType in [TYPE_MUZZLE, TYPE_OPTICS, TYPE_FLASHLIGHT, TYPE_BIPOD] && _item isKindOf ["CBA_MiscItem", (_configCfgWeapons)]);
-			//Base game misc items
-			case (_itemInfoType in [TYPE_FIRST_AID_KIT, TYPE_MEDIKIT, TYPE_TOOLKIT] ||	_simulationType == "ItemMineDetector"): {
-				"MiscItem";
-			};
-			default {
-				ERROR_JN_2("Unknown item in item type script: ", _item);
-				"MiscItem";
-			};
-		};
-	};
-	
-	case (isClass _magazineConfig): {
+	case (_preferMagazineConfig || {_hasMagazineConfig && {!_hasWeaponConfig}}): {
 		// Lists to check against
 		private _grenadeList = [];
 		{
@@ -182,6 +148,47 @@ private _itemCategory = switch true do {
 				// haaaaack
 				if (_item isKindOf ["SPE_MUZZLE_FAKEMAG", configFile >> "CfgMagazines"]) exitWith {"Junk"};
 				"Magazine";
+			};
+		};
+	};
+
+	case (_hasWeaponConfig): {
+		switch true do {
+			//Weapon accessories
+			case (_itemInfoType in [TYPE_MUZZLE, TYPE_OPTICS, TYPE_FLASHLIGHT, TYPE_BIPOD]
+			      && {!(_item isKindOf ["CBA_MiscItem", (_configCfgWeapons)])}): {
+				switch (_itemInfoType) do {
+					case TYPE_OPTICS: { "AccessorySights" };
+					case TYPE_FLASHLIGHT: { "AccessoryPointer" };
+					case TYPE_MUZZLE: { "AccessoryMuzzle" };
+					case TYPE_BIPOD: { "AccessoryBipod" };
+				};
+			};
+			case (_itemInfoType == TYPE_HEADGEAR): { "Headgear" };
+			case (_itemInfoType == TYPE_UNIFORM): { "Uniform" };
+			case (_itemInfoType == TYPE_VEST): { "Vest" };
+			case (_simulationType == "NVGoggles"): { "NVGoggles" };
+			//Binos after NVGs to avoid accidentally catching them;
+			case (_simulationType == "Binocular" ||	{_simulationType == "Weapon" && _itemType == TYPE_BINOCULAR_AND_NVG}): { "Binocular" };
+			case (_simulationType == "ItemMap"): { "Map" };
+			case (_simulationType == "ItemCompass"): { "Compass" };
+			case (_simulationType == "ItemRadio"): { "Radio" };
+			case (_simulationType == "ItemWatch"): { "Watch" };
+			case (_simulationType == "ItemGPS"): { "GPS" };
+			case (_itemInfoType == TYPE_UAV_TERMINAL): { "UAVTerminal" };
+			//Weapon, at the bottom to avoid adding binoculars
+			case (isClass (_weaponConfig >> "WeaponSlotsInfo") && _itemType != TYPE_BINOCULAR_AND_NVG): {
+				(_item call BIS_fnc_itemType) select 1;
+			};
+			//Community Base Addon Misc Items
+			case (_itemInfoType in [TYPE_MUZZLE, TYPE_OPTICS, TYPE_FLASHLIGHT, TYPE_BIPOD] && _item isKindOf ["CBA_MiscItem", (_configCfgWeapons)]);
+			//Base game misc items
+			case (_itemInfoType in [TYPE_FIRST_AID_KIT, TYPE_MEDIKIT, TYPE_TOOLKIT] ||	_simulationType == "ItemMineDetector"): {
+				"MiscItem";
+			};
+			default {
+				ERROR_JN_2("Unknown item in item type script: ", _item);
+				"MiscItem";
 			};
 		};
 	};

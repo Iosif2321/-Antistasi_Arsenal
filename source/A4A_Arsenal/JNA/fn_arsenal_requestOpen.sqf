@@ -30,12 +30,12 @@ _temp = server getVariable [_playerListKey, []];
 _temp pushBackUnique _clientOwner;
 server setVariable [_playerListKey, _temp, true];
 
-// Also set global jna_dataList on server for save operations
-jna_dataList = _data;
+// Keep runtime data separate from the server variable array on hosted servers.
+jna_dataList = +_data;
 
 Info_1("_open arsenal for: clientOwner ",_clientOwner);
 if (_clientOwner == clientOwner) then {
-    ["Open",[_data]] call jn_fnc_arsenal;
+    ["Open",[+_data]] call jn_fnc_arsenal;
 } else {
     ["Open",[_data]] remoteExecCall ["jn_fnc_arsenal", _clientOwner];
 };
