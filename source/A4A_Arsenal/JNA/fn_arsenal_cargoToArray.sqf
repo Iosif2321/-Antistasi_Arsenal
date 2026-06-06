@@ -142,32 +142,9 @@ _unloadContainer = {
 				};
 			};
 		};
-		// weaponsItemsCargo for attachments and loaded magazines (weapons already added above)
-		{
-			{
-				private["_index","_item","_amount"];
-				if(typename _x isEqualTo "ARRAY")then{
-					if(count _x > 0)then{
-						_item = _x select 0;
-						_amount = _x select 1;
-						_index = IDC_RSCDISPLAYARSENAL_TAB_CARGOMAGALL;
-						[_array,_index,_item,_amount]call _addToArray;
-					};
-				}else{
-					if!(_x isEqualTo "")then{
-						_item = _x;
-						_index = _item call jn_fnc_arsenal_itemType;
-						// Skip base weapons  already added via getWeaponCargo
-						if!(_index in [IDC_RSCDISPLAYARSENAL_TAB_PRIMARYWEAPON, IDC_RSCDISPLAYARSENAL_TAB_SECONDARYWEAPON, IDC_RSCDISPLAYARSENAL_TAB_HANDGUN])then{
-							_amount = 1;
-							if(_index != -1)then{
-								[_array,_index,_item,_amount]call _addToArray;
-							};
-						};
-					};
-				};
-			}foreach _x;
-		}foreach (weaponsItemsCargo _container_sub);
+		// Container weapon cargo is counted as physical weapons only.
+		// Reading weaponsItemsCargo here splits one stored weapon into its loaded magazine
+		// and attachments, which inflates cargo transfers into extra arsenal entries.
 	};
 
 

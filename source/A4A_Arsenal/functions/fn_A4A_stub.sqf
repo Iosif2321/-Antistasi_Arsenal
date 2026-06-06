@@ -203,50 +203,55 @@ if (isNil "SCRT_fnc_arsenal_loadoutArsenal") then {
 // ========================================================================================
 // CBA Settings  addon options (ESC  Options  Game  Configure Addons  Antistasi Arsenal)
 // ========================================================================================
-if (!isNil "CBA_fnc_addSetting") then {
-    [
-        "A4A_Arsenal_ContainerAccess",
-        "LIST",
-        ["Container Arsenal Access", "Who can use 'Select vehicle to open arsenal' action"],
-        "Antistasi Arsenal",
-        [[0, 1, 2], ["Everyone", "Arsenal Editors", "Disabled"], 0],
-        1
-    ] call CBA_fnc_addSetting;
+if (isNil "A4A_Arsenal_CBASettingsRegistered") then {
+    if (!isNil "CBA_fnc_addSetting") then {
+        [
+            "A4A_Arsenal_ContainerAccess",
+            "LIST",
+            ["Container Arsenal Access", "Who can use 'Select vehicle to open arsenal' action"],
+            "Antistasi Arsenal",
+            [[0, 1, 2], ["Everyone", "Arsenal Editors", "Disabled"], 0],
+            1
+        ] call CBA_fnc_addSetting;
 
-    [
-        "A4A_Arsenal_EditorSteamIDs",
-        "EDITBOX",
-        ["Arsenal Editor SteamIDs", "SteamIDs allowed to edit arsenal data. Separate multiple IDs with commas, semicolons, or spaces."],
-        "Antistasi Arsenal",
-        "",
-        1
-    ] call CBA_fnc_addSetting;
+        [
+            "A4A_Arsenal_EditorSteamIDs",
+            "EDITBOX",
+            ["Arsenal Editor SteamIDs", "SteamIDs allowed to edit arsenal data. Separate multiple IDs with commas, semicolons, or spaces."],
+            "Antistasi Arsenal",
+            "",
+            1
+        ] call CBA_fnc_addSetting;
 
-    [
-        "A4A_Arsenal_EditAccessMode",
-        "LIST",
-        ["Arsenal Editor Access Mode", "SteamID Only allows listed SteamIDs. SteamID + Zeus also requires Zeus access."],
-        "Antistasi Arsenal",
-        [[0, 1], ["SteamID Only", "SteamID + Zeus"], 1],
-        1
-    ] call CBA_fnc_addSetting;
+        [
+            "A4A_Arsenal_EditAccessMode",
+            "LIST",
+            ["Arsenal Editor Access Mode", "SteamID Only allows listed SteamIDs. SteamID + Zeus also requires Zeus access."],
+            "Antistasi Arsenal",
+            [[0, 1], ["SteamID Only", "SteamID + Zeus"], 1],
+            1
+        ] call CBA_fnc_addSetting;
 
-    [
-        "A4A_Arsenal_UnlockThreshold",
-        "SLIDER",
-        ["Unlock Threshold", "Number of items required for unlimited use. Applies to new arsenals and overrides module setting."],
-        "Antistasi Arsenal",
-        [1, 200, 25, 0],
-        1
-    ] call CBA_fnc_addSetting;
+        [
+            "A4A_Arsenal_UnlockThreshold",
+            "SLIDER",
+            ["Unlock Threshold", "Number of items required for unlimited use. Applies to new arsenals and overrides module setting."],
+            "Antistasi Arsenal",
+            [1, 200, 25, 0],
+            1
+        ] call CBA_fnc_addSetting;
 
-    diag_log "A4A_Arsenal: CBA settings registered.";
+        A4A_Arsenal_CBASettingsRegistered = true;
+        diag_log "A4A_Arsenal: CBA settings registered.";
+    } else {
+        A4A_Arsenal_ContainerAccess = 0;
+        A4A_Arsenal_EditorSteamIDs = "";
+        A4A_Arsenal_EditAccessMode = 1;
+        A4A_Arsenal_UnlockThreshold = 25;
+        diag_log "A4A_Arsenal: CBA not available, using default settings.";
+    };
 } else {
-    A4A_Arsenal_ContainerAccess = 0;
-    A4A_Arsenal_EditorSteamIDs = "";
-    A4A_Arsenal_EditAccessMode = 1;
-    A4A_Arsenal_UnlockThreshold = 25;
-    diag_log "A4A_Arsenal: CBA not available, using default settings.";
+    diag_log "A4A_Arsenal: CBA settings already registered.";
 };
 
 if (isNil "A4A_Arsenal_EditorSteamIDs") then {

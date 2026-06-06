@@ -40,6 +40,12 @@ class CfgRemoteExec {
     };
 };
 
+class Extended_PreInit_EventHandlers {
+    class A4A_Arsenal {
+        init = "call A4A_fnc_A4A_stub";
+    };
+};
+
 // Garage dialog
 #include "Garage\Dialogs.hpp"
 

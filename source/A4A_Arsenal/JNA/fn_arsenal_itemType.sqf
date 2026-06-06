@@ -212,7 +212,7 @@ if(_return == -1)then{
 	private _data = (missionnamespace getvariable ["bis_fnc_arsenal_data", []]);
 	{
 		private _index = _x;
-		private _dataSet = _data select _index;
+		private _dataSet = _data param [_index, []];
 
 		{
 			if((tolower _item)isEqualTo (tolower _x))exitWith{_return = _index};
