@@ -237,7 +237,7 @@ if (isNil "A4A_Arsenal_CBASettingsRegistered") then {
             "SLIDER",
             ["Unlock Threshold", "Number of items required for unlimited use. Applies to new arsenals and overrides module setting."],
             "Antistasi Arsenal",
-            [1, 200, 25, 0],
+            [1, 25000, 25, 0],
             1
         ] call CBA_fnc_addSetting;
 

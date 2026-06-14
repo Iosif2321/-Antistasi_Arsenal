@@ -44,6 +44,10 @@ $checks = @(
             -and $stub -match "A4A_Arsenal_UnlockThreshold"
     },
     @{
+        Name = "CBA unlock threshold slider allows up to 25000 items"
+        Pass = $stub -match "\[1,\s*25000,\s*25,\s*0\]"
+    },
+    @{
         Name = "hosted server arsenal open uses a local data copy"
         Pass = $requestOpen -match "jna_dataList\s*=\s*\+_data"
     },
