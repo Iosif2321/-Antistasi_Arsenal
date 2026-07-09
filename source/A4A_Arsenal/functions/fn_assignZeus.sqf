@@ -42,36 +42,42 @@ if (isNull _curator) exitWith {
 };
 
 _curator setVariable ["Addons", 3, true];
+_curator setVariable ["owner", getPlayerUID _player, true];
 _curator setVariable ["BIS_fnc_initModules_disableAutoActivation", false, true];
 
 _player assignCurator _curator;
+diag_log format ["A4A_Arsenal: assignCurator issued for %1 -> %2", name _player, _curator];
 
-// Wait for assignment to propagate (up to 5 seconds)
-private _timeout = diag_tickTime + 5;
-waitUntil {
-    !isNull getAssignedCuratorLogic _player || diag_tickTime > _timeout
-};
+// Wait for assignment to propagate in a spawned scheduled environment to prevent "Suspension not allowed" error
+[_player, _curator] spawn {
+    params ["_player", "_curator"];
+    
+    private _timeout = diag_tickTime + 12;
+    waitUntil {
+        !isNull getAssignedCuratorLogic _player || diag_tickTime > _timeout
+    };
 
-if (isNull getAssignedCuratorLogic _player) exitWith {
-    deleteVehicle _curator;
-    "Zeus assignment failed (timeout)." remoteExecCall ["systemChat", _player];
-    diag_log format ["A4A_Arsenal: assignCurator timed out for %1", name _player];
-};
+    // Dedicated servers can report getAssignedCuratorLogic with delay; double-check via allCurators owner binding.
+    private _assignedLogic = getAssignedCuratorLogic _player;
+    private _assignedViaOwner = allCurators findIf {getAssignedCuratorUnit _x isEqualTo _player} > -1;
+    if (isNull _assignedLogic && {!_assignedViaOwner}) exitWith {
+        deleteVehicle _curator;
+        "Zeus assignment failed (timeout)." remoteExecCall ["systemChat", _player];
+        diag_log format ["A4A_Arsenal: assignCurator timed out for %1 (logic=%2, ownerBinding=%3)", name _player, _assignedLogic, _assignedViaOwner];
+    };
 
-// Broadcast Zeus flag for client-side UI
-_player setVariable ["A4A_Arsenal_HasZeus", true, true];
+    // Broadcast Zeus flag for client-side UI
+    _player setVariable ["A4A_Arsenal_HasZeus", true, true];
 
-private _msg = format ["Zeus assigned to %1", name _player];
-_msg remoteExecCall ["systemChat", _player];
-diag_log format ["A4A_Arsenal: %1", _msg];
+    private _msg = format ["Zeus assigned to %1", name _player];
+    _msg remoteExecCall ["systemChat", _player];
+    diag_log format ["A4A_Arsenal: %1", _msg];
 
-// Add editable objects after delay
-[_curator] spawn {
-    params ["_cur"];
+    // Add editable objects after delay
     sleep 1;
-    if (!isNull _cur) then {
+    if (!isNull _curator) then {
         private _objs = entities [[], [], true, false];
-        _cur addCuratorEditableObjects [_objs, true];
+        _curator addCuratorEditableObjects [_objs, true];
         diag_log format ["A4A_Arsenal: Curator editable objects added (%1).", count _objs];
     };
 };

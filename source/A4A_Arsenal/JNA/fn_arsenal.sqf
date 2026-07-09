@@ -1,4 +1,4 @@
-﻿/*
+/*
     By: Jeroen Notenbomer
 
 	overwrites default arsenal script, original arsenal needs to be running first in order to initilize the display.
@@ -585,7 +585,28 @@ switch _mode do {
 
 			_ctrlList = _display displayctrl (IDC_RSCDISPLAYARSENAL_LIST + _idc);
 			_ctrlList ctrlRemoveAllEventHandlers "LBSelChanged";
-			_ctrlList ctrlAddEventHandler ["MouseButtonUp",	{uiNamespace setvariable ['jna_userInput',true];}];
+			_ctrlList ctrlAddEventHandler ["MouseButtonUp",	format ["
+				uiNamespace setvariable ['jna_userInput',true];
+				params ['_control', '_button', '_x', '_y', '_shift', '_ctrl', '_alt'];
+				private _step = 1;
+				if (_shift && _ctrl) then {
+					_step = 50;
+				} else {
+					if (_shift) then { _step = 5; };
+					if (_ctrl) then { _step = 10; };
+				};
+				private _cursel = if (ctrltype _control == 102) then {lnbCurSelRow _control} else {lbCurSel _control};
+				if (_cursel != -1) then {
+					if (%1 in [IDCS_RIGHT]) then {
+						if (_button == 0) then {
+							[ctrlParent _control, _step] call jn_fnc_arsenal;
+						};
+						if (_button == 1) then {
+							[ctrlParent _control, -_step] call jn_fnc_arsenal;
+						};
+					};
+				};
+			",_idc]];
 			_ctrlList ctrlAddEventHandler ["LBSelChanged",	format ["
 				if(uiNamespace getvariable ['jna_userInput',false])then{
 					['SelectItem',[ctrlparent (_this select 0),(_this select 0),%1]] call jn_fnc_arsenal;
@@ -2634,16 +2655,18 @@ switch _mode do {
 
 		//remove or add
 		_count = 1;
-
-		// Multipliers: Ctrl=×5, Shift=×10, Ctrl+Shift=×50
-		private _shift = uiNamespace getVariable ["arsenalShift", false];
-		private _ctrl = uiNamespace getVariable ["arsenalCtrl", false];
-		if (_ctrl && _shift) then {
-			_count = 50;
-		} else {
-			if (_ctrl) then { _count = 5; };
-			if (_shift) then { _count = 10; };
+		private _step = abs _add;
+		if (_step <= 0) then {
+			private _shift = uiNamespace getVariable ["arsenalShift", false];
+			private _ctrl = uiNamespace getVariable ["arsenalCtrl", false];
+			if (_shift && _ctrl) then {
+				_step = 50;
+			} else {
+				if (_shift) then { _step = 5; };
+				if (_ctrl) then { _step = 10; };
+			};
 		};
+		_count = _step;
 
 		private _totalCount = 0;
 
@@ -2657,15 +2680,7 @@ switch _mode do {
 				if(_index in [IDC_RSCDISPLAYARSENAL_TAB_CARGOMAG,IDC_RSCDISPLAYARSENAL_TAB_CARGOMAGALL])then{//magazines are handeld by bullet count
 					_count = getNumber (configfile >> "CfgMagazines" >> _item >> "count");
 					private _bulletCount = _count;
-					private _magsToAdd = 1;
-					private _shiftMod = uiNamespace getVariable ["arsenalShift", false];
-					private _ctrlMod = uiNamespace getVariable ["arsenalCtrl", false];
-					if (_ctrlMod && _shiftMod) then {
-						_magsToAdd = 50;
-					} else {
-						if (_ctrlMod) then { _magsToAdd = 5; };
-						if (_shiftMod) then { _magsToAdd = 10; };
-					};
+					private _magsToAdd = _step;
 					// Limit by available amount
 					if(_amount != -1)then{
 						private _maxMags = floor (_amount / _bulletCount);
@@ -3115,11 +3130,11 @@ switch _mode do {
 			case (_key == DIK_TAB): {
 			};
 
-			case (_key == DIK_LSHIFT): {
+			case (_key in [DIK_LSHIFT, DIK_RSHIFT]): {
 				uiNamespace setVariable ["arsenalShift", true];
 				_return = true;
 			};
-			case (_key == DIK_LCONTROL): {
+			case (_key in [DIK_LCONTROL, DIK_RCONTROL]): {
 				uiNamespace setVariable ["arsenalCtrl", true];
 				_return = true;
 			};
@@ -3182,11 +3197,11 @@ switch _mode do {
 		_ctrl = _this select 3;
 		_alt = _this select 4;
 		switch true do {
-			case (_key == DIK_LSHIFT): {
+			case (_key in [DIK_LSHIFT, DIK_RSHIFT]): {
 				uiNamespace setVariable ["arsenalShift", false];
 				_return = true;
 			};
-			case (_key == DIK_LCONTROL): {
+			case (_key in [DIK_LCONTROL, DIK_RCONTROL]): {
 				uiNamespace setVariable ["arsenalCtrl", false];
 				_return = true;
 			};
