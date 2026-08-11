@@ -12,9 +12,43 @@
 
 #include "defines.inc"
 
-params ["_mode", ["_params", []]];
+params [["_mode", "", [""]], ["_params", [], [[]]]];
+if (_mode isEqualTo "") exitWith {
+    diag_log "A4A_Garage: rejected malformed dispatcher call without a string mode";
+};
 
-switch (toLower _mode) do {
+private _normalizedMode = toLower _mode;
+private _garageIsRemote = isRemoteExecuted;
+private _garageRemoteOwner = if (_garageIsRemote) then {remoteExecutedOwner} else {-1};
+private _garageInternalCall = localNamespace getVariable ["A4A_Garage_InternalCall", false];
+private _garageTrustedBootstrap =
+    isServer
+    && {_garageIsRemote}
+    && {_garageRemoteOwner isEqualTo 2}
+    && {_normalizedMode isEqualTo "initserver"};
+if (
+    isServer
+    && {_garageIsRemote}
+    && {canSuspend}
+    && {!_garageInternalCall}
+    && {!_garageTrustedBootstrap}
+) exitWith {
+    diag_log format ["A4A_Garage: rejected scheduled dispatcher mode '%1' from owner %2", _mode, _garageRemoteOwner];
+};
+if (!isServer && {_garageIsRemote && {_garageRemoteOwner != 2}}) exitWith {
+    diag_log format ["A4A_Garage: rejected peer dispatcher mode '%1' from owner %2", _mode, _garageRemoteOwner];
+};
+if (
+    isServer
+    && {_garageIsRemote}
+    && {!(_normalizedMode isEqualTo "addvehicle")}
+    && {!_garageTrustedBootstrap}
+    && {!_garageInternalCall}
+) exitWith {
+    diag_log format ["A4A_Garage: rejected remote server dispatcher mode '%1' from owner %2", _mode, _garageRemoteOwner];
+};
+
+switch _normalizedMode do {
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 // SERVER: Initialize garage data for a specific garage ID
@@ -94,23 +128,74 @@ case "nextuid": {
 // SERVER: Store a vehicle into the garage
 case "addvehicle": {
     if (!isServer) exitWith {};
-    _params params ["_garageID", "_vehicle", "_clientOwner"];
+    _params params [["_garageID", "", [""]], ["_vehicle", objNull, [objNull]], ["_clientOwner", -1, [0]]];
+
+    private _requestPlayer = objNull;
+    if (_garageIsRemote) then {
+        _clientOwner = _garageRemoteOwner;
+        {
+            if (
+                isPlayer _x
+                && {!(_x isKindOf "VirtualMan_F")}
+                && {!(_x isKindOf "HeadlessClient_F")}
+                && {!((getPlayerUID _x) isEqualTo "")}
+                && {(owner _x) isEqualTo _clientOwner}
+            ) exitWith {_requestPlayer = _x};
+        } forEach allPlayers;
+    } else {
+        if (hasInterface && {!isNull player} && {isPlayer player} && {local player}) then {
+            _requestPlayer = player;
+            _clientOwner = clientOwner;
+        };
+    };
+    private _notifyRequester = {
+        params [["_message", "", [""]]];
+        if (_message isEqualTo "") exitWith {};
+        if (_clientOwner isEqualTo clientOwner && {hasInterface} && {!isDedicated}) then {
+            systemChat _message;
+        } else {
+            if (_clientOwner > 2) then {
+                ["ServerNotify", [_message]] remoteExecCall ["jn_fnc_arsenal", _clientOwner];
+            };
+        };
+    };
+    private _registry = localNamespace getVariable ["A4A_Garage_ServerRegistry", []];
+    private _registryIndex = _registry findIf {
+        !isNull (_x select 0) && {(_x select 1) isEqualTo _garageID}
+    };
+    private _garageObject = if (_registryIndex >= 0) then {(_registry select _registryIndex) select 0} else {objNull};
+    if (
+        isNull _requestPlayer
+        || {isNull _garageObject}
+        || {isNull _vehicle}
+        || {!alive _vehicle}
+        || {!alive _requestPlayer}
+        || {_requestPlayer distance _garageObject > 30}
+        || {_requestPlayer distance _vehicle > 30}
+        || {_vehicle distance _garageObject > 25}
+        || {vehicle _requestPlayer != _requestPlayer}
+    ) exitWith {
+        diag_log format ["A4A_Garage: rejected addVehicle from owner %1 for garage '%2'", _clientOwner, _garageID];
+        ["Garage request rejected by server validation."] call _notifyRequester;
+    };
 
     if (isNull _vehicle || !alive _vehicle) exitWith {
-        [format ["Garage '%1': vehicle is null or destroyed", _garageID]] remoteExecCall ["systemChat", _clientOwner];
+        [format ["Garage '%1': vehicle is null or destroyed", _garageID]] call _notifyRequester;
     };
 
     // Classify vehicle
     private _className = typeOf _vehicle;
     private _displayName = getText (configFile >> "CfgVehicles" >> _className >> "displayName");
+    localNamespace setVariable ["A4A_Garage_InternalCall", true];
     private _catIdx = ["getCatIndex", [_vehicle]] call A4A_fnc_garage;
+    localNamespace setVariable ["A4A_Garage_InternalCall", false];
     if (_catIdx < 0) exitWith {
-        [format ["Garage: cannot store this type of vehicle (%1)", _className]] remoteExecCall ["systemChat", _clientOwner];
+        [format ["Garage: cannot store this type of vehicle (%1)", _className]] call _notifyRequester;
     };
 
     // Check if crewed
     if (count crew _vehicle > 0) exitWith {
-        ["Garage: vehicle has crew, cannot store"] remoteExecCall ["systemChat", _clientOwner];
+        ["Garage: vehicle has crew, cannot store"] call _notifyRequester;
     };
 
     // Save state
@@ -123,7 +208,9 @@ case "addvehicle": {
     private _stateData = [_damage, _fuel, _vDir, _vUp, _pylons, _textures];
 
     // Get UID
+    localNamespace setVariable ["A4A_Garage_InternalCall", true];
     private _uid = ["nextUID", [_garageID]] call A4A_fnc_garage;
+    localNamespace setVariable ["A4A_Garage_InternalCall", false];
 
     // Store
     private _serverKey = format ["A4A_GRG_%1", _garageID];
@@ -137,10 +224,12 @@ case "addvehicle": {
     deleteVehicle _vehicle;
 
     // Save to profile
+    localNamespace setVariable ["A4A_Garage_InternalCall", true];
     ["save", [_garageID]] call A4A_fnc_garage;
+    localNamespace setVariable ["A4A_Garage_InternalCall", false];
 
     // Notify
-    [format ["Garage '%1': stored %2", _garageID, _displayName]] remoteExecCall ["systemChat", _clientOwner];
+    [format ["Garage '%1': stored %2", _garageID, _displayName]] call _notifyRequester;
     diag_log format ["A4A_Garage: Stored %1 (UID %2) in garage '%3' cat %4", _className, _uid, _garageID, _catIdx];
 };
 

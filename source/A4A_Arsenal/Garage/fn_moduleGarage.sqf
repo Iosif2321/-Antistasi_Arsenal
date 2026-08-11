@@ -4,6 +4,10 @@
 */
 params ["_logic", "_units", "_activated"];
 
+if (isRemoteExecuted && {remoteExecutedOwner != 2}) exitWith {
+    diag_log format ["A4A_Garage: rejected client-authored moduleGarage call from owner %1", remoteExecutedOwner];
+};
+
 if (!_activated) exitWith {};
 if (!isServer) exitWith {};
 

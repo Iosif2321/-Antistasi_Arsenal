@@ -1,0 +1,322 @@
+{
+  "schemaVersion": 1,
+  "meta": {
+    "title": "ANTISTASI ARSENAL — системный атлас",
+    "subtitle": "Авторитетный количественный запас: Legacy JNA и ACE3 Preview",
+    "description": "Карта показывает, как один Arsenal ID связывает настройку модуля, серверный запас из 27 категорий, пользовательский интерфейс, контейнерные операции, права редактора, сетевую синхронизацию и персистентность.",
+    "language": "ru",
+    "evidenceDate": "2026-08-11",
+    "generatedFor": "администраторы миссий, разработчики, тестировщики и сопровождающие",
+    "canvas": {"width": 130000, "height": 130000},
+    "center": {
+      "id": "arsenal-state",
+      "title": "ЯДРО ANTISTASI ARSENAL",
+      "subtitle": "Authoritative Quantitative Stock",
+      "summary": "Вычисляет, применяет и сохраняет авторитетное количественное состояние одного арсенала для проверенной операции.",
+      "details": [
+        "Работает в области одного Arsenal ID и серверного массива из 27 категорий.",
+        "Проверяет контекст операции, доступ и доступное количество до изменения состояния.",
+        "Передаёт отображение и физическое изменение экипировки адаптеру Legacy JNA или ACE3."
+      ],
+      "technical": [
+        "stateKey = jna_dataList_{arsenalId}",
+        "persistKey = A4A_ArsenalData_{arsenalId}",
+        "entry = [className, count]; count = -1 means infinite"
+      ],
+      "sources": ["README.md", "source/A4A_Arsenal/JNA/fn_arsenal.sqf", "source/A4A_Arsenal/functions/fn_arsenalLogic.sqf"],
+      "status": "implemented",
+      "logic": {
+        "preview": "Ядро принимает одну проверенную операцию и превращает её в новое авторитетное состояние конкретного арсенала.",
+        "purpose": "Не допустить, чтобы локальный интерфейс, другой Arsenal ID или неподтверждённый редактор произвольно изменили общий количественный запас.",
+        "input": "Тип операции, объект и Arsenal ID, текущая серверная копия запаса, политика доступа и подтверждённый контекст клиента.",
+        "steps": [
+          "Определить область одного арсенала и активного участника.",
+          "Проверить право на запрошенную операцию и классифицировать предмет.",
+          "Вычислить допустимую количественную дельту с учётом остатка и порога.",
+          "Применить дельту к безопасной копии серверного состояния.",
+          "Разослать результат нужным клиентам и сохранить состояние."
+        ],
+        "decision": "Достаточно ли подтверждённого контекста и запаса, чтобы принять операцию для этого Arsenal ID.",
+        "output": "Новая авторитетная копия количественного запаса и адресное обновление активных интерфейсов.",
+        "next": "Результат получает Legacy JNA или ACE3 Preview, а долговременную копию получает слой персистентности.",
+        "failure": "При неизвестном предмете, недостаточном запасе, пустых данных или отсутствии права операция отклоняется либо переводится в явно описанный fallback без переиспользования чужого состояния.",
+        "status": "Основное количественное ядро реализовано; живое MP-поведение подтверждается отдельно."
+      }
+    }
+  },
+  "stages": [
+    {
+      "id": "receive-operation",
+      "title": "Принять операцию",
+      "summary": "Принимает открытие, взятие, возврат, перенос cargo, редакторское изменение или закрытие.",
+      "details": ["Различает пользовательские и серверные команды.", "Сохраняет контекст объекта и клиента."],
+      "technical": ["Open / OpenACE / UpdateItemAdd / UpdateItemRemove / SAVE_JNA"],
+      "sources": ["source/A4A_Arsenal/JNA/fn_arsenal.sqf", "source/A4A_Arsenal/JNA/fn_arsenal_requestOpen.sqf", "source/A4A_Arsenal/JNA/fn_arsenal_cargoToArsenal.sqf", "source/A4A_Arsenal/functions/fn_arsenalLogic.sqf"],
+      "status": "implemented"
+    },
+    {
+      "id": "resolve-scope",
+      "title": "Разрешить область",
+      "summary": "Связывает операцию с объектом, Arsenal ID, клиентом и активной сессией.",
+      "details": ["Использует отдельные ключи состояния для каждого Arsenal ID.", "Не смешивает зрителей разных арсеналов."],
+      "technical": ["object → Arsenal ID → server key → viewer list"],
+      "sources": ["source/A4A_Arsenal/JNA/fn_arsenal_init.sqf", "source/A4A_Arsenal/JNA/fn_arsenal_requestOpen.sqf", "source/A4A_Arsenal/JNA/fn_arsenal.sqf"],
+      "status": "implemented"
+    },
+    {
+      "id": "authorize-operation",
+      "title": "Проверить право",
+      "summary": "Проверяет доступ к контейнеру, редактору и серверному сохранению.",
+      "details": ["Пустой allowlist запрещает редактирование.", "Режим может дополнительно требовать Zeus.", "Сервер повторно проверяет редакторское сохранение."],
+      "technical": ["SteamID allowlist ∧ optional Zeus", "server SAVE_JNA recheck"],
+      "sources": ["source/A4A_Arsenal/functions/fn_arsenal_canEdit.sqf", "source/A4A_Arsenal/JNA/fn_arsenal_init.sqf", "source/A4A_Arsenal/functions/fn_arsenalLogic.sqf"],
+      "status": "implemented",
+      "logic": {
+        "preview": "Этап отделяет видимую кнопку от реального права изменить общий запас.",
+        "purpose": "Не доверять только клиентскому интерфейсу при чувствительных операциях.",
+        "input": "Игрок, режим доступа, обезличенная запись allowlist и тип операции.",
+        "steps": ["Разобрать список разрешённых профилей.", "Проверить принадлежность профиля.", "При необходимости подтвердить Zeus.", "Повторить проверку на сервере перед сохранением."],
+        "decision": "Разрешена ли эта операция этому участнику.",
+        "output": "Разрешение продолжить или безопасный отказ.",
+        "next": "Разрешённая операция переходит к классификации и вычислению дельты.",
+        "failure": "Пустой список, неизвестный игрок или отсутствие требуемого Zeus приводят к отказу.",
+        "status": "Проверки реализованы; точная связность подтверждается автоматическим тестом."
+      }
+    },
+    {
+      "id": "classify-item",
+      "title": "Классифицировать предмет",
+      "summary": "Определяет одну из 27 категорий и читает текущее количество предмета.",
+      "details": ["Предпочитает конфигурацию магазина для пересекающихся классов.", "Безопасно обрабатывает отсутствующую категорию."],
+      "technical": ["item → category index", "data param [index, []]"],
+      "sources": ["source/A4A_Arsenal/JNA/fn_arsenal_itemType.sqf", "source/A4A_Arsenal/JNA/fn_arsenal_itemCount.sqf"],
+      "status": "implemented"
+    },
+    {
+      "id": "compute-delta",
+      "title": "Вычислить дельту",
+      "summary": "Вычисляет допустимое изменение запаса для взятия, возврата или переноса.",
+      "details": ["Ограничивает выдачу доступным остатком.", "Учитывает модификатор количества.", "Для ACE сравнивает cargo до и после события."],
+      "technical": ["accepted = min(realDelta, step, stock)", "finite >= threshold → infinite"],
+      "sources": ["source/A4A_Arsenal/JNA/fn_arsenal_addItem.sqf", "source/A4A_Arsenal/JNA/fn_arsenal_removeItem.sqf", "source/A4A_Arsenal/JNA/fn_arsenal_handleAction.sqf", "source/A4A_Arsenal/JNA/fn_arsenal_aceStock.sqf"],
+      "status": "prototype",
+      "logic": {
+        "preview": "Этап превращает намерение интерфейса в ограниченную количественную дельту.",
+        "purpose": "Сохранить количественный инвариант при разных интерфейсах и размерах операции.",
+        "input": "Направление, выбранный предмет, текущий запас, модификатор количества и фактическая дельта инвентаря.",
+        "steps": ["Определить направление выдачи или возврата.", "Получить фактический шаг.", "Ограничить выдачу остатком.", "Учесть бесконечное состояние и порог."],
+        "decision": "Какая часть запрошенного изменения допустима.",
+        "output": "Нулевая, конечная или бесконечная дельта для серверного состояния.",
+        "next": "Допустимая дельта применяется к безопасной копии данных.",
+        "failure": "Недоступный предмет или нулевая фактическая дельта не уменьшают запас.",
+        "status": "Legacy-путь реализован; общий ACE-путь остаётся прототипом до живого теста."
+      }
+    },
+    {
+      "id": "apply-state",
+      "title": "Применить состояние",
+      "summary": "Применяет разрешённую дельту к копии авторитетного серверного массива.",
+      "details": ["Не изменяет общий массив через небезопасный alias.", "Сохраняет границу одного Arsenal ID."],
+      "technical": ["targetData = +(server getVariable [...])"],
+      "sources": ["source/A4A_Arsenal/JNA/fn_arsenal.sqf", "source/A4A_Arsenal/functions/fn_arsenalLogic.sqf"],
+      "status": "implemented",
+      "logic": {
+        "preview": "Сервер применяет только уже разрешённую дельту к отдельной копии состояния.",
+        "purpose": "Исключить двойное изменение и преждевременную мутацию на hosted server.",
+        "input": "Arsenal ID, безопасная копия 27 категорий и принятая дельта.",
+        "steps": ["Получить массив по ключу Arsenal ID.", "Создать отдельную копию массива.", "Изменить одну категорию.", "Заменить серверное значение новой копией."],
+        "decision": "Соответствуют ли данные ожидаемой форме и области.",
+        "output": "Новая серверная версия запаса.",
+        "next": "Состояние передаётся рассылке и персистентности.",
+        "failure": "Некорректный массив или область не записываются как успешное изменение.",
+        "status": "Копирование и серверная запись реализованы; живой race-сценарий не выполнялся."
+      }
+    },
+    {
+      "id": "sync-persist",
+      "title": "Синхронизировать и сохранить",
+      "summary": "Обновляет активных зрителей, адаптеры и profileNamespace.",
+      "details": ["Рассылка ограничена зрителями одного Arsenal ID.", "Закрытие удаляет клиента из списка и сохраняет данные."],
+      "technical": ["server state → viewers + profileNamespace"],
+      "sources": ["source/A4A_Arsenal/JNA/fn_arsenal.sqf", "source/A4A_Arsenal/JNA/fn_arsenal_requestClose.sqf", "source/A4A_Arsenal/JNA/fn_arsenal_cargoToArsenal.sqf", "source/A4A_Arsenal/functions/fn_arsenalLogic.sqf"],
+      "status": "implemented"
+    }
+  ],
+  "branches": [
+    {
+      "id": "bootstrap",
+      "title": "РАЗВЁРТЫВАНИЕ И BOOTSTRAP",
+      "subtitle": "3DEN, CBA and object initialization",
+      "summary": "Создаёт область арсенала, регистрирует настройки и инициализирует синхронизированный объект.",
+      "status": "implemented",
+      "logic": {
+        "preview": "Ветка превращает синхронизированный 3DEN-объект в доступную всем нужным машинам точку арсенала.",
+        "purpose": "Задать стабильный Arsenal ID, порог и функции до пользовательских операций.",
+        "input": "3DEN-модуль, синхронизированный объект и CBA-настройки.",
+        "steps": ["Прочитать атрибуты модуля.", "Опубликовать ID и порог на объекте.", "Запустить инициализацию JNA с JIP.", "Добавить действия и одноразовые обработчики."],
+        "decision": "Готов ли объект и не был ли он уже инициализирован.",
+        "output": "Сетевой объект арсенала с зарегистрированными действиями.",
+        "next": "Объект передаёт операции пользовательскому интерфейсу и серверному состоянию.",
+        "failure": "Отсутствующий или повторный объект не создаёт второй набор действий.",
+        "status": "Bootstrap реализован; живой JIP-сценарий не выполнялся."
+      },
+      "panels": [
+        {"id":"eden-module","title":"3DEN-модуль арсенала","kind":"bootstrap","summary":"Читает Arsenal ID и Unlock Threshold у синхронизированного объекта.","details":["Обрабатывает только серверную логику модуля.","Удаляет logic-объект после раздачи инициализации."],"technical":["ArsenalID = Base","UnlockThreshold = 25"],"sources":["source/A4A_Arsenal/config.cpp","source/A4A_Arsenal/functions/fn_moduleArsenal.sqf"],"status":"implemented"},
+        {"id":"cba-settings","title":"CBA-настройки","kind":"configuration","summary":"Регистрирует доступ, права, порог и выбор Legacy или ACE UI.","details":["Имеет безопасные значения по умолчанию.","Защищён от повторной регистрации."],"technical":["ContainerAccess / EditorSteamIDs / EditAccessMode / UnlockThreshold / UIStyle"],"sources":["source/A4A_Arsenal/functions/fn_A4A_stub.sqf"],"status":"implemented"},
+        {"id":"function-registry","title":"Реестр функций","kind":"bootstrap","summary":"Объявляет A4A, JN и ACE postInit функции аддона.","details":["Разделяет A4A и JN namespaces.","Загружает ACE stock bridge после инициализации."],"technical":["CfgFunctions + Extended_PreInit_EventHandlers"],"sources":["source/A4A_Arsenal/config.cpp","source/A4A_Arsenal/CfgFunctions.hpp"],"status":"implemented"},
+        {"id":"object-init-jip","title":"Инициализация объекта и JIP","kind":"lifecycle","summary":"Публикует параметры и запускает JNA init на всех машинах с JIP-ключом объекта.","details":["Объект хранит ID и порог публично.","Клиенты получают действия после подключения."],"technical":["remoteExec target 0, JIP = object"],"sources":["source/A4A_Arsenal/functions/fn_arsenalInit.sqf","source/A4A_Arsenal/JNA/fn_arsenal_init.sqf"],"status":"implemented"},
+        {"id":"duplicate-guards","title":"Одноразовые guards","kind":"guard","summary":"Не допускает повторную регистрацию настроек, объекта и ACE handlers.","details":["Использует отдельные флаги для каждого уровня.","Повторный вызов завершается без новых действий."],"technical":["CBASettingsRegistered / Arsenal_Initialized / handlersRegistered"],"sources":["source/A4A_Arsenal/functions/fn_A4A_stub.sqf","source/A4A_Arsenal/JNA/fn_arsenal_init.sqf","source/A4A_Arsenal/JNA/fn_arsenal_aceStock.sqf"],"status":"implemented"}
+      ]
+    },
+    {
+      "id": "stock-model",
+      "title": "МОДЕЛЬ ЗАПАСА",
+      "subtitle": "27 categories and quantitative rules",
+      "summary": "Классифицирует предметы и хранит конечное, пустое или бесконечное количество.",
+      "status": "implemented",
+      "panels": [
+        {"id":"data-shape","title":"Форма данных","kind":"data","summary":"Хранит 27 категорий с парами класса и количества.","details":["Порядок категорий является контрактом UI.","Пустая категория представлена пустым массивом."],"technical":["data.length = 27","entry = [className, count]"],"sources":["README.md","source/A4A_Arsenal/JNA/fn_arsenal_init.sqf","source/A4A_Arsenal/JNA/fn_arsenal.sqf"],"status":"implemented"},
+        {"id":"infinite-threshold","title":"Бесконечность и порог","kind":"rules","summary":"Переводит накопленный предмет в бесконечный запас при достижении порога.","details":["Значение -1 означает бесконечность.","Порог задаётся модулем или CBA."],"technical":["count = -1 → unlimited","count >= threshold → -1"],"sources":["README.md","source/A4A_Arsenal/functions/fn_arsenalLogic.sqf","source/A4A_Arsenal/JNA/fn_arsenal_addItem.sqf"],"status":"implemented","logic":{"preview":"Правило отделяет конечный склад от разблокированного предмета.","purpose":"Сделать накопление предметов управляемым правилом миссии.","input":"Текущее количество, добавляемая дельта и порог арсенала.","steps":["Сложить конечное количество.","Сравнить результат с порогом.","При достижении порога записать бесконечный маркер."],"decision":"Должен ли предмет остаться конечным или стать бесконечным.","output":"Новое количество либо -1.","next":"Результат сохраняется и рассылается интерфейсам.","failure":"Неизвестный предмет не становится бесконечным автоматически.","status":"Правило реализовано; игровой баланс не оценивается."}},
+        {"id":"item-classification","title":"Классификация предмета","kind":"algorithm","summary":"Выбирает категорию по конфигурации CfgWeapons, CfgMagazines, CfgVehicles и специальным признакам.","details":["Использует безопасный доступ к массиву категории.","Предпочитает магазин при пересечении классов."],"technical":["itemType(item) → index","data param [index, []]"],"sources":["source/A4A_Arsenal/JNA/fn_arsenal_itemType.sqf","tests/verify_arsenal_regressions.ps1"],"status":"verified"},
+        {"id":"stock-helpers","title":"Операции с массивами","kind":"algorithm","summary":"Считает, ищет, добавляет и удаляет количественные записи.","details":["Сохраняет сортируемую пару класс/количество.","Обрабатывает отсутствие записи без выхода за границы."],"technical":["itemCount / inList / addToArray / removeFromArray"],"sources":["source/A4A_Arsenal/JNA/fn_arsenal_itemCount.sqf","source/A4A_Arsenal/JNA/fn_arsenal_inList.sqf","source/A4A_Arsenal/JNA/fn_arsenal_addToArray.sqf","source/A4A_Arsenal/JNA/fn_arsenal_removeFromArray.sqf"],"status":"implemented"},
+        {"id":"special-configs","title":"Специальные категории","kind":"adapter","summary":"Учитывает ACE explosives, TFAR/ACRE radios и ACE comms.","details":["Радио может переноситься в misc virtual items.","ACE-признаки не подменяют основную категорию без проверки."],"technical":["ace_explosives_placeable","ace_arsenal_isComms","simulation = ItemRadio"],"sources":["source/A4A_Arsenal/JNA/fn_arsenal_itemType.sqf","source/A4A_Arsenal/JNA/fn_arsenal_aceStock.sqf"],"status":"prototype"}
+      ]
+    },
+    {
+      "id": "server-state",
+      "title": "СЕРВЕРНОЕ СОСТОЯНИЕ",
+      "subtitle": "Authority, copies and persistence",
+      "summary": "Владеет количественным состоянием каждого Arsenal ID и его долговременной копией.",
+      "status": "implemented",
+      "panels": [
+        {"id":"keyed-state","title":"Состояние по Arsenal ID","kind":"state","summary":"Разделяет серверные массивы и viewer lists по стабильному ID.","details":["Каждый объект разрешает собственный ключ.","Значение Base используется как fallback."],"technical":["jna_dataList_{id}","jna_playersInArsenal_{id}"],"sources":["source/A4A_Arsenal/JNA/fn_arsenal_init.sqf","source/A4A_Arsenal/JNA/fn_arsenal.sqf"],"status":"implemented"},
+        {"id":"defensive-copy","title":"Защитная копия","kind":"guard","summary":"Копирует серверный массив до изменения, чтобы не мутировать общий alias.","details":["Hosted server не применяет дельту дважды.","Рассылка получает уже новую копию."],"technical":["targetData = +(server getVariable [...])"],"sources":["source/A4A_Arsenal/JNA/fn_arsenal.sqf","source/A4A_Arsenal/JNA/fn_arsenal_addItem.sqf","source/A4A_Arsenal/JNA/fn_arsenal_removeItem.sqf","tests/verify_arsenal_regressions.ps1"],"status":"verified","logic":{"preview":"Изменение выполняется на копии, а не на общем массиве по ссылке.","purpose":"Исключить скрытое предварительное изменение и двойной учёт.","input":"Текущая серверная версия и одна дельта.","steps":["Скопировать массив.","Изменить копию.","Записать копию как новую версию."],"decision":"Соответствует ли копия ожидаемому Arsenal ID.","output":"Новая отдельная версия данных.","next":"Версия передаётся сохранению и viewer fan-out.","failure":"Если копию нельзя получить, операция не должна использовать локальный stale-массив.","status":"Статический regression gate PASS; живой MP-путь не запускался."}},
+        {"id":"viewer-sessions","title":"Активные зрители","kind":"session","summary":"Отслеживает clientOwner пользователей, открывших конкретный арсенал.","details":["Открытие добавляет клиента.","Закрытие удаляет клиента."],"technical":["open → pushBackUnique","close → subtract clientOwner"],"sources":["source/A4A_Arsenal/JNA/fn_arsenal_requestOpen.sqf","source/A4A_Arsenal/JNA/fn_arsenal_requestClose.sqf"],"status":"implemented"},
+        {"id":"persistence","title":"Персистентность","kind":"storage","summary":"Загружает и сохраняет данные в profileNamespace по Arsenal ID.","details":["Инициализация загружает сохранённый массив либо 27 пустых категорий.","Закрытие и редакторский save обновляют долговременную копию."],"technical":["A4A_ArsenalData_{id}","saveProfileNamespace"],"sources":["source/A4A_Arsenal/JNA/fn_arsenal_init.sqf","source/A4A_Arsenal/JNA/fn_arsenal.sqf","source/A4A_Arsenal/functions/fn_arsenalLogic.sqf"],"status":"implemented","logic":{"preview":"Слой связывает серверную версию одного арсенала с сохранением между сессиями.","purpose":"Не потерять количественный запас и не смешать разные Arsenal ID.","input":"Проверенный ID и массив из 27 категорий.","steps":["Сформировать ключ.","Проверить форму загруженных данных.","Обновить profileNamespace.","Вызвать сохранение профиля."],"decision":"Можно ли считать массив валидной полной версией.","output":"Долговременная копия состояния.","next":"Следующая инициализация загружает эту копию.","failure":"Неверная форма не заменяет ожидаемые 27 категорий успешным сохранением.","status":"Код существует; restart/reopen в живой Arma 3 не выполнялся."}},
+        {"id":"hosted-server","title":"Hosted-server путь","kind":"compatibility","summary":"Различает локальный ответ сервера и remoteExec для отдельного клиента.","details":["При локальном открытии используется копия данных.","Клиентские add/remove не предизменяют серверное значение.","Статический regression gate прошёл; игровая hosted-сессия остаётся NOT RUN."],"technical":["clientOwner == 2 → local call","jna_dataList = +data"],"sources":["source/A4A_Arsenal/JNA/fn_arsenal_requestOpen.sqf","source/A4A_Arsenal/JNA/fn_arsenal_addItem.sqf","source/A4A_Arsenal/JNA/fn_arsenal_removeItem.sqf","tests/verify_arsenal_regressions.ps1"],"status":"verified"}
+      ]
+    },
+    {
+      "id": "legacy-ui",
+      "title": "LEGACY JNA UI",
+      "subtitle": "Loadout, cargo and stock controls",
+      "summary": "Показывает ограниченный арсенал и преобразует действия игрока в количественные операции.",
+      "status": "implemented",
+      "panels": [
+        {"id":"action-open","title":"Действие открытия","kind":"interface","summary":"Сохраняет исходный инвентарь, запускает loading screen и запрашивает серверные данные.","details":["Запоминает магазины с боеприпасами.","Сохраняет attachments контейнеров."],"technical":["jn_fnc_arsenal_handleAction → requestOpen"],"sources":["source/A4A_Arsenal/JNA/fn_arsenal_handleAction.sqf"],"status":"implemented","logic":{"preview":"Действие готовит обратимый снимок игрока до открытия UI.","purpose":"Позволить UI изменять экипировку, сохраняя возможность корректного закрытия.","input":"Игрок и объект арсенала.","steps":["Проверить инициализацию.","Сохранить магазины и attachments.","Выбрать UI style.","Запросить данные у сервера."],"decision":"Можно ли открыть Legacy или ACE адаптер.","output":"Запрос с clientOwner, объектом и стилем UI.","next":"Сеть передаёт запрос серверному состоянию.","failure":"Ошибка загрузки завершает loading screen и показывает явное сообщение.","status":"Путь реализован; живой UI в этой задаче не запускался."}},
+        {"id":"open-data","title":"Доставка данных UI","kind":"data","summary":"Получает копию серверного массива и открывает Legacy JNA интерфейс.","details":["Hosted server вызывает UI локально.","Удалённый клиент получает remoteExecCall."],"technical":["mode = Open","jna_dataList = +data"],"sources":["source/A4A_Arsenal/JNA/fn_arsenal_requestOpen.sqf","source/A4A_Arsenal/JNA/fn_arsenal.sqf"],"status":"implemented"},
+        {"id":"take-return","title":"Взятие и возврат","kind":"workflow","summary":"Связывает физическое изменение экипировки с уменьшением или увеличением запаса.","details":["Конечный запас уменьшается при выдаче.","Возврат добавляет предмет и может разблокировать бесконечность."],"technical":["removeItem / addItem"],"sources":["source/A4A_Arsenal/JNA/fn_arsenal.sqf","source/A4A_Arsenal/JNA/fn_arsenal_addItem.sqf","source/A4A_Arsenal/JNA/fn_arsenal_removeItem.sqf"],"status":"implemented","logic":{"preview":"Legacy UI учитывает предмет только вместе с соответствующей количественной операцией.","purpose":"Синхронизировать физическую экипировку и общий склад.","input":"Выбранный класс, направление и количество.","steps":["Определить категорию.","Проверить доступный остаток.","Изменить экипировку.","Отправить серверную дельту."],"decision":"Разрешено ли выдать запрошенное количество.","output":"Новая экипировка и обновлённый запас.","next":"Сервер рассылает результат другим зрителям.","failure":"Нулевой запас не превращается в успешную выдачу.","status":"Код реализован; живое одновременное использование не доказано."}},
+        {"id":"quantity-modifiers","title":"Модификаторы количества","kind":"controls","summary":"Использует обычный, Shift и Ctrl шаг для массовых операций.","details":["Состояние клавиш хранится в uiNamespace.","Фактический шаг ограничивается остатком."],"technical":["default / Shift / Ctrl"],"sources":["source/A4A_Arsenal/JNA/fn_arsenal.sqf","source/A4A_Arsenal/JNA/fn_arsenal_handleAction.sqf"],"status":"implemented"},
+        {"id":"close-restore","title":"Закрытие и восстановление","kind":"lifecycle","summary":"Закрывает viewer session и восстанавливает сохранённые особенности loadout.","details":["Вызывает requestClose для текущего объекта.","Очищает UI session state."],"technical":["requestClose + RestoreTFAR"],"sources":["source/A4A_Arsenal/JNA/fn_arsenal_init.sqf","source/A4A_Arsenal/JNA/fn_arsenal_requestClose.sqf"],"status":"implemented"},
+        {"id":"failure-paths","title":"Ошибки Legacy UI","kind":"failure","summary":"Завершает loading screen при пустых или не полученных данных и показывает причину.","details":["Не оставляет бесконечный loading screen.","Пустой арсенал не маскируется как готовый."],"technical":["endLoadingScreen + hint/systemChat"],"sources":["source/A4A_Arsenal/JNA/fn_arsenal.sqf","source/A4A_Arsenal/JNA/fn_arsenal_handleAction.sqf"],"status":"implemented"}
+      ]
+    },
+    {
+      "id": "ace-preview",
+      "title": "ACE3 PREVIEW",
+      "subtitle": "Experimental JNA stock bridge",
+      "summary": "Открывает ACE Arsenal как экспериментальный адаптер над тем же JNA-запасом.",
+      "status": "prototype",
+      "logic": {
+        "preview": "Ветка зеркалирует количественный JNA-запас в ACE virtual items и возвращает изменения в авторитетную модель.",
+        "purpose": "Дать альтернативный ACE-интерфейс без создания второго независимого склада.",
+        "input": "Копия JNA data list, объект арсенала и ACE UI events.",
+        "steps": ["Инициализировать virtual items.", "Сохранить cargo snapshot.", "Открыть ACE display.", "Вычислять реальные дельты событий.", "Завершить viewer session при закрытии."],
+        "decision": "Доступен ли ACE и допустима ли фактическая дельта.",
+        "output": "Синхронизированный ACE UI и JNA stock update.",
+        "next": "Серверное состояние рассылает принятую версию.",
+        "failure": "При отсутствии ACE выполняется явный fallback на Legacy; неполная дельта не списывает запас.",
+        "status": "Код присутствует в текущем worktree, но двухклиентский живой сценарий не выполнялся."
+      },
+      "panels": [
+        {"id":"ui-selection","title":"Выбор Legacy или ACE","kind":"configuration","summary":"CBA setting передаёт стиль серверу, который выбирает Open или OpenACE.","details":["ACE выбирается только при доступной функции openBox.","Иначе используется Legacy fallback."],"technical":["UIStyle 0 = Legacy; 1 = ACE"],"sources":["source/A4A_Arsenal/functions/fn_A4A_stub.sqf","source/A4A_Arsenal/JNA/fn_arsenal_handleAction.sqf","source/A4A_Arsenal/JNA/fn_arsenal_requestOpen.sqf","source/A4A_Arsenal/JNA/fn_arsenal.sqf"],"status":"prototype"},
+        {"id":"virtual-items","title":"Зеркало virtual items","kind":"adapter","summary":"Добавляет доступные JNA-классы в ACE virtual inventory и синхронизирует изменения.","details":["Конечный и бесконечный запас отображаются раздельно.","Нулевой запас удаляется из virtual items."],"technical":["aceSyncVirtualItems(item, stock)"],"sources":["source/A4A_Arsenal/JNA/fn_arsenal_aceStock.sqf"],"status":"prototype"},
+        {"id":"session-lifecycle","title":"Жизненный цикл ACE","kind":"lifecycle","summary":"Регистрирует CBA events, начинает stock session и завершает её при закрытии display.","details":["Handlers регистрируются один раз.","EndSession вызывает requestClose."],"technical":["BeginSession → display events → EndSession"],"sources":["source/A4A_Arsenal/JNA/fn_arsenal_aceStock.sqf"],"status":"prototype"},
+        {"id":"cargo-delta","title":"Фактическая cargo-дельта","kind":"algorithm","summary":"Сравнивает снимок до события с текущим инвентарём после мутации ACE.","details":["ACE изменяет cargo до события.","Списание основано на реальной, а не запрошенной дельте."],"technical":["realDelta = countAfter - countBefore"],"sources":["source/A4A_Arsenal/JNA/fn_arsenal_aceStock.sqf"],"status":"prototype","logic":{"preview":"Bridge восстанавливает реальную величину изменения из двух снимков cargo.","purpose":"Не списать предмет, который ACE фактически не добавил, и не принять возврат без удаления.","input":"Снимок контейнеров игрока до события и текущее состояние после события.","steps":["Посчитать предмет до события.","Посчитать предмет после события.","Вычесть значения.","Ограничить дельту шагом и остатком.","Передать принятую дельту JNA stock."],"decision":"Соответствует ли направление события реальному изменению.","output":"Подтверждённая фактическая дельта.","next":"Stock model обновляет авторитетное количество.","failure":"Нулевая или противоположная дельта завершается сообщением без изменения запаса.","status":"Алгоритм реализован, но живой ACE cargo event не проверялся в этой задаче."}},
+        {"id":"equipped-items","title":"Синхронизация экипировки","kind":"adapter","summary":"Сравнивает предыдущие и текущие ACE slots и возвращает/списывает заменённые классы.","details":["Старый предмет возвращается в запас.","Новый предмет списывается только при доступности."],"technical":["previousItems[slot] ↔ currentItems[slot]"],"sources":["source/A4A_Arsenal/JNA/fn_arsenal_aceStock.sqf"],"status":"prototype"},
+        {"id":"category-fallback","title":"Категории и fallback","kind":"compatibility","summary":"Скрывает неподходящие ACE tabs, переносит radios и возвращается к Legacy при отсутствии ACE.","details":["Face, voice и insignia не участвуют в JNA stock.","ACRE spare radios перемещаются в misc items."],"technical":["hidden tabs + radio relocation + Legacy fallback"],"sources":["source/A4A_Arsenal/JNA/fn_arsenal_aceStock.sqf","source/A4A_Arsenal/JNA/fn_arsenal_itemType.sqf","source/A4A_Arsenal/JNA/fn_arsenal.sqf"],"status":"prototype"}
+      ]
+    },
+    {
+      "id": "containers",
+      "title": "КОНТЕЙНЕРЫ И ТЕХНИКА",
+      "subtitle": "Cargo selection and transfer",
+      "summary": "Извлекает cargo из выбранного объекта и добавляет классифицированные предметы в запас.",
+      "status": "implemented",
+      "panels": [
+        {"id":"select-nearby","title":"Выбор ближайшего объекта","kind":"interface","summary":"Позволяет выбрать доступный контейнер или технику рядом с арсеналом.","details":["Учитывает дистанцию и состояние объекта.","Действие скрывается внутри техники игрока."],"technical":["distance < 5; vehicle player == player"],"sources":["source/A4A_Arsenal/JNA/fn_arsenal_init.sqf"],"status":"implemented"},
+        {"id":"access-policy","title":"Политика контейнеров","kind":"authorization","summary":"Разрешает контейнеры всем, только редакторам или никому.","details":["Режим editor использует общий canEdit.","Disabled удаляет путь из пользовательского доступа."],"technical":["ContainerAccess = Everyone / Editors / Disabled"],"sources":["source/A4A_Arsenal/functions/fn_A4A_stub.sqf","source/A4A_Arsenal/JNA/fn_arsenal_init.sqf","source/A4A_Arsenal/functions/fn_arsenal_canEdit.sqf"],"status":"implemented"},
+        {"id":"cargo-extract","title":"Извлечение cargo","kind":"pipeline","summary":"Преобразует физическое содержимое объекта в категории и количества JNA.","details":["Контейнерный weapon cargo не разбирается через weaponsItemsCargo.","Экипированный инвентарь игрока может учитывать weaponsItems."],"technical":["cargo → category arrays","container attachments stay intact"],"sources":["source/A4A_Arsenal/JNA/fn_arsenal_cargoToArray.sqf","tests/verify_arsenal_regressions.ps1"],"status":"verified","logic":{"preview":"Pipeline считает переносимые классы, не разрушая attachments и загруженные магазины контейнерного оружия.","purpose":"Сохранить физический смысл cargo при преобразовании в количественный склад.","input":"Выбранный контейнер или инвентарь игрока.","steps":["Прочитать cargo по типам.","Классифицировать каждый класс.","Суммировать количества.","Не разбирать контейнерное оружие на внутренние элементы."],"decision":"Какие классы допустимы для количественного арсенала.","output":"Массив добавлений по категориям.","next":"Серверный cargo transfer применяет добавления.","failure":"Неизвестные классы не создают некорректную категорию.","status":"Статический regression gate PASS; реальный игровой контейнер не проверялся."}},
+        {"id":"cargo-transfer","title":"Перенос в арсенал","kind":"workflow","summary":"На сервере добавляет извлечённые количества и уведомляет активных зрителей.","details":["Определяет Arsenal ID целевого объекта.","Каждое добавление проходит количественный helper."],"technical":["cargoToArray → addItem → viewer update"],"sources":["source/A4A_Arsenal/JNA/fn_arsenal_cargoToArsenal.sqf"],"status":"implemented"},
+        {"id":"transfer-guards","title":"Guards переноса","kind":"guard","summary":"Не допускает параллельную обработку одного cargo и сбрасывает busy flag после завершения.","details":["Busy flag хранится на объекте.","Viewer fan-out ограничен Arsenal ID."],"technical":["A4A_JNA_cargoToArsenal_busy"],"sources":["source/A4A_Arsenal/JNA/fn_arsenal_cargoToArsenal.sqf"],"status":"implemented"},
+        {"id":"vehicle-boundary","title":"Граница vehicle arsenal","kind":"boundary","summary":"Исходники vehicle arsenal существуют, но не являются основной поддерживаемой функцией аддона.","details":["README называет Garage экспериментальным направлением.","Наличие кода не доказывает готовый пользовательский сценарий."],"technical":["experimental source path"],"sources":["README.md","source/A4A_Arsenal/JNA/fn_vehicleArsenal.sqf"],"status":"prototype"}
+      ]
+    },
+    {
+      "id": "editor",
+      "title": "РЕДАКТОР И ДОСТУП",
+      "subtitle": "SteamID policy, Zeus and SAVE_JNA",
+      "summary": "Разрешает уполномоченному редактору изменять, импортировать и сохранять количественные данные.",
+      "status": "implemented",
+      "panels": [
+        {"id":"editor-access","title":"Политика редактора","kind":"identity","summary":"Проверяет allowlist профилей и опциональное требование Zeus.","details":["Пустой список запрещает редактирование всем.","Legacy mission variable используется только как fallback."],"technical":["SteamID only / SteamID + Zeus"],"sources":["source/A4A_Arsenal/functions/fn_arsenal_canEdit.sqf","tests/verify_arsenal_permissions.ps1"],"status":"verified","logic":{"preview":"Политика связывает участника с правом редактирования без публикации реальных ID.","purpose":"Ограничить изменение общего склада явным списком и ролью.","input":"Текущий игрок, строка allowlist и режим доступа.","steps":["Разобрать список.","Проверить профиль.","При необходимости проверить Zeus."],"decision":"Имеет ли участник право редактировать.","output":"Логическое разрешение.","next":"Разрешение открывает UI и сопровождает save.","failure":"Пустой или несовпадающий список возвращает false.","status":"Статический permission gate PASS; игровая авторизация не запускалась."}},
+        {"id":"editor-ui","title":"Интерфейс редактора","kind":"interface","summary":"Показывает категории и позволяет менять конечные или бесконечные количества.","details":["Сохраняет локальный набор изменённых значений.","Не открывается без canEdit."],"technical":["EditorOpen / EditorModify / EditorSave"],"sources":["source/A4A_Arsenal/JNA/fn_arsenal.sqf"],"status":"implemented"},
+        {"id":"import-export","title":"Импорт и экспорт","kind":"data","summary":"Создаёт читаемый отчёт и импортируемый SQF-блок из 27 категорий.","details":["Данные ограничены маркерами BEGIN/END DATA.","Ручной экспорт требует права редактора."],"technical":["// === BEGIN DATA === ... // === END DATA ==="],"sources":["README.md","source/A4A_Arsenal/JNA/fn_arsenal.sqf"],"status":"implemented"},
+        {"id":"editor-save","title":"Серверный SAVE_JNA","kind":"authorization","summary":"Повторно проверяет игрока и форму 27 категорий перед серверной записью.","details":["Клиентское разрешение не считается достаточным.","Неверная форма данных отклоняется."],"technical":["canEdit(player) ∧ count(data) = 27"],"sources":["source/A4A_Arsenal/JNA/fn_arsenal.sqf","source/A4A_Arsenal/functions/fn_arsenalLogic.sqf","tests/verify_arsenal_permissions.ps1"],"status":"verified","logic":{"preview":"Сохранение проходит отдельную серверную проверку личности и формы данных.","purpose":"Не доверять изменённому клиенту или устаревшему UI.","input":"Игрок, Arsenal ID и кандидат из 27 категорий.","steps":["Разрешить объект игрока.","Повторить canEdit.","Проверить 27 категорий.","Записать server и profileNamespace."],"decision":"Можно ли принять эту полную версию данных.","output":"Новая сохранённая версия либо отказ.","next":"Активные потребители получают авторитетную версию.","failure":"Неизвестный игрок, отказ доступа или неверная длина не сохраняются.","status":"Статический permission gate PASS; сохранение в живой Arma 3 не запускалось."}},
+        {"id":"zeus-path","title":"Путь Zeus","kind":"identity","summary":"Определяет существующее право Zeus и может запросить серверное назначение curator.","details":["Использует внутренний флаг и assigned curator logic.","Не публикует реальные идентификаторы в атласе."],"technical":["arsenal_isZeus / assignZeus / inputHandler"],"sources":["source/A4A_Arsenal/functions/fn_arsenal_isZeus.sqf","source/A4A_Arsenal/functions/fn_assignZeus.sqf","source/A4A_Arsenal/functions/fn_inputHandler.sqf"],"status":"implemented"}
+      ]
+    },
+    {
+      "id": "network",
+      "title": "СЕТЬ И ГРАНИЦЫ ДОВЕРИЯ",
+      "subtitle": "remoteExec, viewers and JIP",
+      "summary": "Переносит запросы к серверу и адресные обновления обратно клиентам.",
+      "status": "implemented",
+      "panels": [
+        {"id":"remote-whitelist","title":"CfgRemoteExec whitelist","kind":"security","summary":"Ограничивает удалённые функции и их разрешённые цели.","details":["Серверные запросы имеют allowedTargets 2.","Клиентские/UI функции разрешены отдельно."],"technical":["CfgRemoteExec mode = 1"],"sources":["source/A4A_Arsenal/config.cpp"],"status":"implemented","logic":{"preview":"Whitelist задаёт допустимую форму сетевого вызова, но не заменяет проверку данных внутри функции.","purpose":"Сократить поверхность удалённого выполнения.","input":"Имя функции и целевая машина.","steps":["Сопоставить функцию whitelist.","Проверить allowedTargets.","Передать управление функции с её внутренними guards."],"decision":"Разрешён ли этот маршрут конфигурацией.","output":"Допущенный вызов либо блокировка движком.","next":"Серверная функция повторно проверяет контекст.","failure":"Неописанный маршрут не должен считаться рабочим.","status":"Конфигурация существует; live dedicated route не проверялся."}},
+        {"id":"open-close","title":"Открытие и закрытие","kind":"protocol","summary":"Передаёт clientOwner, объект, стиль UI и завершение viewer session.","details":["Hosted server получает локальный callback.","Удалённый клиент получает адресный remoteExecCall."],"technical":["requestOpen(clientOwner, object, uiStyle)","requestClose(clientOwner, object)"],"sources":["source/A4A_Arsenal/JNA/fn_arsenal_requestOpen.sqf","source/A4A_Arsenal/JNA/fn_arsenal_requestClose.sqf"],"status":"implemented"},
+        {"id":"item-updates","title":"Обновления предметов","kind":"protocol","summary":"Передаёт add/remove команды серверному обработчику и адресным зрителям.","details":["Команда содержит category, class, amount и Arsenal ID.","Сервер изменяет копию своего состояния."],"technical":["UpdateItemAdd / UpdateItemRemove"],"sources":["source/A4A_Arsenal/JNA/fn_arsenal.sqf","source/A4A_Arsenal/JNA/fn_arsenal_addItem.sqf","source/A4A_Arsenal/JNA/fn_arsenal_removeItem.sqf"],"status":"implemented"},
+        {"id":"viewer-fanout","title":"Рассылка зрителям","kind":"routing","summary":"Отправляет обновление только клиентам, открывшим тот же Arsenal ID.","details":["Исключает инициатора, когда он уже применил локальное UI-изменение.","Учитывает hosted server owner."],"technical":["playersInArsenal_{id} - sender"],"sources":["source/A4A_Arsenal/JNA/fn_arsenal.sqf","source/A4A_Arsenal/JNA/fn_arsenal_cargoToArsenal.sqf"],"status":"implemented"},
+        {"id":"init-jip","title":"Инициализация JIP","kind":"lifecycle","summary":"Публикует параметры объекта и сохраняет вызов инициализации для подключившихся клиентов.","details":["JIP-ключ связан с объектом.","Повторный клиентский init защищён флагом объекта."],"technical":["remoteExec target 0, JIP object"],"sources":["source/A4A_Arsenal/functions/fn_moduleArsenal.sqf","source/A4A_Arsenal/functions/fn_arsenalInit.sqf","source/A4A_Arsenal/JNA/fn_arsenal_init.sqf"],"status":"implemented"}
+      ]
+    },
+    {
+      "id": "verification",
+      "title": "ПРОВЕРКИ И ГРАНИЦЫ ДОКАЗАТЕЛЬСТВ",
+      "subtitle": "Automated proof versus live runtime",
+      "summary": "Различает существующий код, выполненные автоматические проверки и неподтверждённые игровые сценарии.",
+      "status": "not_run",
+      "logic": {
+        "preview": "Ветка не позволяет превратить локальный тест или исходник в ложное заявление о живой MP-работе.",
+        "purpose": "Показать читателю точную силу каждого доказательства.",
+        "input": "Исходники, результаты тестов и перечень обязательных live scenarios.",
+        "steps": ["Запустить статические gates.", "Отметить проверяемые утверждения verified.", "Сохранить ACE и MP gates как not_run.", "Описать конкретный будущий сценарий."],
+        "decision": "Какой статус доказательств допустим для каждого утверждения.",
+        "output": "Разделённые implemented, verified, prototype и not_run статусы.",
+        "next": "Сопровождающий использует live gates для следующего цикла проверки.",
+        "failure": "Отсутствие живого теста не скрывается и не заменяется статическим выводом.",
+        "status": "Статусы обновляются только после фактического выполнения gates."
+      },
+      "panels": [
+        {"id":"permission-tests","title":"Permission regression gate","kind":"verification","summary":"Проверяет регистрацию canEdit, клиентские editor paths, серверный save и CBA-настройки.","details":["Проверяет пустой allowlist denial.","Проверяет SteamID-only и SteamID-plus-Zeus режимы.","PASS 2026-08-11 в текущем worktree."],"technical":["tests/verify_arsenal_permissions.ps1"],"sources":["tests/verify_arsenal_permissions.ps1"],"status":"verified","logic":{"preview":"Статический gate проверяет связность разрешений в текущих файлах.","purpose":"Поймать обход canEdit при изменении UI или сервера.","input":"Текущие config и SQF-файлы.","steps":["Прочитать файлы.","Сопоставить обязательные regex-инварианты.","Завершиться ошибкой при пропуске."],"decision":"Все ли обязательные permission paths связаны с canEdit.","output":"PASS или список нарушенных инвариантов.","next":"PASS повышает только узкие wiring-утверждения.","failure":"FAIL блокирует статус verified и требует исправления runtime-кода вне scope атласа.","status":"PASS 2026-08-11: Arsenal edit permission checks are wired."}},
+        {"id":"regression-tests","title":"Behavior regression gate","kind":"verification","summary":"Проверяет cargo extraction, itemType, CBA, hosted copy и безопасные server updates.","details":["Не является живым тестом Arma 3.","Проверяет текущий незакоммиченный код.","PASS 2026-08-11 в текущем worktree."],"technical":["tests/verify_arsenal_regressions.ps1"],"sources":["tests/verify_arsenal_regressions.ps1"],"status":"verified","logic":{"preview":"Статический gate фиксирует узкие регрессии количественной логики.","purpose":"Не допустить возврат известных ошибок при документировании текущего worktree.","input":"Текущие SQF и config-файлы.","steps":["Проверить cargo contract.","Проверить itemType guards.","Проверить CBA init.","Проверить hosted defensive copy."],"decision":"Сохраняются ли перечисленные структурные инварианты.","output":"PASS либо точное имя нарушенного check.","next":"PASS повышает только соответствующие узкие панели.","failure":"FAIL останавливает генерацию доказательного статуса.","status":"PASS 2026-08-11: cargo, itemType and CBA regression invariants are covered."}},
+        {"id":"ace-live-gate","title":"Живой ACE3 proof gate","kind":"live-test","summary":"Требует двух клиентов, finite/infinite stock, take/return, reconnect и корректное закрытие.","details":["Должен наблюдать реальный ACE cargoChanged.","Должен проверить отсутствие двойного списания."],"technical":["2 clients + ACE3 + hosted/dedicated session"],"sources":["source/A4A_Arsenal/JNA/fn_arsenal_aceStock.sqf"],"status":"not_run","logic":{"preview":"Только этот сценарий может подтвердить ACE bridge как живую систему, а не набор функций.","purpose":"Проверить порядок реальных ACE events и серверную синхронизацию.","input":"Arma 3, ACE3, два клиента и конечный тестовый запас.","steps":["Открыть ACE UI на двух клиентах.","Взять и вернуть предметы разными шагами.","Проверить finite и infinite режим.","Переподключиться.","Закрыть UI и проверить viewer cleanup."],"decision":"Совпадает ли физический инвентарь с одним серверным списанием.","output":"Живое доказательство либо воспроизводимый failure trace.","next":"Только PASS позволяет пересмотреть prototype статус.","failure":"Без выполнения статус остаётся not_run.","status":"NOT_RUN: игровой сценарий не запускался."}},
+        {"id":"multiplayer-persistence-gate","title":"MP persistence proof gate","kind":"live-test","summary":"Требует hosted и dedicated reopen/restart для двух разных Arsenal ID.","details":["Проверяет отсутствие смешивания IDs.","Проверяет сохранение после закрытия и рестарта."],"technical":["hosted + dedicated + restart + 2 Arsenal IDs"],"sources":["README.md","source/A4A_Arsenal/JNA/fn_arsenal_requestClose.sqf"],"status":"not_run","logic":{"preview":"Сценарий проверяет реальную долговечность и разделение арсеналов.","purpose":"Подтвердить поведение profileNamespace и viewer sessions в игре.","input":"Два Arsenal ID, hosted server и dedicated server.","steps":["Заполнить разные запасы.","Закрыть интерфейс арсенала.","Перезапустить сессию.","Открыть каждый ID.","Сравнить данные и viewer lists."],"decision":"Сохранились ли данные раздельно и без stale viewers.","output":"Живой verdict по персистентности.","next":"PASS повышает только MP persistence claims.","failure":"Без выполнения статус остаётся not_run.","status":"NOT_RUN: Arma 3 restart/reopen не выполнялся."}},
+        {"id":"garage-boundary","title":"Экспериментальная Garage-граница","kind":"boundary","summary":"Garage-код присутствует, но README не считает его поддерживаемой рабочей функцией.","details":["Не включается в ядро арсенала.","Не получает статус verified из-за наличия файлов."],"technical":["experimental development path"],"sources":["README.md","source/A4A_Arsenal/Garage"],"status":"prototype","logic":{"preview":"Панель предотвращает смешение арсенала с соседним экспериментальным направлением.","purpose":"Сохранить честную границу scope.","input":"README и наличие Garage source tree.","steps":["Прочитать заявленный support status.","Отделить код от доказанного feature.","Пометить границу prototype."],"decision":"Является ли Garage частью поддерживаемого результата.","output":"Явное исключение из основного инварианта.","next":"Отдельный проект может получить собственный proof cycle.","failure":"Наличие файлов не трактуется как готовность.","status":"Граница остаётся прототипом без живой проверки."}},
+        {"id":"failure-catalog","title":"Каталог безопасных отказов","kind":"failure","summary":"Сводит пустые данные, отсутствие ACE, отказ прав, нулевой stock и неверную область.","details":["Каждый отказ имеет видимое сообщение или guard.","Stale success не считается допустимым fallback."],"technical":["empty data / missing ACE / denied edit / stock 0 / wrong scope"],"sources":["source/A4A_Arsenal/JNA/fn_arsenal.sqf","source/A4A_Arsenal/JNA/fn_arsenal_aceStock.sqf","source/A4A_Arsenal/functions/fn_arsenal_canEdit.sqf","source/A4A_Arsenal/functions/fn_arsenalLogic.sqf"],"status":"implemented"}
+      ]
+    }
+  ],
+  "edges": [
+    {"id":"bootstrap-to-server","from":"branch:bootstrap","to":"branch:server-state","type":"control","label":"инициализированный Arsenal ID","status":"implemented","logic":{"preview":"Bootstrap создаёт область, которой затем владеет серверное состояние.","purpose":"Связать объект и ключ состояния.","input":"Опубликованные ID и порог.","steps":["Инициализировать объект.","Сформировать ключ.","Загрузить состояние."],"decision":"Существует ли валидный объект.","output":"Серверная область арсенала.","next":"Server state обслуживает операции.","failure":"Null-объект не создаёт область.","status":"Implemented; JIP live gate not run."}},
+    {"id":"legacy-open-to-network","from":"panel:legacy-ui:action-open","to":"panel:network:open-close","type":"control","label":"запрос открыть или закрыть","status":"implemented"},
+    {"id":"network-to-server","from":"branch:network","to":"branch:server-state","type":"control","label":"авторитетная команда изменения","status":"implemented"},
+    {"id":"stock-to-server","from":"branch:stock-model","to":"branch:server-state","type":"data","label":"категория, класс и количество","status":"implemented"},
+    {"id":"server-to-legacy","from":"branch:server-state","to":"branch:legacy-ui","type":"data","label":"копия текущего запаса","status":"implemented"},
+    {"id":"server-to-ace","from":"branch:server-state","to":"branch:ace-preview","type":"data","label":"запас для ACE virtual items","status":"prototype"},
+    {"id":"ace-to-stock","from":"branch:ace-preview","to":"branch:stock-model","type":"data","label":"принятая фактическая дельта","status":"prototype"},
+    {"id":"containers-to-stock","from":"branch:containers","to":"branch:stock-model","type":"data","label":"классифицированный cargo","status":"implemented"},
+    {"id":"editor-identity-to-save","from":"panel:editor:editor-access","to":"panel:editor:editor-save","type":"identity","label":"разрешение редактора","status":"implemented"},
+    {"id":"editor-save-to-server","from":"panel:editor:editor-save","to":"branch:server-state","type":"control","label":"проверенное сохранение","status":"implemented"}
+  ]
+}

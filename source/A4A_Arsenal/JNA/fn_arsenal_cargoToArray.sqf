@@ -45,6 +45,7 @@ _unloadContainer = {
 	_mags = [magazinesAmmoCargo _container_sub, magazinesAmmo _container_sub] select (_isPlayer);
 	{
 		_item = _x select 0;
+		// Persisted V1 magazine stock is a remaining-ammunition pool.
 		_amount = _x select 1;
 		_index = _item call jn_fnc_arsenal_itemType;
 		[_array,_index,_item,_amount]call _addToArray;
@@ -107,6 +108,7 @@ _unloadContainer = {
 				if(typename _x isEqualTo "ARRAY")then{
 					if(count _x > 0)then{
 						_item = _x select 0;
+						// Persisted V1 magazine stock is a remaining-ammunition pool.
 						_amount = _x select 1;
 						_index = IDC_RSCDISPLAYARSENAL_TAB_CARGOMAGALL;
 						[_array,_index,_item,_amount]call _addToArray;
@@ -127,24 +129,35 @@ _unloadContainer = {
 			} foreach _x;
 		} foreach _attItems;
 	} else {
-		// Container: getWeaponCargo [classes,counts] for base weapons
-		private _wepData = getWeaponCargo _container_sub;
-		private _wepClasses = _wepData select 0;
-		private _wepCounts = _wepData select 1;
-		for "_i" from 0 to (count _wepClasses - 1) do {
-			private _cls = _wepClasses select _i;
-			private _cnt = if (_i < count _wepCounts) then { _wepCounts select _i } else { 1 };
-			if (_cls isNotEqualTo "" && _cnt > 0) then {
-				private _base = _cls call bis_fnc_baseWeapon;
-				_index = _base call jn_fnc_arsenal_itemType;
-				if (_index != -1) then {
-					[_array, _index, _base, _cnt] call _addToArray;
-				};
+		// weaponsItemsCargo returns one tuple per physical weapon:
+		// [weapon,muzzle,pointer,optic,primaryMag,secondaryMag,bipod]. Since the
+		// source container is cleared after deposit, every real component and the
+		// remaining ammunition in both loaded magazines must be credited.
+		{
+			private _weaponTuple = _x;
+			private _weaponClass = _weaponTuple param [0, ""];
+			if !(_weaponClass isEqualTo "") then {
+				private _baseWeapon = _weaponClass call bis_fnc_baseWeapon;
+				private _weaponIndex = _baseWeapon call jn_fnc_arsenal_itemType;
+				[_array, _weaponIndex, _baseWeapon, 1] call _addToArray;
 			};
-		};
-		// Container weapon cargo is counted as physical weapons only.
-		// Reading weaponsItemsCargo here splits one stored weapon into its loaded magazine
-		// and attachments, which inflates cargo transfers into extra arsenal entries.
+			{
+				private _component = _weaponTuple param [_x, ""];
+				if (_component isEqualType "" && {!(_component isEqualTo "")}) then {
+					[_array, _component call jn_fnc_arsenal_itemType, _component, 1] call _addToArray;
+				};
+			} forEach [1, 2, 3, 6];
+			{
+				private _loadedMagazine = _weaponTuple param [_x, []];
+				if (_loadedMagazine isEqualType [] && {count _loadedMagazine >= 2}) then {
+					private _magClass = _loadedMagazine select 0;
+					private _remainingRounds = _loadedMagazine select 1;
+					if (_magClass isEqualType "" && {!(_magClass isEqualTo "")} && {_remainingRounds > 0}) then {
+						[_array, IDC_RSCDISPLAYARSENAL_TAB_CARGOMAGALL, _magClass, _remainingRounds] call _addToArray;
+					};
+				};
+			} forEach [4, 5];
+		} forEach (weaponsItemsCargo _container_sub);
 	};
 
 

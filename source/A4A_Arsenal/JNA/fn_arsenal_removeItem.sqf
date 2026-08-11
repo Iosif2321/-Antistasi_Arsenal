@@ -2,6 +2,12 @@
 #include "\A3\ui_f\hpp\defineDIKCodes.inc"
 #include "\A3\Ui_f\hpp\defineResinclDesign.inc"
 
+// Clients must send normalized deltas through the sender-bound dispatcher.
+// Reject direct remote execution of this permissive bulk wrapper on server.
+if (isRemoteExecuted) exitWith {
+	diag_log format ["A4A_Arsenal: rejected direct remote removeItem wrapper from owner %1", remoteExecutedOwner];
+};
+
 private _array = [[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]];
 
 if(typeName (_this select 0) isEqualTo "SCALAR")then{//[_index, _item] or [_index, _item, _amount];
@@ -27,17 +33,10 @@ if(typeName (_this select 0) isEqualTo "SCALAR")then{//[_index, _item] or [_inde
 				jna_dataList set [_index, [jna_dataList select _index, [_item, _amount]] call jn_fnc_arsenal_removeFromArray];
 			};
 
-			//update server and other players (exclude self - already updated locally)
+			// Send only to the server. The server fans out a sanitized committed delta.
 			private _curArsenalID = (missionNamespace getVariable ["jna_object", objNull]) getVariable ["A4A_Arsenal_ID", "Base"];
-			if (!isNil "server") then {
-				private _playersInArsenal = +(server getVariable [format ["jna_playersInArsenal_%1", _curArsenalID], []]) - [clientOwner];
-				if!(0 in _playersInArsenal)then{_playersInArsenal pushBackUnique 2;};
-				["UpdateItemRemove",[_index, _item, _amount,true, name player, getPlayerUID player, _curArsenalID]] remoteExecCall ["jn_fnc_arsenal",_playersInArsenal];
-			} else {
-				// server object not ready  update server only
-				if (isServer) then { ["UpdateItemRemove",[_index, _item, _amount,true, name player, getPlayerUID player, _curArsenalID]] call jn_fnc_arsenal }
-				else { ["UpdateItemRemove",[_index, _item, _amount,true, name player, getPlayerUID player, _curArsenalID]] remoteExecCall ["jn_fnc_arsenal",2] };
-			};
+			if (isServer) then { ["UpdateItemRemove",[_index, _item, _amount,true, name player, getPlayerUID player, _curArsenalID]] call jn_fnc_arsenal }
+			else { ["UpdateItemRemove",[_index, _item, _amount,true, name player, getPlayerUID player, _curArsenalID]] remoteExecCall ["jn_fnc_arsenal",2] };
 		};
 	} forEach _x;
 }foreach _array;

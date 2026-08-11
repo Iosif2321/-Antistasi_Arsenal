@@ -9,6 +9,29 @@
 **/
 
 if !(missionNamespace getVariable ["arsenalInit", false]) exitWith {};
+
+private _uiStyle = 0;
+if (!isNil "CBA_fnc_getSetting") then {
+	_uiStyle = ["A4A_Arsenal_UIStyle", 0] call CBA_fnc_getSetting;
+} else {
+	if (!isNil "A4A_Arsenal_UIStyle") then { _uiStyle = A4A_Arsenal_UIStyle; };
+};
+if (
+	_uiStyle isEqualTo 1
+	&& {
+		missionNamespace getVariable ["A4A_aceStock_active", false]
+		|| {!isNull (findDisplay 1127001)}
+	}
+) exitWith {
+	systemChat "Close the current ACE Arsenal before opening A4A ACE Preview.";
+	diag_log "A4A_Arsenal: handleAction rejected overlapping ACE Arsenal open";
+};
+diag_log format [
+	"A4A_Arsenal: handleAction uiStyle=%1 (0=Legacy, 1=ACE) aceAvailable=%2",
+	_uiStyle,
+	!isNil "ace_arsenal_fnc_openBox"
+];
+
 missionNamespace setVariable ["jna_object", _this select 0];
 
 // Antistasi UI dependencies removed
@@ -75,6 +98,6 @@ missionNamespace setVariable ["jna_containerCargo_init", _attachmentsContainers]
 //set type
 UINamespace setVariable ["jn_type","arsenal"];
 
-//request server to open arsenal (pass the object so server knows which arsenal)
+//request server to open arsenal (pass the object and client UI style preference)
 private _arsenalObj = missionNamespace getVariable ["jna_object", objNull];
-[clientOwner, _arsenalObj] remoteExecCall ["jn_fnc_arsenal_requestOpen",2];
+[clientOwner, _arsenalObj, _uiStyle] remoteExecCall ["jn_fnc_arsenal_requestOpen",2];

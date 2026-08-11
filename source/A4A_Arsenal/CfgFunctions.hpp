@@ -38,6 +38,7 @@ class CfgFunctions {
 			class arsenal_removeItem {};
 			class arsenal_requestOpen {};
 			class arsenal_requestClose {};
+			class arsenal_aceStock { postInit = 1; };
 			class vehicleArsenal {};
 
 		};

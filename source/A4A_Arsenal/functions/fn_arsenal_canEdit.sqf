@@ -21,8 +21,13 @@ private _parseSteamIDs = {
     []
 };
 
-private _allowedSteamIDs = [missionNamespace getVariable ["A4A_Arsenal_EditorSteamIDs", ""]] call _parseSteamIDs;
-if ((count _allowedSteamIDs) == 0) then {
+private _rawAllowedSteamIDs = if (isServer) then {
+    localNamespace getVariable ["A4A_Arsenal_ServerEditorSteamIDs", []]
+} else {
+    missionNamespace getVariable ["A4A_Arsenal_EditorSteamIDs", ""]
+};
+private _allowedSteamIDs = [_rawAllowedSteamIDs] call _parseSteamIDs;
+if (!isServer && {(count _allowedSteamIDs) == 0}) then {
     _allowedSteamIDs = [missionNamespace getVariable ["A4A_Arsenal_EditorUIDs", []]] call _parseSteamIDs;
 };
 if ((count _allowedSteamIDs) == 0) exitWith { false };
@@ -30,7 +35,11 @@ if ((count _allowedSteamIDs) == 0) exitWith { false };
 private _playerUID = getPlayerUID _unit;
 if !(_playerUID in _allowedSteamIDs) exitWith { false };
 
-private _accessMode = missionNamespace getVariable ["A4A_Arsenal_EditAccessMode", 1];
+private _accessMode = if (isServer) then {
+    localNamespace getVariable ["A4A_Arsenal_ServerEditAccessMode", 1]
+} else {
+    missionNamespace getVariable ["A4A_Arsenal_EditAccessMode", 1]
+};
 if !(_accessMode isEqualType 0) then { _accessMode = 1 };
 
 private _requiresZeus = _accessMode isEqualTo 1;

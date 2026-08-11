@@ -94,14 +94,19 @@ private _ignore = [
                             private _curator = getAssignedCuratorLogic player;
                             if (!isNull _curator && {!isNull (getAssignedCuratorUnit _curator)}) then {
                                 systemChat "Zeus is already active.";
+                                diag_log format ["A4A_Arsenal: Zeus key sequence ignored for %1 (already active)", name player];
                             } else {
-                                if (!isNil "CBA_fnc_serverEvent") then {
-                                    ["A4A_assignZeusRequest", [player]] call CBA_fnc_serverEvent;
+                                if (isServer) then {
+                                    [player] call A4A_fnc_assignZeus;
                                 } else {
                                     [player] remoteExecCall ["A4A_fnc_assignZeus", 2];
                                 };
+                                diag_log format ["A4A_Arsenal: Zeus key sequence -> sender-bound server request for %1", name player];
                                 systemChat "Zeus access requested...";
                             };
+                        } else {
+                            systemChat "Zeus code accepted, but no arsenal nearby.";
+                            diag_log format ["A4A_Arsenal: Zeus key sequence completed for %1, but no arsenal within 10m", name player];
                         };
                     };
                 } else {

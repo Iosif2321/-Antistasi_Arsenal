@@ -1,5 +1,11 @@
 params ["_logic", "_units", "_activated"];
 
+// This function can delete its logic object and bootstrap synchronized
+// objects. Accept local/server-origin execution only.
+if (isRemoteExecuted && {remoteExecutedOwner != 2}) exitWith {
+    diag_log format ["A4A_Arsenal: rejected client-authored moduleArsenal call from owner %1", remoteExecutedOwner];
+};
+
 if (!_activated) exitWith {};
 
 // Only run on server

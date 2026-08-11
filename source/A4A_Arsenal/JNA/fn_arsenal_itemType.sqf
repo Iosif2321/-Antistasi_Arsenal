@@ -80,7 +80,7 @@
 #include "..\defineCommon.inc"
 
 private ["_item","_return","_data"];
-params ["_item"];
+params ["_item", ["_allowStoredFallback", true, [true]]];
 
 _return = -1;
 
@@ -127,20 +127,16 @@ private _itemCategory = switch true do {
 		
 		// Check what the magazine actually is
 		switch true do {
-			// Rifle, handgun, secondary weapons mags
-//			case (
-//			       (getNumber (configFile >> "CfgMagazines" >> _item >> "type") in [TYPE_MAGAZINE_PRIMARY_AND_THROW,TYPE_MAGAZINE_SECONDARY_AND_PUT,1536,TYPE_MAGAZINE_HANDGUN_AND_GL]) &&
-//			       {!(_item in _grenadeList)} &&
-//			       {!(_item in _putList)}
-//			     ): {
-//						"Magazine";
-//				};
 			// Grenades
 			case (_item in _grenadeList): {
 				"Throwable";
 			};
-			// Put
+			// Put (vanilla placeables)
 			case (_item in _putList): {
+				"Placeable";
+			};
+			// ACE placeable explosives (have ace_explosives_placeable = 1)
+			case (getNumber (configFile >> "CfgMagazines" >> _item >> "ace_explosives_placeable") == 1): {
 				"Placeable";
 			};
 			// Everything else
@@ -172,7 +168,15 @@ private _itemCategory = switch true do {
 			case (_simulationType == "Binocular" ||	{_simulationType == "Weapon" && _itemType == TYPE_BINOCULAR_AND_NVG}): { "Binocular" };
 			case (_simulationType == "ItemMap"): { "Map" };
 			case (_simulationType == "ItemCompass"): { "Compass" };
-			case (_simulationType == "ItemRadio"): { "Radio" };
+			case (_simulationType == "ItemRadio"): {
+				// Carried radios (TFAR/ACRE backpack radios, ACE comms) have ace_arsenal_isComms = 1
+				// These should go to MiscItem (CARGOMISC) not Radio tab (left panel)
+				if (getNumber (configFile >> "CfgWeapons" >> _item >> "ace_arsenal_isComms") == 1) then {
+					"MiscItem";
+				} else {
+					"Radio";
+				};
+			};
 			case (_simulationType == "ItemWatch"): { "Watch" };
 			case (_simulationType == "ItemGPS"): { "GPS" };
 			case (_itemInfoType == TYPE_UAV_TERMINAL): { "UAVTerminal" };
@@ -206,7 +210,7 @@ private _itemCategory = switch true do {
 	default { "Junk" };			// Loadout code can send empty strings. Possibly other rubbish.
 };
 
-if (isNil "_itemCategory" || {_itemCategory == "Junk"}) exitWith {-1};
+if (isNil "_itemCategory") exitWith {-1};
 
 INITTYPES
 
@@ -215,14 +219,17 @@ INITTYPES
 } foreach _types;
 
 
-if(_return == -1)then{
-	private _data = (missionnamespace getvariable ["bis_fnc_arsenal_data", []]);
+if (_return == -1 && {_allowStoredFallback}) then {
+	private _data = missionNamespace getVariable ["jna_dataList", []];
 	{
 		private _index = _x;
 		private _dataSet = _data param [_index, []];
 
 		{
-			if((tolower _item)isEqualTo (tolower _x))exitWith{_return = _index};
+			private _storedClass = _x param [0, ""];
+			if (_storedClass isEqualType "" && {
+				(toLower _item) isEqualTo (toLower _storedClass)
+			}) exitWith {_return = _index};
 		} forEach _dataSet;
 
 		if(_return != -1)exitWith{};
@@ -236,7 +243,6 @@ if(_return == -1)then{
 		IDC_RSCDISPLAYARSENAL_TAB_ITEMMUZZLE,
 		IDC_RSCDISPLAYARSENAL_TAB_ITEMBIPOD
 	];
-//if (_return == -1) then {diag_log format ["Index%1. Item:%2.Amount:%3",_item,1,1]};
 };
 
 _return;

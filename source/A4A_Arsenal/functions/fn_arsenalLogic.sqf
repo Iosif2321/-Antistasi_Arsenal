@@ -1,5 +1,12 @@
 ﻿params ["_mode", ["_params", []]];
 
+// Legacy all-in-one dispatcher has permissive modes and no sender/session
+// protocol. It is local-only; supported network operations use the hardened
+// JNA endpoints instead. This also prevents peer-to-peer INIT_CLIENT injection.
+if (isRemoteExecuted) exitWith {
+    diag_log format ["A4A_arsenalLogic: rejected remote invocation of mode '%1' from owner %2", _mode, remoteExecutedOwner];
+};
+
 switch (_mode) do {
     case "INIT_SERVER": {
         _params params ["_object"];

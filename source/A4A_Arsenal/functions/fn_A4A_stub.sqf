@@ -1,5 +1,11 @@
 ﻿// Stub definitions for Jeroen Arsenal to work standalone
 // Defines functions and variables expected by JNA that are usually provided by Antistasi Core.
+// This function is an addon preInit entrypoint, never a network endpoint.
+// This local preInit helper is absent from the mode-1 remote allowlist; retain
+// a direct guard as defense in depth against higher-precedence mission config.
+if (isRemoteExecuted) exitWith {
+    diag_log format ["A4A_Arsenal: rejected remote A4A stub invocation from owner %1", remoteExecutedOwner];
+};
 // Based on original implementations from: Antistasi\A4A\addons\core\
 
 // ========================================================================================
@@ -220,7 +226,9 @@ if (isNil "A4A_Arsenal_CBASettingsRegistered") then {
             ["Arsenal Editor SteamIDs", "SteamIDs allowed to edit arsenal data. Separate multiple IDs with commas, semicolons, or spaces."],
             "Antistasi Arsenal",
             "",
-            1
+            1,
+            {},
+            true
         ] call CBA_fnc_addSetting;
 
         [
@@ -229,7 +237,9 @@ if (isNil "A4A_Arsenal_CBASettingsRegistered") then {
             ["Arsenal Editor Access Mode", "SteamID Only allows listed SteamIDs. SteamID + Zeus also requires Zeus access."],
             "Antistasi Arsenal",
             [[0, 1], ["SteamID Only", "SteamID + Zeus"], 1],
-            1
+            1,
+            {},
+            true
         ] call CBA_fnc_addSetting;
 
         [
@@ -238,6 +248,17 @@ if (isNil "A4A_Arsenal_CBASettingsRegistered") then {
             ["Unlock Threshold", "Number of items required for unlimited use. Applies to new arsenals and overrides module setting."],
             "Antistasi Arsenal",
             [1, 25000, 25, 0],
+            1,
+            {},
+            true
+        ] call CBA_fnc_addSetting;
+
+        [
+            "A4A_Arsenal_UIStyle",
+            "LIST",
+            ["Arsenal UI Style", "Legacy uses built-in JNA UI. ACE3 Preview opens ACE Arsenal with live JNA stock counts and persistence."],
+            "Antistasi Arsenal",
+            [[0, 1], ["Legacy (JNA)", "ACE3 Preview"], 0],
             1
         ] call CBA_fnc_addSetting;
 
@@ -248,6 +269,7 @@ if (isNil "A4A_Arsenal_CBASettingsRegistered") then {
         A4A_Arsenal_EditorSteamIDs = "";
         A4A_Arsenal_EditAccessMode = 1;
         A4A_Arsenal_UnlockThreshold = 25;
+        A4A_Arsenal_UIStyle = 0;
         diag_log "A4A_Arsenal: CBA not available, using default settings.";
     };
 } else {
@@ -255,13 +277,42 @@ if (isNil "A4A_Arsenal_CBASettingsRegistered") then {
 };
 
 if (isNil "A4A_Arsenal_EditorSteamIDs") then {
-    missionNamespace setVariable ["A4A_Arsenal_EditorSteamIDs", "", true];
+    missionNamespace setVariable ["A4A_Arsenal_EditorSteamIDs", ""];
 };
 if (isNil "A4A_Arsenal_EditAccessMode") then {
-    missionNamespace setVariable ["A4A_Arsenal_EditAccessMode", 1, true];
+    missionNamespace setVariable ["A4A_Arsenal_EditAccessMode", 1];
 };
 if (isNil "A4A_Arsenal_EditorUIDs") then {
-    missionNamespace setVariable ["A4A_Arsenal_EditorUIDs", [], true];
+    missionNamespace setVariable ["A4A_Arsenal_EditorUIDs", []];
+};
+if (isNil "A4A_Arsenal_UIStyle") then {
+    missionNamespace setVariable ["A4A_Arsenal_UIStyle", 0];
+};
+
+// Capture server authority once during addon preInit, before a remote client
+// can publish same-named missionNamespace variables. Security-sensitive CBA
+// settings above require restart; runtime replicated changes remain UI-only.
+if (isServer) then {
+    isNil {
+        if !(localNamespace getVariable ["A4A_Arsenal_ServerAuthorityCaptured", false]) then {
+            localNamespace setVariable [
+                "A4A_Arsenal_ServerEditorSteamIDs",
+                missionNamespace getVariable ["A4A_Arsenal_EditorSteamIDs", ""]
+            ];
+            localNamespace setVariable [
+                "A4A_Arsenal_ServerEditAccessMode",
+                missionNamespace getVariable ["A4A_Arsenal_EditAccessMode", 1]
+            ];
+            localNamespace setVariable [
+                "A4A_Arsenal_ServerUnlockThreshold",
+                missionNamespace getVariable ["A4A_Arsenal_UnlockThreshold", 25]
+            ];
+            // Per-class public overrides remain client/UI compatibility only
+            // until an authenticated server-owned configuration source exists.
+            localNamespace setVariable ["A4A_Arsenal_ServerLimits", createHashMap];
+            localNamespace setVariable ["A4A_Arsenal_ServerAuthorityCaptured", true];
+        };
+    };
 };
 
 diag_log "A4A_Arsenal: Stubs initialized.";

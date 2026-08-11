@@ -8,6 +8,11 @@ params [
     ["_garageID", "Default", [""]]
 ];
 
+// Initialization may be distributed only by the server/module path.
+if (isRemoteExecuted && {remoteExecutedOwner != 2}) exitWith {
+    diag_log format ["A4A_Garage: rejected client-authored garageInit from owner %1", remoteExecutedOwner];
+};
+
 if (isNull _object) exitWith {
     diag_log "A4A_Garage: Error - null object in garageInit";
 };
@@ -33,6 +38,16 @@ if (isServer) then {
         server = (createGroup sideLogic) createUnit ["Logic", [0,0,0], [], 0, "NONE"];
         publicVariable "server";
     };
+    private _registry = localNamespace getVariable ["A4A_Garage_ServerRegistry", []];
+    private _registryIndex = _registry findIf {(_x select 0) isEqualTo _object};
+    if (_registryIndex < 0) then {
+        _registry pushBack [_object, _garageID];
+    } else {
+        _registry set [_registryIndex, [_object, _garageID]];
+    };
+    localNamespace setVariable ["A4A_Garage_ServerRegistry", _registry];
+    // This call inherits the server-originated remote context. The dispatcher
+    // admits only owner-2 initServer as the narrowly trusted bootstrap mode.
     ["initServer", [_garageID]] call A4A_fnc_garage;
 };
 

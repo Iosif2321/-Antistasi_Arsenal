@@ -13,56 +13,103 @@ params [
     ["_unlockThreshold", 25, [0]]
 ];
 
+// Only the server may distribute initialization. Local client execution can
+// at most create client UI, while remote client execution on the server would
+// otherwise enroll an attacker-selected object into the canonical registry.
+if (isRemoteExecuted && {remoteExecutedOwner != 2}) exitWith {
+    diag_log format ["A4A_Arsenal: rejected client-authored JNA init from owner %1", remoteExecutedOwner];
+};
+
 if(isNull _object)exitWith{["Error: wrong input given '%1'",_object] call BIS_fnc_error;};
 
-// Check if already initialized on this machine
-if (_object getVariable ["A4A_Arsenal_Initialized", false]) exitWith {
-    if (hasInterface) then { systemChat format ["Antistasi Arsenal: Object %1 already initialized", _object]; };
+// Network-replicated object variables are UI compatibility only. Private
+// per-machine registries decide whether server and client work must run.
+private _runServerInit = isServer;
+private _runClientInit = hasInterface;
+if (_runServerInit) then {
+    isNil {
+        private _serverInitObjects = localNamespace getVariable ["A4A_Arsenal_ServerInitObjects", []];
+        if (_object in _serverInitObjects) then {
+            _runServerInit = false;
+        } else {
+            _serverInitObjects pushBack _object;
+            localNamespace setVariable ["A4A_Arsenal_ServerInitObjects", _serverInitObjects];
+        };
+    };
 };
+if (_runClientInit) then {
+    isNil {
+        private _clientInitObjects = localNamespace getVariable ["A4A_Arsenal_ClientInitObjects", []];
+        if (_object in _clientInitObjects) then {
+            _runClientInit = false;
+        } else {
+            _clientInitObjects pushBack _object;
+            localNamespace setVariable ["A4A_Arsenal_ClientInitObjects", _clientInitObjects];
+        };
+    };
+};
+if (!_runServerInit && {!_runClientInit}) exitWith {};
 _object setVariable ["A4A_Arsenal_Initialized", true];
 
 // Debug log for client side
-if (hasInterface) then {
+if (_runClientInit) then {
     systemChat format ["Antistasi Arsenal: Client Init for %1", _object];
 };
 
-// Set variables on object - but DON'T overwrite if already set by fn_arsenalInit.sqf
-// (fn_arsenalInit sets the correct ID from module params BEFORE calling this function,
-//  but only passes [_object] - so _arsenalID param here defaults to "Base")
-private _existingID = _object getVariable ["A4A_Arsenal_ID", ""];
-if (_existingID isEqualTo "") then {
-    _object setVariable ["A4A_Arsenal_ID", _arsenalID, true];
+// The server resolves canonical ID/threshold only from its pre-registered
+// localNamespace entry. Clients may read the public copies for display only.
+private _serverRegistrationValid = true;
+if (isServer) then {
+    private _canonicalRegistry = localNamespace getVariable ["A4A_Arsenal_ServerRegistry", []];
+    private _canonicalIndex = _canonicalRegistry findIf {count _x >= 2 && {(_x select 0) isEqualTo _object}};
+    if (_canonicalIndex < 0) then {
+        _serverRegistrationValid = false;
+    } else {
+        private _canonicalEntry = _canonicalRegistry select _canonicalIndex;
+        _arsenalID = _canonicalEntry select 1;
+        _unlockThreshold = _canonicalEntry param [
+            2,
+            localNamespace getVariable ["A4A_Arsenal_ServerUnlockThreshold", _unlockThreshold],
+            [0]
+        ];
+    };
 } else {
-    _arsenalID = _existingID; // use the ID that was already set
+    _arsenalID = _object getVariable ["A4A_Arsenal_ID", _arsenalID];
+    _unlockThreshold = _object getVariable ["A4A_Arsenal_Threshold", _unlockThreshold];
 };
-private _existingThreshold = _object getVariable ["A4A_Arsenal_Threshold", -1];
-if (_existingThreshold < 0) then {
-    _object setVariable ["A4A_Arsenal_Threshold", _unlockThreshold, true];
-} else {
-    _unlockThreshold = _existingThreshold;
+if (isServer && {!_serverRegistrationValid}) exitWith {
+    diag_log format ["A4A_Arsenal: JNA server init rejected unregistered object %1", _object];
 };
 
 // Ensure server logic object exists FIRST (before any per-arsenal operations)
 // Must be outside jna_commonInitDone since multiple inits can race in scheduled env
-if (isServer && {isNil "server"}) then {
-    server = (createGroup sideLogic) createUnit ["Logic", [0,0,0], [], 0, "NONE"];
-    publicVariable "server";
-    Info("JNA created server logic object");
+if (isServer) then {
+    isNil {
+        if (isNil "server") then {
+            server = (createGroup sideLogic) createUnit ["Logic", [0,0,0], [], 0, "NONE"];
+            publicVariable "server";
+            Info("JNA created server logic object");
+        };
+    };
 };
 
 // Common init (once per machine) - Preload, minItemMember
-if (isNil "jna_commonInitDone") then {
+private _runCommonInit = false;
+isNil {
+    if !(localNamespace getVariable ["A4A_Arsenal_CommonInitDone", false]) then {
+        localNamespace setVariable ["A4A_Arsenal_CommonInitDone", true];
+        _runCommonInit = true;
+    };
+};
+if (_runCommonInit) then {
     jna_commonInitDone = true;
     missionNamespace setVariable ["jna_object", _object]; // default, overwritten on each open
 
-    // Determine unlock threshold: CBA setting > module param > default 25
-    // CBA setting (A4A_Arsenal_UnlockThreshold) is synced globally by CBA framework.
-    if (!isNil "A4A_Arsenal_UnlockThreshold") then {
-        A4A_guestItemLimit = A4A_Arsenal_UnlockThreshold;
+    // Server authority uses only the preInit private CBA snapshot/callback.
+    if (isServer) then {
+        A4A_guestItemLimit = localNamespace getVariable ["A4A_Arsenal_ServerUnlockThreshold", _unlockThreshold];
     } else {
-        if (isNil "A4A_guestItemLimit") then {
-            A4A_guestItemLimit = _unlockThreshold;
-        };
+        A4A_guestItemLimit = missionNamespace getVariable ["A4A_Arsenal_UnlockThreshold", _unlockThreshold];
     };
 
     jna_minItemMember = [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1];
@@ -73,41 +120,38 @@ if (isNil "jna_commonInitDone") then {
 };
 
 // Per-arsenal server-side init: load data for THIS arsenal by its ID
-if (isServer) then {
-    // One-time: register CBA server events for Zeus and EditorSave
-    if (isNil "A4A_cbaEventsRegistered") then {
-        A4A_cbaEventsRegistered = true;
-        diag_log "A4A_Arsenal: CBA registration starting...";
+if (_runServerInit) then {
+	// The server-authoritative reserve calculation must not depend on globals
+	// that a client can replicate after initialization.  Snapshot both the
+	// per-tab defaults and optional per-class overrides into localNamespace.
+	if (isNil {localNamespace getVariable "A4A_Arsenal_ServerMinItems"}) then {
+		localNamespace setVariable ["A4A_Arsenal_ServerMinItems", +jna_minItemMember];
+		if (isNil {localNamespace getVariable "A4A_Arsenal_ServerLimits"}) then {
+			localNamespace setVariable ["A4A_Arsenal_ServerLimits", createHashMap];
+		};
+	};
 
-        private _cbaAvailable = !isNil "CBA_fnc_addEventHandler";
-        diag_log format ["A4A_Arsenal: CBA_fnc_addEventHandler available = %1", _cbaAvailable];
-
-        if (_cbaAvailable) then {
-            private _r1 = ["A4A_assignZeusRequest", {
-                params ["_player"];
-                diag_log format ["A4A_Arsenal: CBA assignZeus request from %1", name _player];
-                [_player] call A4A_fnc_assignZeus;
-            }] call CBA_fnc_addEventHandler;
-            diag_log format ["A4A_Arsenal: CBA assignZeus handler registered (id=%1)", _r1];
-
-            private _r2 = ["A4A_editorSaveRequest", {
-                diag_log format ["A4A_Arsenal: CBA editorSave request received: %1", _this];
-                ["SAVE_JNA", _this] call A4A_fnc_arsenalLogic;
-            }] call CBA_fnc_addEventHandler;
-            diag_log format ["A4A_Arsenal: CBA editorSave handler registered (id=%1)", _r2];
-
-            diag_log "A4A_Arsenal: CBA server events registered (from arsenal_init).";
-        } else {
-            diag_log "A4A_Arsenal: ERROR - CBA_fnc_addEventHandler NOT available! CBA events will NOT work.";
-            diag_log "A4A_Arsenal: Falling back to remoteExec for Zeus (may be blocked by CfgRemoteExec).";
-        };
-    } else {
-        diag_log "A4A_Arsenal: CBA events already registered (skipping).";
+    // Private server registry supports proximity checks for privileged requests.
+    private _serverArsenalObjects = localNamespace getVariable ["A4A_Arsenal_ServerObjects", []];
+    _serverArsenalObjects pushBackUnique _object;
+    localNamespace setVariable ["A4A_Arsenal_ServerObjects", _serverArsenalObjects];
+    // Fail closed if preInit was bypassed; never import replicated settings here.
+    if (isNil {localNamespace getVariable "A4A_Arsenal_ServerEditorSteamIDs"}) then {
+        localNamespace setVariable ["A4A_Arsenal_ServerEditorSteamIDs", ""];
+    };
+    if (isNil {localNamespace getVariable "A4A_Arsenal_ServerEditAccessMode"}) then {
+        localNamespace setVariable ["A4A_Arsenal_ServerEditAccessMode", 0];
     };
 
     // One-time check: ensure A4A_fnc_assignZeus is allowed for remoteExec (Zeus key sequence)
-    if (isNil "A4A_remoteExecCheckDone") then {
-        A4A_remoteExecCheckDone = true;
+    private _runRemoteExecCheck = false;
+    isNil {
+        if !(localNamespace getVariable ["A4A_Arsenal_RemoteExecCheckDone", false]) then {
+            localNamespace setVariable ["A4A_Arsenal_RemoteExecCheckDone", true];
+            _runRemoteExecCheck = true;
+        };
+    };
+    if (_runRemoteExecCheck) then {
         private _fnClass = configFile >> "CfgRemoteExec" >> "Functions" >> "A4A_fnc_assignZeus";
         private _mode = getNumber (configFile >> "CfgRemoteExec" >> "Functions" >> "mode");
         if (_mode == 0) then {
@@ -121,24 +165,67 @@ if (isServer) then {
         };
     };
 
-    private _arsenalID = _object getVariable ["A4A_Arsenal_ID", "Base"];
     private _profileKey = format ["A4A_ArsenalData_%1", _arsenalID];
     private _serverKey = format ["jna_dataList_%1", _arsenalID];
     private _defaultData = [[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]];
 
-    // Load from profile if not already on server
-    if (isNil {server getVariable _serverKey}) then {
-        private _loaded = profileNamespace getVariable [_profileKey, _defaultData];
-        if (count _loaded != 27 || {!(_loaded select 0 isEqualType [])}) then {
+    // Private canonical state. The public GameLogic value below is a legacy
+    // read-only mirror and is never accepted back as server authority.
+    private _serverData = localNamespace getVariable ["A4A_Arsenal_ServerData", createHashMap];
+    private _data = _serverData getOrDefault [_arsenalID, []];
+    if (count _data != 27) then {
+        _data = profileNamespace getVariable [_profileKey, _defaultData];
+        private _validatePersistedData = {
+            params ["_candidate"];
+            if !(_candidate isEqualType [] && {count _candidate == 27}) exitWith {false};
+            private _valid = true;
+            private _totalEntries = 0;
+            {
+                if !(_x isEqualType []) exitWith {_valid = false};
+                private _seen = createHashMap;
+                {
+                    if !(_x isEqualType [] && {count _x == 2}) exitWith {_valid = false};
+                    private _className = _x select 0;
+                    private _amount = _x select 1;
+                    if !(
+                        _className isEqualType ""
+                        && {!(_className isEqualTo "")}
+                        && {count _className <= 256}
+                        && {_amount isEqualType 0}
+                        && {finite _amount}
+                        && {_amount isEqualTo floor _amount}
+                        && {_amount == -1 || {_amount > 0 && {_amount <= 100000000}}}
+                    ) exitWith {_valid = false};
+                    private _key = toLower _className;
+                    if (_seen getOrDefault [_key, false]) exitWith {_valid = false};
+                    _seen set [_key, true];
+                    _totalEntries = _totalEntries + 1;
+                    if (_totalEntries > 10000) exitWith {_valid = false};
+                } forEach _x;
+                if (!_valid) exitWith {};
+            } forEach _candidate;
+            _valid
+        };
+        if !([_data] call _validatePersistedData) then {
             Info("JNA data format invalid, resetting to default");
             profileNamespace setVariable [_profileKey, nil];
-            _loaded = _defaultData;
+            _data = _defaultData;
         };
-        server setVariable [_serverKey, _loaded, true];
+        _serverData set [_arsenalID, _data];
+        localNamespace setVariable ["A4A_Arsenal_ServerData", _serverData];
         Info_1("JNA loaded arsenal data for ID: ", _arsenalID);
     };
-
-    private _data = server getVariable [_serverKey, _defaultData];
+    server setVariable [_serverKey, _data, true];
+    private _serverRevisions = localNamespace getVariable ["A4A_Arsenal_ServerRevisions", createHashMap];
+    if (isNil {_serverRevisions get _arsenalID}) then {
+        _serverRevisions set [_arsenalID, 0];
+        localNamespace setVariable ["A4A_Arsenal_ServerRevisions", _serverRevisions];
+    };
+    // requestOpen and one-shot save/import remain fail-closed until canonical
+    // profile data and revision state are both installed.
+    private _readyObjects = localNamespace getVariable ["A4A_Arsenal_ServerReadyObjects", []];
+    _readyObjects pushBackUnique _object;
+    localNamespace setVariable ["A4A_Arsenal_ServerReadyObjects", _readyObjects];
     private _itemCount = 0;
     { _itemCount = _itemCount + count _x } forEach _data;
     diag_log format ["A4A_Arsenal Init: Arsenal '%1' key='%2' | %3 items loaded | profile='%4'", _arsenalID, _profileKey, _itemCount, profileName];
@@ -157,8 +244,14 @@ if (isServer) then {
     systemChat format ["A4A Arsenal '%1': %2 items loaded", _arsenalID, _itemCount];
 
     // Sync Zeus state to clients (getAssignedCuratorLogic unreliable on client in dedicated MP)
-    if (isNil "A4A_zeusSyncStarted") then {
-        A4A_zeusSyncStarted = true;
+    private _startZeusSync = false;
+    isNil {
+        if !(localNamespace getVariable ["A4A_Arsenal_ZeusSyncStarted", false]) then {
+            localNamespace setVariable ["A4A_Arsenal_ZeusSyncStarted", true];
+            _startZeusSync = true;
+        };
+    };
+    if (_startZeusSync) then {
         [] spawn {
             while {true} do {
                 {
@@ -179,7 +272,7 @@ if (isServer) then {
 };
 
 //player
-if(hasInterface)then{
+if (_runClientInit) then {
     Info("JNA loading player data");
 
     // Track arsenal objects for Zeus key sequence proximity check
@@ -226,6 +319,7 @@ if(hasInterface)then{
 
 				//set type and object to use later
 				UINamespace setVariable ["jn_type", "containerArsenal"];
+				missionNamespace setVariable ["jna_object", _object];
 				UINamespace setVariable ["jn_object",_object];
 				UINamespace setVariable ["jn_object_selected",_objectSelected];
 
@@ -293,7 +387,13 @@ if(hasInterface)then{
     //add import arsenal data button (from clipboard) - authorized editors only
     _object addAction [
         "<t color='#ffaa00'>Import Arsenal Data</t>",
-        { ["ImportData"] call jn_fnc_arsenal },
+        {
+            params ["_target"];
+            // Bind the one-shot import to the action's actual registered object;
+            // never reuse a stale missionNamespace object from another arsenal.
+            missionNamespace setVariable ["jna_object", _target];
+            ["ImportData", [_target, true]] call jn_fnc_arsenal;
+        },
         [],
         1,
         false,

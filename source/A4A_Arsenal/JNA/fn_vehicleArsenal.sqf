@@ -202,7 +202,7 @@ switch _mode do {
 			case IDC_RSCDISPLAYARSENAL_TAB_CARGOMAG;
 			case IDC_RSCDISPLAYARSENAL_TAB_CARGOMAGALL;
 			case IDC_RSCDISPLAYARSENAL_TAB_CARGOTHROW;
-			case IDC_RSCDISPLAYARSENAL_TAB_CARGOPUT: 	{	_magCount = getNumber (configfile >> "cfgmagazines" 	>> _item >> "count");
+			case IDC_RSCDISPLAYARSENAL_TAB_CARGOPUT: 	{	_magCount = (getNumber (configfile >> "cfgmagazines" 	>> _item >> "count")) max 1;
 															configfile >> "cfgmagazines" 	>> _item >> "mass"};
 			case IDC_RSCDISPLAYARSENAL_TAB_PRIMARYWEAPON;
 			case IDC_RSCDISPLAYARSENAL_TAB_SECONDARYWEAPON;
@@ -678,11 +678,7 @@ switch _mode do {
 			_count = _count * 10;
 		};
 		if(_shift && _ctrl) then {
-			_count = _count * 25;
-		};
-
-		if (_add > 0 && {_count > _amount && {_amount != -1}}) then {
-			_count = _amount;
+			_count = _count * 50;
 		};
 
 		if(((_amount > 0 || _amount == -1) || _add < 0) && (_add != 0))then{
@@ -691,17 +687,22 @@ switch _mode do {
 
 				//non-member limits
 				_min = [_index, _item] call _minItemsMember;
-				if((_amount <= _min) AND (_amount != -1) AND !(player call A4A_fnc_isMember)) exitWith{
+				private _isMember = player call A4A_fnc_isMember;
+				if((_amount <= _min) AND (_amount != -1) AND !_isMember) exitWith{
 					['showMessage',[_display,(localize "STR_JNA_ACT_ONLY_MEMBERS")]] call jn_fnc_arsenal;
 				};
+				private _withdrawableAmount = _amount;
+				if (_amount != -1 && !_isMember) then {
+					_withdrawableAmount = (_amount - _min) max 0;
+				};
 
-				//magazines are handeld by bullet count
 				if(_index in [IDC_RSCDISPLAYARSENAL_TAB_CARGOMAG,IDC_RSCDISPLAYARSENAL_TAB_CARGOMAGALL])then{
-					//check if full mag can be optaind
-					_count = getNumber (configfile >> "CfgMagazines" >> _item >> "count");
-					if(_amount != -1)then{
-						if(_amount<_count)then{_count = _amount};
-					};
+					// UI steps are physical magazines; persisted V1 stock is ammunition.
+					private _magazineCapacity = (getNumber (configfile >> "CfgMagazines" >> _item >> "count")) max 1;
+					_count = _count * _magazineCapacity;
+				};
+				if (_amount != -1 && {_count > _withdrawableAmount}) then {
+					_count = _withdrawableAmount;
 				};
 
 				if(_count > 0)then{
@@ -718,7 +719,8 @@ switch _mode do {
 
 			}else{
 				if(_index in [IDC_RSCDISPLAYARSENAL_TAB_CARGOMAG,IDC_RSCDISPLAYARSENAL_TAB_CARGOMAGALL])then{
-					_count = getNumber (configfile >> "CfgMagazines" >> _item >> "count");
+					private _magazineCapacity = (getNumber (configfile >> "CfgMagazines" >> _item >> "count")) max 1;
+					_count = _count * _magazineCapacity;
 				};
 
 				if(_count>_amountOld)then{
@@ -891,7 +893,8 @@ switch _mode do {
 		diag_log format ["A4A_VehicleArsenal Unload: %1 item groups from %2. Per-IDC: %3", _unloadTotal, typeOf _objectSelected, _unloadSummary];
 
 		jnva_loadout_mass = 0;
-        jnva_loadout remoteExecCall ["jn_fnc_arsenal_addItem",2];
+		// Normalize locally; the wrapper sends sender-bound deltas only to server.
+		jnva_loadout call jn_fnc_arsenal_addItem;
 
        	jnva_loadout = (_objectSelected call jn_fnc_arsenal_cargoToArray);
 
@@ -967,11 +970,12 @@ switch _mode do {
 			{
 				private _item = _x select 0;
 				private _amount = _x select 1;
-				private _count = getNumber (configfile >> "CfgMagazines" >> _item >> "count");
+				private _count = (getNumber (configfile >> "CfgMagazines" >> _item >> "count")) max 1;
 
 				while{_amount>0}do{
-					_obj addMagazineAmmoCargo [_item,1,_amount];
-					_amount = _amount - _count;
+					private _ammoToAdd = _amount min _count;
+					_obj addMagazineAmmoCargo [_item,1,_ammoToAdd];
+					_amount = _amount - _ammoToAdd;
 				};
 			} forEach _list;
 		} forEach [

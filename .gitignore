@@ -6,6 +6,7 @@ addons/*.pbo
 *.bisign
 *.biprivatekey
 .superpowers/brainstorm/
+results/
 
 # IDE
 .vscode/

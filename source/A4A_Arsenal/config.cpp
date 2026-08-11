@@ -4,7 +4,7 @@ class CfgPatches {
     class A4A_Arsenal {
         units[] = {"A4A_ModuleArsenal", "A4A_ModuleGarage"};
         requiredVersion = 1.0;
-        requiredAddons[] = {"A3_Modules_F", "A3_UI_F", "A3_Structures_F_Heli_Items_Electronics", "cba_main"};
+        requiredAddons[] = {"A3_Modules_F", "A3_UI_F", "A3_Structures_F_Heli_Items_Electronics", "cba_main", "cba_settings"};
         version = 0.50;
         versionStr = "0.5.0";
         versionAr[] = {0,5,0};
@@ -21,21 +21,34 @@ class CfgFactionClasses {
 
 class CfgRemoteExec {
     class Functions {
-        mode = 2;
-        jip = 1;
-        class A4A_fnc_arsenalInit { allowedTargets = 0; };
+        // Deny by default. Only the audited protocol endpoints below may cross
+        // the network; arbitrary-code helpers and local wrappers stay private.
+        mode = 1;
+        jip = 0;
+        class A4A_fnc_arsenalInit {
+            allowedTargets = 0;
+            jip = 1;
+        };
         class jn_fnc_arsenal { allowedTargets = 0; };
-        class jn_fnc_arsenal_init { allowedTargets = 0; };
+        class jn_fnc_arsenal_init {
+            allowedTargets = 0;
+            jip = 1;
+        };
         class jn_fnc_arsenal_requestOpen { allowedTargets = 2; };
-        class jn_fnc_arsenal_handleAction { allowedTargets = 0; };
+        class jn_fnc_arsenal_requestClose { allowedTargets = 2; };
+        class jn_fnc_arsenal_cargoToArsenal { allowedTargets = 2; };
         class A4A_fnc_assignZeus { allowedTargets = 2; };
-        class A4A_fnc_arsenalLogic { allowedTargets = 2; };
-        class A4A_fnc_garage { allowedTargets = 0; };
-        class A4A_fnc_garageInit { allowedTargets = 0; };
+        class A4A_fnc_arsenal_saveRequest { allowedTargets = 2; };
+        class A4A_fnc_garageInit {
+            allowedTargets = 0;
+            jip = 1;
+        };
+        class A4A_fnc_garage { allowedTargets = 2; };
     };
-    // Allow engine commands (systemChat etc.) via remoteExec
+    // mode=1 is whitelist-only for commands. Server-originated command behavior
+    // is engine-defined; no client command whitelist is granted here.
     class Commands {
-        mode = 1; // 1 = allow all commands
+        mode = 1;
         jip = 0;
     };
 };
@@ -58,6 +71,8 @@ class CfgFunctions {
             class arsenalLogic {};
             class arsenal_isZeus {};
             class arsenal_canEdit {};
+            class arsenal_saveRequest {};
+            class arsenal_scheduleProfileSave {};
             class inputHandler {};
             class assignZeus {};
             class A4A_stub { preInit = 1; };
@@ -110,6 +125,7 @@ class CfgFunctions {
             class arsenal_removeItem {};
             class arsenal_requestOpen {};
             class arsenal_requestClose {};
+            class arsenal_aceStock { postInit = 1; };
             class vehicleArsenal {};
         };
     };
