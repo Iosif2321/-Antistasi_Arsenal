@@ -5,6 +5,7 @@ addons/*.pbo
 # Temp / cache
 *.bisign
 *.biprivatekey
+.superpowers/brainstorm/
 
 # IDE
 .vscode/
