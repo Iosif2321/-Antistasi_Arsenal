@@ -445,6 +445,26 @@ if (Test-Path -LiteralPath $missionRoot -PathType Container) {
     Assert-Check "cargo commits use one revision and one snapshot notification" ($cargoDeposit -match 'A4A_ServerRevisions' -and $cargoDeposit -match 'A4A_fnc_publishSnapshot' -and $cargoDeposit -match 'A4A_fnc_schedulePersistence' -and $cargoWithdraw -match 'A4A_ServerRevisions' -and $cargoWithdraw -match 'A4A_fnc_publishSnapshot')
     Assert-Check "cargo actions treat cursor crate or vehicle as one generic holder" ($cargoActions -match 'cursorObject' -and $cargoActions -match 'A4A_fnc_requestCargoDeposit' -and $cargoActions -match 'A4A_fnc_requestCargoWithdraw' -and $cargoActions -match 'jn_fnc_arsenal_cargoToArray' -and $cargoActions -notmatch 'Garage|vehicleArsenal')
     Assert-Check "cargo code has no per-item network fanout" ($cargoDeposit -notmatch 'UpdateItemAdd|UpdateItemRemove' -and $cargoWithdraw -notmatch 'UpdateItemAdd|UpdateItemRemove')
+
+    $missionSqmPath = Join-Path $missionRoot "mission.sqm"
+    $readmePath = Join-Path $missionRoot "README_MISSION_RU.md"
+    $compatibilityPath = Join-Path $missionRoot "COMPATIBILITY.md"
+    $verificationPath = Join-Path $missionRoot "VERIFICATION.md"
+    foreach ($artifactPath in @($missionSqmPath, $readmePath, $compatibilityPath, $verificationPath)) {
+        Assert-Check ("deployable mission artifact exists: " + (Split-Path -Leaf $artifactPath)) (Test-Path -LiteralPath $artifactPath -PathType Leaf)
+    }
+    $missionSqm = if (Test-Path -LiteralPath $missionSqmPath) { Get-Content -LiteralPath $missionSqmPath -Raw } else { "" }
+    $readme = if (Test-Path -LiteralPath $readmePath) { Get-Content -LiteralPath $readmePath -Raw } else { "" }
+    $compatibility = if (Test-Path -LiteralPath $compatibilityPath) { Get-Content -LiteralPath $compatibilityPath -Raw } else { "" }
+    $verification = if (Test-Path -LiteralPath $verificationPath) { Get-Content -LiteralPath $verificationPath -Raw } else { "" }
+    Assert-Check "VR scenario has a playable vanilla unit" ($missionSqm -match 'type\s*=\s*"B_Soldier_F"' -and $missionSqm -match 'isPlayer\s*=\s*1')
+    Assert-Check "VR scenario has the configured named vanilla arsenal crate" ($missionSqm -match 'type\s*=\s*"B_supplyCrate_F"' -and $missionSqm -match 'name\s*=\s*"a4a_arsenal_base"')
+    Assert-Check "mission.sqm has no A4A CBA ACE or Garage addon dependency" ($missionSqm -notmatch 'requiredAddons|CfgPatches|type\s*=\s*"(?:A4A|Antistasi|cba_|ace_|Garage|vehicleArsenal)' -and $missionSqm -match 'addons\[\]\s*=\s*\{\s*"A3_Characters_F_BLUFOR"\s*,\s*"A3_Weapons_F_Ammoboxes"\s*\}')
+    Assert-Check "Russian guide explains unpacked MPMissions deployment and scenario configuration" ($readme -match 'MPMissions' -and $readme -match 'NO_PBO|UNPACKED_MISSION' -and $readme -match 'A4A\\config\\arsenals\.sqf' -and $readme -match 'a4a_arsenal_base')
+    Assert-Check "Russian guide limits vehicles to physical cargo holders and excludes Garage" ($readme -match 'Garage' -and $readme -match 'CARGO_ONLY' -and $readme -match 'NO_VEHICLE_STORAGE_OR_SPAWN')
+    Assert-Check "operator guide documents persistence backup and reset" ($readme -match 'A4A_MissionArsenal_v2_' -and $readme -match 'profileNamespace' -and $readme -match 'PERSISTENCE_BACKUP' -and $readme -match 'PERSISTENCE_RESET')
+    Assert-Check "compatibility matrix names installed CBA and ACE targets and optional fallbacks" ($compatibility -match 'CBA_A3\s+3\.19\.0' -and $compatibility -match 'ACE3\s+3\.21\.1' -and $compatibility -match 'NO_CBA' -and $compatibility -match 'NO_ACE' -and $compatibility -match 'Legacy')
+    Assert-Check "verification distinguishes static proof from all required runtime gates" ($verification -match 'PASS' -and $verification -match 'NOT_RUN' -and $verification -match 'dedicated' -and $verification -match 'hosted' -and $verification -match 'JIP' -and $verification -match 'restart' -and $verification -match 'two-client' -and $verification -match 'cargo rollback' -and $verification -match 'performance')
 }
 
 if ($failures.Count -gt 0) {

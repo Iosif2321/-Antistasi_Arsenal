@@ -1,0 +1,111 @@
+version=53;
+class EditorData
+{
+    moveGridStep=1;
+    angleGridStep=0.2617994;
+    scaleGridStep=1;
+    autoGroupingDist=10;
+    toggles=1;
+    class ItemIDProvider
+    {
+        nextID=3;
+    };
+    class LayerIndexProvider
+    {
+        nextID=1;
+    };
+    class Camera
+    {
+        pos[]={10,10,10};
+        dir[]={-0.57735026,-0.57735026,-0.57735026};
+        up[]={-0.40824831,0.81649661,-0.40824831};
+        aside[]={-0.70710677,0,0.70710677};
+    };
+};
+binarizationWanted=0;
+sourceName="Quantitative_Arsenal_Mission";
+addons[]=
+{
+    "A3_Characters_F_BLUFOR",
+    "A3_Weapons_F_Ammoboxes"
+};
+addonsAuto[]=
+{
+    "A3_Characters_F_BLUFOR",
+    "A3_Weapons_F_Ammoboxes"
+};
+randomSeed=4120812;
+class ScenarioData
+{
+    author="Antistasi Arsenal contributors";
+};
+class Mission
+{
+    class Intel
+    {
+        timeOfChanges=1800.0002;
+        startWeather=0.2;
+        startWind=0.1;
+        startWaves=0.1;
+        forecastWeather=0.2;
+        forecastWind=0.1;
+        forecastWaves=0.1;
+        forecastLightnings=0;
+        year=2035;
+        month=6;
+        day=24;
+        hour=12;
+        minute=0;
+        startFogDecay=0.013;
+        forecastFogDecay=0.013;
+    };
+    class Entities
+    {
+        items=2;
+        class Item0
+        {
+            dataType="Group";
+            side="West";
+            class Entities
+            {
+                items=1;
+                class Item0
+                {
+                    dataType="Object";
+                    class PositionInfo
+                    {
+                        position[]={0,0,0};
+                    };
+                    side="West";
+                    flags=7;
+                    class Attributes
+                    {
+                        isPlayer=1;
+                    };
+                    id=1;
+                    type="B_Soldier_F";
+                };
+            };
+            class Attributes
+            {
+            };
+            id=0;
+        };
+        class Item1
+        {
+            dataType="Object";
+            class PositionInfo
+            {
+                position[]={4,0,0};
+            };
+            side="Empty";
+            flags=4;
+            class Attributes
+            {
+                name="a4a_arsenal_base";
+            };
+            id=2;
+            type="B_supplyCrate_F";
+        };
+    };
+};

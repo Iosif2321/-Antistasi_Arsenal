@@ -189,12 +189,12 @@
 - Create: `mission/A4A_Arsenal_Mission.VR/VERIFICATION.md`
 - Modify: `tests/verify_mission_only_layout.ps1`
 
-- [ ] Add RED checks for a parseable VR mission, configured named arsenal crate, playable unit, no addon A4A dependency, installation/run instructions, persistence reset/backup instructions, CBA/ACE compatibility matrix, and explicit static versus runtime proof status.
-- [ ] Run the test and observe failure.
-- [ ] Create the minimal multiplayer-capable VR scenario and Russian operator guide for copying the unpacked folder into `MPMissions` and configuring arsenal object rows.
-- [ ] Document CBA_A3 3.19.0, ACE3 3.21.1, no-CBA, no-ACE, dedicated, hosted, JIP, reconnect, restart, two-client race, cargo rollback, and mod-heavy performance runtime gates without claiming unrun evidence.
-- [ ] Rerun layout and documentation checks.
-- [ ] Commit exact paths with message `docs: make mission-only arsenal deployable`.
+- [x] Add RED checks for a parseable VR mission, configured named arsenal crate, playable unit, no addon A4A dependency, installation/run instructions, persistence reset/backup instructions, CBA/ACE compatibility matrix, and explicit static versus runtime proof status.
+- [x] Run the test and observe failure.
+- [x] Create the minimal multiplayer-capable VR scenario and Russian operator guide for copying the unpacked folder into `MPMissions` and configuring arsenal object rows.
+- [x] Document CBA_A3 3.19.0, ACE3 3.21.1, no-CBA, no-ACE, dedicated, hosted, JIP, reconnect, restart, two-client race, cargo rollback, and mod-heavy performance runtime gates without claiming unrun evidence.
+- [x] Rerun layout and documentation checks.
+- [x] Commit exact paths with message `docs: make mission-only arsenal deployable`.
 
 ## Task 12: Migration verification and handoff
 
