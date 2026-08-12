@@ -10,12 +10,8 @@
 
 if !(missionNamespace getVariable ["arsenalInit", false]) exitWith {};
 
-private _uiStyle = 0;
-if (!isNil "CBA_fnc_getSetting") then {
-	_uiStyle = ["A4A_Arsenal_UIStyle", 0] call CBA_fnc_getSetting;
-} else {
-	if (!isNil "A4A_Arsenal_UIStyle") then { _uiStyle = A4A_Arsenal_UIStyle; };
-};
+private _uiStyleSetting = ["uiStyle", "Legacy"] call A4A_fnc_getSetting;
+private _uiStyle = [0, 1] select (_uiStyleSetting in ["ACE", 1]);
 if (
 	_uiStyle isEqualTo 1
 	&& {

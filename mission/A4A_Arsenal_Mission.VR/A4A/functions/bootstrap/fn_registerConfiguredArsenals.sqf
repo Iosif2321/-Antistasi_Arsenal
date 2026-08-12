@@ -12,6 +12,8 @@ private _ids = localNamespace getVariable ["A4A_ServerIdRegistry", createHashMap
 private _dataById = localNamespace getVariable ["A4A_ServerData", createHashMap];
 private _revisions = localNamespace getVariable ["A4A_ServerRevisions", createHashMap];
 private _ready = localNamespace getVariable ["A4A_ServerReady", createHashMap];
+private _serverSettings = localNamespace getVariable ["A4A_ServerSettings", createHashMap];
+private _unlockThresholdOverride = _serverSettings getOrDefault ["unlockThresholdOverride", 0];
 
 {
     private _row = _x;
@@ -39,6 +41,7 @@ private _ready = localNamespace getVariable ["A4A_ServerReady", createHashMap];
         diag_log format ["[A4A Mission] Ignored invalid arsenal row %1", _forEachIndex];
         continue;
     };
+    if (_unlockThresholdOverride > 0) then { _threshold = _unlockThresholdOverride };
 
     private _object = missionNamespace getVariable [_variableName, objNull];
     if (isNull _object) then {
@@ -93,4 +96,3 @@ localNamespace setVariable ["A4A_ServerIdRegistry", _ids];
 localNamespace setVariable ["A4A_ServerData", _dataById];
 localNamespace setVariable ["A4A_ServerRevisions", _revisions];
 localNamespace setVariable ["A4A_ServerReady", _ready];
-

@@ -11,6 +11,9 @@ isNil {
 };
 if (!_runServerInit) exitWith {};
 
+if (!isNil "A4A_fnc_initCbaSettings") then {
+    [] call A4A_fnc_initCbaSettings;
+};
 [] call A4A_fnc_registerConfiguredArsenals;
 
 addMissionEventHandler ["HandleDisconnect", {

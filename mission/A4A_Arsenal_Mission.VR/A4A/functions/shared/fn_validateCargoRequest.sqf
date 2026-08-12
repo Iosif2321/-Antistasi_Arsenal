@@ -26,6 +26,7 @@ private _ready = localNamespace getVariable ["A4A_ServerReady", createHashMap];
 private _settings = localNamespace getVariable ["A4A_ServerSettings", createHashMap];
 private _interactionDistance = _settings getOrDefault ["interactionDistance", 5];
 private _cargoDistance = _settings getOrDefault ["cargoDistance", 15];
+private _cargoAccess = _settings getOrDefault ["cargoAccess", 0];
 private _holderConfig = configFile >> "CfgVehicles" >> typeOf _holder;
 private _hasCargo =
     getNumber (_holderConfig >> "maximumLoad") > 0 ||
@@ -42,11 +43,12 @@ if (
     {_requestPlayer distance _holder > _cargoDistance} ||
     {_arsenalObject distance _holder > (_cargoDistance + _interactionDistance)} ||
     {!_hasCargo} ||
-    {count crew _holder > 0}
+    {count crew _holder > 0} ||
+    {_cargoAccess isEqualTo 2} ||
+    {_cargoAccess isEqualTo 1 && {!([_requestPlayer] call A4A_fnc_canEdit)}}
 ) exitWith { [false, _requestPlayer, _senderOwner, _localHostCall, _canonical, _holderKey] };
 
 if (!local _holder) then { _holder setOwner 2 };
 if (!local _holder) exitWith { [false, _requestPlayer, _senderOwner, _localHostCall, _canonical, _holderKey] };
 
 [true, _requestPlayer, _senderOwner, _localHostCall, _canonical, _holderKey]
-
