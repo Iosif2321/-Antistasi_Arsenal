@@ -1,0 +1,10 @@
+# Keep the unpacked mission artifact byte-stable across Windows and Linux.
+mission/A4A_Arsenal_Mission.VR/** text eol=lf
+mission/A4A_Arsenal_Mission.VR/**/*.paa -text
+
+# These gates and migration documents describe/hash the mission artifact.
+tests/verify_mission_only_layout.ps1 text eol=lf
+tests/verify_mission_dependency_compatibility.ps1 text eol=lf
+docs/superpowers/specs/2026-08-12-mission-only-arsenal-design.md text eol=lf
+docs/superpowers/plans/2026-08-12-mission-only-arsenal-migration.md text eol=lf
+README.md text eol=lf

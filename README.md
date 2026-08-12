@@ -1,392 +1,111 @@
-# Antistasi Arsenal
+# Antistasi Arsenal — модификация сценария
 
-Languages: English | [Русский](#antistasi-arsenal-русская-версия)
-
-Standalone Arma 3 addon that adds an Antistasi-style persistent arsenal module.
-The main supported feature is the arsenal. The garage code is present in the
-source tree as an experimental development path and is not treated as a working
-feature.
-
-## Contents
-
-- `source/A4A_Arsenal/config.cpp` - addon config, 3DEN modules, function
-  registration, remote execution whitelist.
-- `source/A4A_Arsenal/functions` - addon bootstrap, module handlers, Zeus and
-  editor access checks.
-- `source/A4A_Arsenal/JNA` - Jeroen Arsenal based limited arsenal UI and data
-  handling.
-- `source/A4A_Arsenal/Stringtable.xml` - localized UI strings.
-- `build.bat` - local PBO build script.
-- `addons/A4A_Arsenal.pbo` - built PBO output when present.
-
-## Requirements
-
-The addon config declares these required addons:
-
-- `A3_Modules_F`
-- `A3_UI_F`
-- `A3_Structures_F_Heli_Items_Electronics`
-- `cba_main`
-
-The build script expects Arma 3 Tools AddonBuilder at:
+Основной продукт репозитория — один распакованный сценарий Arma 3:
 
 ```text
-C:\Program Files (x86)\Steam\steamapps\common\Arma 3 Tools\AddonBuilder\AddonBuilder.exe
+mission/A4A_Arsenal_Mission.VR/
 ```
 
-`build.bat` also checks that Steam is running before it starts AddonBuilder.
+Это не клиентский и не серверный addon. A4A не нужно добавлять ни в `-mod`, ни
+в `-serverMod`, игрокам не требуется Workshop-мод A4A, а PBO, ключ и подпись не
+создаются. Сервер загружает папку сценария, после чего Arma штатно передаёт
+игрокам её SQF-код, UI и строки как содержимое миссии.
 
-## Building
+## Что реализовано
 
-Run:
+- количественный арсенал с 27 категориями;
+- конечные остатки и `-1` для бесконечного запаса;
+- для магазинов хранится пул оставшихся патронов;
+- несколько независимых складов по постоянному Arsenal ID;
+- серверные ревизии, коррелированные сессии и двухфазные операции выдачи и
+  возврата;
+- проверяемое сохранение в `profileNamespace` и миграция старого ключа;
+- импорт, экспорт и редактирование для разрешённых SteamID;
+- внесение физического груза из ящика или пустой техники в арсенал;
+- загрузка в ящик или пустую технику подтверждённого сервером комплекта;
+- необязательные адаптеры CBA Settings и ACE Arsenal.
 
-```bat
-build.bat
-```
+Подсистемы хранения, покупки, создания и восстановления техники в продукте
+нет. Техника обрабатывается исключительно как физический держатель инвентаря,
+так же как ящик.
 
-The script builds:
+## Быстрый запуск
 
-```text
-source\A4A_Arsenal -> addons\A4A_Arsenal.pbo
-```
+1. Скопируйте папку `mission/A4A_Arsenal_Mission.VR` целиком в `MPMissions`.
+2. Выберите шаблон `A4A_Arsenal_Mission.VR` в `server.cfg` или откройте его в
+   редакторе Arma 3.
+3. Не загружайте старый `@Antistasi_Arsenal` ни на сервере, ни на клиенте.
+4. Для полностью vanilla-конфигурации не загружайте CBA/ACE: количественный
+   Legacy Arsenal остаётся основным и самодостаточным интерфейсом.
 
-If Steam is not running, the script exits before packing.
+Подробное развёртывание, подключение к другой карте, настройка объектов,
+резервное копирование и сброс описаны в
+[`README_MISSION_RU.md`](mission/A4A_Arsenal_Mission.VR/README_MISSION_RU.md).
 
-## Arsenal Module Setup
+## Настройка складов
 
-In 3DEN, use the module:
-
-```text
-Antistasi Arsenal
-```
-
-It is placed under the category:
-
-```text
-Antistasi Arsenal
-```
-
-Synchronize the module with the object that should become the arsenal access
-point. The module handler initializes each synchronized object and then deletes
-the module logic object.
-
-Module attributes:
-
-- `Arsenal ID` - unique ID used for saved arsenal data. Default: `Base`.
-- `Unlock Threshold` - item count required for unlimited use. Default: `25`.
-
-The save key uses the arsenal ID:
-
-```text
-A4A_ArsenalData_<Arsenal ID>
-```
-
-## Player Actions
-
-Initialized arsenal objects add these player-facing actions:
-
-- Open Arsenal - opens the limited arsenal UI.
-- Select vehicle to open arsenal for it - opens the vehicle/container inventory
-  transfer flow when allowed by settings.
-- Export Arsenal Data - editor-only export to clipboard and RPT.
-- Import Arsenal Data - editor-only import from clipboard.
-
-The editor UI is available from the arsenal toolbar for authorized editors.
-It can adjust item counts, set items to infinite, and save the edited arsenal
-data.
-
-## Editor Access
-
-Editor access is controlled through CBA addon settings in the `Antistasi Arsenal`
-category.
-
-Use `A4A_Arsenal_EditorSteamIDs` to enter the SteamIDs that can edit arsenal
-data. Separate multiple IDs with commas, semicolons, or spaces:
-
-```text
-76561198000000000,76561198000000001
-```
-
-An empty SteamID list blocks arsenal editing for everyone.
-
-Use `A4A_Arsenal_EditAccessMode` to choose the access rule:
-
-- `SteamID Only` - the player's SteamID must be in `A4A_Arsenal_EditorSteamIDs`.
-- `SteamID + Zeus` - the player's SteamID must be in
-  `A4A_Arsenal_EditorSteamIDs`, and the player must also pass
-  `A4A_fnc_arsenal_isZeus`.
-
-`SteamID + Zeus` is the default access mode.
-
-Authorized editors can use the editor UI, import data, export data manually, and
-save edited arsenal data. The server checks editor saves again before writing
-the arsenal data.
-
-For legacy mission-side configuration, `A4A_Arsenal_EditorUIDs` is still read
-when `A4A_Arsenal_EditorSteamIDs` is empty:
+Каждому объекту арсенала назначается Eden-переменная. Объекты регистрируются в
+[`A4A/config/arsenals.sqf`](mission/A4A_Arsenal_Mission.VR/A4A/config/arsenals.sqf):
 
 ```sqf
-missionNamespace setVariable [
-    "A4A_Arsenal_EditorUIDs",
-    ["76561198000000000", "76561198000000001"],
-    true
-];
+[
+    ["a4a_arsenal_base", "Base", 25]
+]
 ```
 
-## CBA Settings
-
-The addon registers these CBA settings when CBA settings are available:
-
-- `A4A_Arsenal_ContainerAccess`
-  - `Everyone`
-  - `Arsenal Editors`
-  - `Disabled`
-- `A4A_Arsenal_EditorSteamIDs`
-  - separated SteamID allowlist for arsenal editors
-- `A4A_Arsenal_EditAccessMode`
-  - `SteamID Only`
-  - `SteamID + Zeus`
-- `A4A_Arsenal_UnlockThreshold`
-  - numeric threshold for unlimited use
-
-If CBA settings are unavailable, the addon uses:
-
-```sqf
-A4A_Arsenal_ContainerAccess = 0;
-A4A_Arsenal_EditorSteamIDs = "";
-A4A_Arsenal_EditAccessMode = 1;
-A4A_Arsenal_UnlockThreshold = 25;
-```
-
-When `A4A_Arsenal_ContainerAccess` is set to `Arsenal Editors`, the same editor
-access check is used.
-
-## Export And Import Format
-
-Export writes a readable report and an importable SQF data block. The importable
-block is between:
-
-```text
-// === BEGIN DATA ===
-...
-// === END DATA ===
-```
-
-The data format is an SQF array with 27 category arrays. Each category contains
-entries:
-
-```sqf
-["className", count]
-```
-
-`count = -1` means infinite.
-
-To import, copy the exported block and use the import action or `Ctrl+V` inside
-the arsenal as an authorized editor.
-
-## Notes
-
-- Arsenal data is stored per arsenal ID.
-- Editor saves are checked on the client UI path and again on the server save
-  path.
-- The garage module and garage scripts are not part of the supported workflow
-  described here.
-
-# Antistasi Arsenal: русская версия
-
-[English](#antistasi-arsenal) | Русский
-
-Самостоятельный addon для Arma 3, который добавляет постоянный модуль арсенала
-в стиле Antistasi. Основная поддерживаемая функция проекта - арсенал. Код
-гаража присутствует в дереве исходников как экспериментальное направление
-разработки и не считается рабочей поддерживаемой функцией.
-
-## Содержимое
-
-- `source/A4A_Arsenal/config.cpp` - конфигурация addon, 3DEN-модули,
-  регистрация функций и whitelist для remote execution.
-- `source/A4A_Arsenal/functions` - запуск addon, обработчики модулей, проверки
-  Zeus и доступа к редактированию.
-- `source/A4A_Arsenal/JNA` - ограниченный интерфейс арсенала и обработка данных
-  на основе Jeroen Arsenal.
-- `source/A4A_Arsenal/Stringtable.xml` - локализованные строки интерфейса.
-- `build.bat` - локальный скрипт сборки PBO.
-- `addons/A4A_Arsenal.pbo` - собранный PBO, если он присутствует.
-
-## Требования
-
-В конфигурации addon указаны эти обязательные addons:
-
-- `A3_Modules_F`
-- `A3_UI_F`
-- `A3_Structures_F_Heli_Items_Electronics`
-- `cba_main`
-
-Скрипт сборки ожидает Arma 3 Tools AddonBuilder по пути:
-
-```text
-C:\Program Files (x86)\Steam\steamapps\common\Arma 3 Tools\AddonBuilder\AddonBuilder.exe
-```
-
-`build.bat` также проверяет, что Steam запущен, перед запуском AddonBuilder.
-
-## Сборка
-
-Запуск:
-
-```bat
-build.bat
-```
-
-Скрипт собирает:
-
-```text
-source\A4A_Arsenal -> addons\A4A_Arsenal.pbo
-```
-
-Если Steam не запущен, скрипт завершится до упаковки.
-
-## Настройка модуля арсенала
-
-В 3DEN используется модуль:
-
-```text
-Antistasi Arsenal
-```
-
-Он находится в категории:
-
-```text
-Antistasi Arsenal
-```
-
-Синхронизируйте модуль с объектом, который должен стать точкой доступа к
-арсеналу. Обработчик модуля инициализирует каждый синхронизированный объект, а
-затем удаляет логический объект модуля.
-
-Атрибуты модуля:
-
-- `Arsenal ID` - уникальный ID для сохранённых данных арсенала. Значение по
-  умолчанию: `Base`.
-- `Unlock Threshold` - количество предметов, необходимое для неограниченного
-  использования. Значение по умолчанию: `25`.
-
-Ключ сохранения использует ID арсенала:
-
-```text
-A4A_ArsenalData_<Arsenal ID>
-```
-
-## Действия игроков
-
-Инициализированные объекты арсенала добавляют такие действия:
-
-- Open Arsenal - открывает ограниченный интерфейс арсенала.
-- Select vehicle to open arsenal for it - открывает перенос инвентаря из
-  техники или контейнера, если это разрешено настройками.
-- Export Arsenal Data - экспорт данных в буфер обмена и RPT, только для
-  редакторов.
-- Import Arsenal Data - импорт данных из буфера обмена, только для редакторов.
-
-Интерфейс редактора доступен авторизованным редакторам из панели инструментов
-арсенала. В нём можно менять количество предметов, выставлять бесконечные
-предметы и сохранять изменённые данные арсенала.
-
-## Доступ к редактированию
-
-Доступ к редактированию управляется через CBA-настройки addon в категории
-`Antistasi Arsenal`.
-
-В `A4A_Arsenal_EditorSteamIDs` указываются SteamID игроков, которым разрешено
-редактировать данные арсенала. Несколько ID можно разделять запятыми, точками с
-запятой или пробелами:
-
-```text
-76561198000000000,76561198000000001
-```
-
-Пустой список SteamID блокирует редактирование арсенала для всех.
-
-В `A4A_Arsenal_EditAccessMode` выбирается правило доступа:
-
-- `SteamID Only` - SteamID игрока должен быть в
-  `A4A_Arsenal_EditorSteamIDs`.
-- `SteamID + Zeus` - SteamID игрока должен быть в
-  `A4A_Arsenal_EditorSteamIDs`, и игрок также должен пройти проверку
-  `A4A_fnc_arsenal_isZeus`.
-
-Режим по умолчанию - `SteamID + Zeus`.
-
-Авторизованные редакторы могут использовать интерфейс редактора, импортировать
-данные, вручную экспортировать данные и сохранять изменённые данные арсенала.
-Перед записью данных сервер повторно проверяет право на сохранение.
-
-Для совместимости со старой настройкой миссии `A4A_Arsenal_EditorUIDs` всё ещё
-читается, если `A4A_Arsenal_EditorSteamIDs` пустой:
-
-```sqf
-missionNamespace setVariable [
-    "A4A_Arsenal_EditorUIDs",
-    ["76561198000000000", "76561198000000001"],
-    true
-];
-```
-
-## CBA-настройки
-
-Addon регистрирует эти CBA-настройки, если CBA settings доступны:
-
-- `A4A_Arsenal_ContainerAccess`
-  - `Everyone`
-  - `Arsenal Editors`
-  - `Disabled`
-- `A4A_Arsenal_EditorSteamIDs`
-  - список SteamID редакторов арсенала
-- `A4A_Arsenal_EditAccessMode`
-  - `SteamID Only`
-  - `SteamID + Zeus`
-- `A4A_Arsenal_UnlockThreshold`
-  - числовой порог для неограниченного использования
-
-Если CBA settings недоступны, addon использует:
-
-```sqf
-A4A_Arsenal_ContainerAccess = 0;
-A4A_Arsenal_EditorSteamIDs = "";
-A4A_Arsenal_EditAccessMode = 1;
-A4A_Arsenal_UnlockThreshold = 25;
-```
-
-Когда `A4A_Arsenal_ContainerAccess` установлен в `Arsenal Editors`, используется
-та же проверка доступа, что и для редактора арсенала.
-
-## Формат экспорта и импорта
-
-Экспорт записывает читаемый отчёт и импортируемый SQF-блок данных. Импортируемый
-блок находится между:
-
-```text
-// === BEGIN DATA ===
-...
-// === END DATA ===
-```
-
-Формат данных - SQF-массив с 27 массивами категорий. Каждая категория содержит
-записи:
-
-```sqf
-["className", count]
-```
-
-`count = -1` означает бесконечное количество.
-
-Для импорта скопируйте экспортированный блок и используйте действие импорта или
-`Ctrl+V` внутри арсенала как авторизованный редактор.
-
-## Примечания
-
-- Данные арсенала хранятся отдельно для каждого Arsenal ID.
-- Сохранения редактора проверяются на стороне клиентского UI и повторно на
-  стороне серверного сохранения.
-- Модуль гаража и скрипты гаража не входят в поддерживаемый рабочий процесс,
-  описанный здесь.
+Третье значение — число физических экземпляров для автоматического перехода
+конечного остатка в `-1` (бесконечный запас); `0` отключает разблокировку. Для
+магазинов сервер переводит этот порог в сохранённый пул патронов через
+`CfgMagazines.count`.
+
+Параметры расстояния, времени жизни сессии, лимитов, UI и доступа редакторов
+находятся в
+[`A4A/config/settings.sqf`](mission/A4A_Arsenal_Mission.VR/A4A/config/settings.sqf).
+
+## CBA и ACE
+
+CBA_A3 и ACE3 не являются зависимостями сценария. При их отсутствии работает
+полная Legacy-версия. Если клиент уже загрузил совместимые CBA/ACE, сценарий
+может локально использовать их публичные API:
+
+- CBA Settings предоставляет необязательный интерфейс настроек;
+- ACE Arsenal открывается на временном клиентском proxy только для полностью
+  бесконечного склада;
+- конечный количественный склад всегда использует транзакционный Legacy UI;
+- постоянный объект арсенала не превращается в глобальный ACE box.
+
+Проверенные версии и точные границы доказательства перечислены в
+[`COMPATIBILITY.md`](mission/A4A_Arsenal_Mission.VR/COMPATIBILITY.md) и
+[`VERIFICATION.md`](mission/A4A_Arsenal_Mission.VR/VERIFICATION.md).
+
+## Структура репозитория
+
+- `mission/A4A_Arsenal_Mission.VR/` — единственная развёртываемая поставка;
+- `tests/verify_mission_only_layout.ps1` — структура, RPC, транзакции, UTF-8 и
+  лексические инварианты сценария;
+- `tests/verify_mission_dependency_compatibility.ps1` — необязательные CBA/ACE
+  контракты;
+- `docs/superpowers/specs/2026-08-12-mission-only-arsenal-design.md` — проектный
+  контракт перехода;
+- `source/`, `addons/`, `build.bat` — историческое addon-дерево, оставленное
+  только как материал для сравнения. Оно не копируется на сервер, не собирается
+  и не является продуктом этой ветки.
+
+## Граница проверки
+
+Статические тесты и CfgConvert проверяют структуру, конфигурации, RPC-поверхность
+и исходный код. Они не заменяют запуск в Arma 3. Перед эксплуатационным выпуском
+нужны реальные проверки SP, hosted MP, dedicated MP с двумя клиентами, JIP,
+рестарта профиля, отката груза и сочетаний без/с CBA и ACE. Их статус нельзя
+повышать с `NOT_RUN` без фактического RPT и наблюдаемого результата.
+
+---
+
+## English summary
+
+The deployable product is the unpacked `mission/A4A_Arsenal_Mission.VR`
+scenario folder. It requires no A4A addon, PBO, key, client installation, or
+server-side A4A mod. It provides a server-authoritative quantitative arsenal;
+vehicles are supported only as physical cargo holders. CBA and ACE are optional
+local integrations, while the dependency-free Legacy UI remains the complete
+baseline.

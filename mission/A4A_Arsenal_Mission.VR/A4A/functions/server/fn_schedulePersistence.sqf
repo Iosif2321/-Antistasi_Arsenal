@@ -38,4 +38,3 @@ localNamespace setVariable ["A4A_ServerSaveScheduled", true];
         };
     };
 };
-

@@ -21,4 +21,3 @@ localNamespace setVariable ["A4A_ClientOperationBaseline", getUnitLoadout player
 };
 
 true
-

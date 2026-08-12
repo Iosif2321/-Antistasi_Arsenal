@@ -13,6 +13,8 @@ private _senderOwner = if (_localHostCall) then { clientOwner } else { remoteExe
 private _requestPlayer = [_senderOwner, _localHostCall] call A4A_fnc_resolveRemotePlayer;
 private _validation = [_senderOwner, _requestPlayer, _object, _requestNonce, _generation] call A4A_fnc_validateActiveSession;
 if !(_validation select 0) exitWith {};
+private _canonical = _validation select 3;
+private _threshold = _canonical select 2;
 
 private _transactions = localNamespace getVariable ["A4A_ServerTransactions", createHashMap];
 if (isNil {_transactions get _transactionId}) exitWith {};
@@ -40,6 +42,7 @@ private _message = "Return rejected; the client will restore its provisional loa
 if (_success) then {
     private _candidate = parseSimpleArray str _data;
     _candidate set [_index, [_candidate select _index, [_item, _amount]] call jn_fnc_arsenal_addToArray];
+    _candidate = ([_candidate, _threshold] call A4A_fnc_applyUnlockThreshold) select 0;
     private _validated = [_candidate] call A4A_fnc_validateSnapshot;
     if !(_validated select 0) then {
         _success = false;

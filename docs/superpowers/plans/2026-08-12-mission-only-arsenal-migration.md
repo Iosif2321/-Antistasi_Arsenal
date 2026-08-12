@@ -204,8 +204,8 @@
 - Modify: `mission/A4A_Arsenal_Mission.VR/VERIFICATION.md`
 - Modify: `docs/superpowers/specs/2026-08-12-mission-only-arsenal-design.md`
 
-- [ ] Run the mission-only layout, compatibility, original permissions/regressions/integrity, strict UTF-8, bare-CR, lexical delimiter, `git diff --check`, and CfgConvert gates from a clean command log.
-- [ ] Verify `rg` finds no Garage, addon-only absolute path, `$PBOPREFIX$`, PBO, `CBA_fnc_getSetting`, ACE persistent-box initialization, unrestricted Functions mode, or direct client canonical mutation inside the mission artifact.
-- [ ] Record exact PASS/FAIL/NOT_RUN evidence and hashes in `VERIFICATION.md`; leave PBO build and live Arma/ACE/CBA multiplayer tests explicitly `NOT_RUN` because the product is unpacked and the engine runtime is a separate proof gate.
-- [ ] Review `git diff --stat`, exact staged paths, and `git diff --cached`; keep `timecraft*` and all unrelated user files unstaged.
-- [ ] Commit exact migration/test/document paths with message `chore: verify mission-only arsenal migration`.
+- [x] Run the mission-only layout, compatibility, original permissions/regressions/integrity, strict UTF-8, bare-CR, lexical delimiter, `git diff --check`, and CfgConvert gates from a clean command log.
+- [x] Verify `rg` finds no Garage, addon-only absolute path, `$PBOPREFIX$`, PBO, `CBA_fnc_getSetting`, ACE persistent-box initialization, unrestricted Functions mode, or direct client canonical mutation inside the mission artifact.
+- [x] Record exact PASS/FAIL/NOT_RUN evidence and hashes in `VERIFICATION.md`; mark PBO build `NOT_APPLICABLE` because the product is unpacked and leave live Arma/ACE/CBA multiplayer tests explicitly `NOT_RUN` because engine runtime is a separate proof gate.
+- [x] Review `git diff --stat`, exact staged paths, and `git diff --cached`; keep `timecraft*` and all unrelated user files unstaged.
+- [x] Commit exact migration/test/document paths with message `chore: verify mission-only arsenal migration`.

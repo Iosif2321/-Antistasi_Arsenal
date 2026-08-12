@@ -4,7 +4,8 @@ params [
 ];
 if (!hasInterface || {isRemoteExecuted} || {isNull _object} || {_arsenalId isEqualTo ""}) exitWith { -1 };
 
-private _actionKey = netId _object;
+private _actionKey = [_object] call A4A_fnc_objectKey;
+if (_actionKey isEqualTo "") exitWith { -1 };
 private _actionIds = localNamespace getVariable ["A4A_ClientActionIds", createHashMap];
 if (!isNil {_actionIds get _actionKey}) exitWith { _actionIds get _actionKey };
 
@@ -15,17 +16,20 @@ private _actionId = _object addAction [
         _arguments params ["_configuredId"];
         if (_caller isNotEqualTo player) exitWith {};
 
-        private _requestNonce = format ["%1:%2:%3", clientOwner, floor (diag_tickTime * 1000), floor random 1000000000];
+        private _closePending = localNamespace getVariable ["A4A_ClientClosePending", []];
+        if (_closePending isEqualType [] && {count _closePending > 0}) exitWith {
+            systemChat "The previous Arsenal session is still finalizing.";
+        };
         private _pending = localNamespace getVariable ["A4A_ClientPendingRequests", createHashMap];
+        if (count keys _pending > 0) exitWith {
+            systemChat "An Arsenal open request is already in progress.";
+        };
+        private _requestNonce = format ["%1:%2:%3", clientOwner, floor (diag_tickTime * 1000), floor random 1000000000];
         _pending set [_requestNonce, [_target, diag_tickTime, _configuredId]];
         localNamespace setVariable ["A4A_ClientPendingRequests", _pending];
 
         ["jn_fnc_arsenal", "Loading quantitative Arsenal"] call BIS_fnc_startLoadingScreen;
-        if (isServer) then {
-            [_target, _requestNonce] call A4A_fnc_requestOpen;
-        } else {
-            [_target, _requestNonce] remoteExecCall ["A4A_fnc_requestOpen", 2];
-        };
+        [_target, _requestNonce] remoteExecCall ["A4A_fnc_requestOpen", 2];
 
         [_requestNonce] spawn {
             params ["_nonce"];
@@ -51,4 +55,3 @@ private _actionId = _object addAction [
 _actionIds set [_actionKey, _actionId];
 localNamespace setVariable ["A4A_ClientActionIds", _actionIds];
 _actionId
-

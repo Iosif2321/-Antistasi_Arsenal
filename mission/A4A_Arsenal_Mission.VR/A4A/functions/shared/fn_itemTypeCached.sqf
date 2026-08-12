@@ -14,4 +14,3 @@ if (_itemType isEqualTo 23) then { _itemType = 24 };
 _cache set [_key, _itemType];
 localNamespace setVariable [_cacheName, _cache];
 _itemType
-

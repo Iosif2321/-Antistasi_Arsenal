@@ -25,4 +25,3 @@ private _resolved = objNull;
 } forEach allPlayers;
 
 _resolved
-

@@ -79,6 +79,7 @@ if (!_unlimited) then {
 
 private _lifetime = _settings getOrDefault ["transactionLifetime", 10];
 private _transaction = createHashMapFromArray [
+    ["transactionId", _transactionId],
     ["kind", "withdraw"],
     ["state", "reserved"],
     ["ownerKey", _ownerKey],
@@ -99,4 +100,3 @@ localNamespace setVariable ["A4A_ServerTransactions", _transactions];
 
 private _grant = [_transactionId, "withdraw", _generation, _revision, _index, _item, _amount];
 if (_localHostCall) then { _grant call A4A_fnc_receiveGrant } else { _grant remoteExecCall ["A4A_fnc_receiveGrant", _senderOwner] };
-

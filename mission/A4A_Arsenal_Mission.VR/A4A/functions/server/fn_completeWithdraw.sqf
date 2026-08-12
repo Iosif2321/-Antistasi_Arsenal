@@ -38,13 +38,20 @@ if !(_data isEqualType [] && {count _data isEqualTo 27} && {_revision >= 0}) exi
 
 private _rollback = !_success;
 private _message = "Withdrawal committed.";
+private _deleteTransaction = _success || {_unlimited};
 if (_rollback) then {
     if (!_unlimited) then {
-        _data set [_index, [_data select _index, [_item, _amount]] call jn_fnc_arsenal_addToArray];
-        _dataById set [_arsenalId, _data];
-        localNamespace setVariable ["A4A_ServerData", _dataById];
+        private _refunded = [_transactionId, _senderOwner, "Finite withdrawal reservation was refunded."] call A4A_fnc_refundWithdrawalReservation;
+        if (_refunded select 0) then {
+            _revision = _refunded select 1;
+            _data = _refunded select 2;
+        } else {
+            _message = "Withdrawal failed; its reservation was already finalized or remains queued for safe retry.";
+        };
     };
-    _message = "Withdrawal failed and the reservation was refunded.";
+    if (_message isEqualTo "Withdrawal committed.") then {
+        _message = "Withdrawal failed and the reservation was refunded.";
+    };
 } else {
     _revision = _revision + 1;
     _revisions set [_arsenalId, _revision];
@@ -61,8 +68,11 @@ if (_rollback) then {
     };
 };
 
-_transactions deleteAt _transactionId;
-localNamespace setVariable ["A4A_ServerTransactions", _transactions];
+if (_deleteTransaction) then {
+    _transactions = localNamespace getVariable ["A4A_ServerTransactions", createHashMap];
+    _transactions deleteAt _transactionId;
+    localNamespace setVariable ["A4A_ServerTransactions", _transactions];
+};
 private _snapshot = parseSimpleArray str _data;
 private _payload = [_transactionId, "withdraw", _success, _generation, _revision, _snapshot, _rollback, _message];
 if (_localHostCall) then { _payload call A4A_fnc_receiveTransactionResult } else { _payload remoteExecCall ["A4A_fnc_receiveTransactionResult", _senderOwner] };
@@ -71,4 +81,3 @@ if (_success) then {
     [_arsenalId, _revision, _data, _senderOwner, "Arsenal stock updated."] call A4A_fnc_publishSnapshot;
     if (!isNil "A4A_fnc_schedulePersistence") then { [] call A4A_fnc_schedulePersistence };
 };
-

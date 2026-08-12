@@ -12,9 +12,10 @@ if (isNull _requestPlayer || {isNull _arsenalObject} || {isNull _holder}) exitWi
     [false, _requestPlayer, _senderOwner, _localHostCall, [], ""]
 };
 
-private _holderKey = netId _holder;
+private _holderKey = [_holder] call A4A_fnc_objectKey;
 private _registry = localNamespace getVariable ["A4A_ServerRegistry", createHashMap];
-private _arsenalKey = netId _arsenalObject;
+private _arsenalKey = [_arsenalObject] call A4A_fnc_objectKey;
+if (_arsenalKey isEqualTo "") exitWith { [false, _requestPlayer, _senderOwner, _localHostCall, [], _holderKey] };
 if (isNil {_registry get _arsenalKey}) exitWith { [false, _requestPlayer, _senderOwner, _localHostCall, [], _holderKey] };
 private _canonical = _registry get _arsenalKey;
 if !(_canonical isEqualType [] && {count _canonical isEqualTo 3} && {(_canonical select 0) isEqualTo _arsenalObject}) exitWith {
@@ -36,7 +37,9 @@ private _hasCargo =
 
 if (
     !(_ready getOrDefault [_arsenalId, false]) ||
-    {_holderKey isEqualTo "" || {_holderKey isEqualTo "0:0"}} ||
+    {_holder isEqualTo _arsenalObject} ||
+    {_holder isKindOf "Man"} ||
+    {_holderKey isEqualTo ""} ||
     {!alive _requestPlayer} ||
     {vehicle _requestPlayer isNotEqualTo _requestPlayer} ||
     {_requestPlayer distance _arsenalObject > _interactionDistance} ||

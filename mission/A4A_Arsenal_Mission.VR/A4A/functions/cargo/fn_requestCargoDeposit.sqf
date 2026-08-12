@@ -19,13 +19,15 @@ private _sendResult = {
 if (!_validRequest) exitWith {
     [false, "Cargo deposit rejected by the server."] call _sendResult;
 };
-_holderKey = netId _holder;
 
 private _lockAcquired = false;
 private _locks = localNamespace getVariable ["A4A_ServerCargoLocks", createHashMap];
+private _lockExpiresAt = diag_tickTime + 30;
 isNil {
-    if !(_locks getOrDefault [_holderKey, false]) then {
-        _locks set [_holderKey, true];
+    private _existingLockUntil = _locks getOrDefault [_holderKey, -1];
+    if !(_existingLockUntil isEqualType 0) then { _existingLockUntil = -1 };
+    if (_existingLockUntil <= diag_tickTime) then {
+        _locks set [_holderKey, _lockExpiresAt];
         localNamespace setVariable ["A4A_ServerCargoLocks", _locks];
         _lockAcquired = true;
     };
@@ -95,11 +97,57 @@ private _result = call {
         [false, "Cargo is empty or exceeds the safe transaction limits.", _currentRevision, [], false]
     };
 
+    _candidate = ([_candidate, _threshold] call A4A_fnc_applyUnlockThreshold) select 0;
     private _validatedCandidate = [_candidate] call A4A_fnc_validateSnapshot;
     if !(_validatedCandidate select 0) exitWith {
         [false, format ["Cargo deposit rejected: %1", _validatedCandidate select 3], _currentRevision, [], false]
     };
     _candidate = _validatedCandidate select 1;
+
+    /*
+        A finite withdrawal is already deducted from canonical data but may
+        still need to be refunded. Prove that the post-deposit state can absorb
+        every outstanding refund before clearing the physical holder.
+    */
+    private _refundCandidate = parseSimpleArray str _candidate;
+    private _refundCandidateValid = true;
+    private _transactions = localNamespace getVariable ["A4A_ServerTransactions", createHashMap];
+    {
+        private _reservation = _transactions get _x;
+        if (
+            _reservation isEqualType createHashMap &&
+            {(_reservation getOrDefault ["kind", ""]) isEqualTo "withdraw"} &&
+            {(_reservation getOrDefault ["state", ""]) in ["reserved", "refunding"]} &&
+            {!(_reservation getOrDefault ["unlimited", false])} &&
+            {(_reservation getOrDefault ["arsenalId", ""]) isEqualTo _arsenalId}
+        ) then {
+            private _refundIndex = _reservation getOrDefault ["index", -1];
+            private _refundItem = _reservation getOrDefault ["item", ""];
+            private _refundAmount = _reservation getOrDefault ["amount", 0];
+            if !(
+                _refundIndex >= 0 &&
+                {_refundIndex <= 26} &&
+                {_refundItem isNotEqualTo ""} &&
+                {_refundAmount > 0}
+            ) then {
+                _refundCandidateValid = false;
+            } else {
+                _refundCandidate set [
+                    _refundIndex,
+                    [_refundCandidate select _refundIndex, [_refundItem, _refundAmount]] call jn_fnc_arsenal_addToArray
+                ];
+            };
+        };
+        if (!_refundCandidateValid) exitWith {};
+    } forEach keys _transactions;
+    private _validatedRefundCandidate = if (_refundCandidateValid) then {
+        [_refundCandidate] call A4A_fnc_validateSnapshot
+    } else {
+        [false, [], 0, "malformed outstanding withdrawal reservation"]
+    };
+    if !(_validatedRefundCandidate select 0) exitWith {
+        [false, "Cargo deposit rejected: capacity is reserved for an outstanding withdrawal refund.", _currentRevision, [], false]
+    };
 
     private _backup = [_holder] call A4A_fnc_snapshotCargo;
     if (count _backup isNotEqualTo 4) exitWith {

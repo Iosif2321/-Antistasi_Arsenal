@@ -24,7 +24,8 @@ if (
     {getPlayerUID _requestPlayer isEqualTo ""}
 ) exitWith {};
 
-private _objectKey = netId _object;
+private _objectKey = [_object] call A4A_fnc_objectKey;
+if (_objectKey isEqualTo "") exitWith {};
 private _registry = localNamespace getVariable ["A4A_ServerRegistry", createHashMap];
 if (isNil {_registry get _objectKey}) exitWith {};
 private _canonical = _registry get _objectKey;
@@ -49,7 +50,7 @@ private _generation = (_generations getOrDefault [_ownerKey, 0]) + 1;
 _generations set [_ownerKey, _generation];
 localNamespace setVariable ["A4A_ServerSessionGenerations", _generations];
 
-private _lifetime = _settings getOrDefault ["sessionLifetime", 30];
+private _lifetime = _settings getOrDefault ["sessionLifetime", 900];
 private _session = createHashMapFromArray [
     ["object", _object],
     ["objectKey", _objectKey],
@@ -74,4 +75,3 @@ if (_localHostCall) then {
 } else {
     _payload remoteExecCall ["A4A_fnc_receiveOpen", _senderOwner];
 };
-

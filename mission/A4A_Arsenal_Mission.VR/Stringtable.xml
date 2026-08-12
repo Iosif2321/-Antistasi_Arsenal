@@ -144,38 +144,6 @@
                 <Korean>무전기 및 의료품같은 기본 아이템 추가</Korean>
                 <French>Ajouter des éléments par défaut tels que des radios et des fournitures médicales</French>
             </Key>
-            <Key ID="STR_JNA_ACT_MOVE_FROM_CRATE_TO_ARSENAL_BUTTON">
-                <Original>To crate</Original>
-                <Russian>В ящик</Russian>
-                <German>Kiste</German>
-                <Chinesesimp>到箱子</Chinesesimp>
-                <Korean>상자로</Korean>
-                <French>A mettre en caisse</French>
-            </Key>
-            <Key ID="STR_JNA_ACT_MOVE_FROM_CRATE_TO_ARSENAL">
-                <Original>Move items from crate inventory to arsenal</Original>
-                <Russian>Переместить предметы из инвентаря ящика в арсенал</Russian>
-                <German>Verschiebe Gegenstände aus dem Kisteninventar ins Arsenal</German>
-                <Chinesesimp>将箱子里物品转移到军火库库存</Chinesesimp>
-                <Korean>상자 소지품을 아스널로 아이템 옮기기</Korean>
-                <French>Déplacer des objets de l'inventaire de la caisse vers l'arsenal</French>
-            </Key>
-            <Key ID="STR_JNA_ACT_MOVE_FROM_VEHICLE_TO_ARSENAL_BUTTON">
-                <Original>Unload Vehicle</Original>
-                <Russian>Разгрузить машину</Russian>
-                <German>Fahrzeug entladen</German>
-                <Chinesesimp>卸载载具</Chinesesimp>
-                <Korean>차량 하역</Korean>
-                <French>Décharger le véhicule</French>
-            </Key>
-            <Key ID="STR_JNA_ACT_MOVE_FROM_VEHICLE_TO_ARSENAL">
-                <Original>Move items from vehicle inventory to arsenal</Original>
-                <Russian>Переместить предметы из инвентаря транспортного средства в арсенал</Russian>
-                <German>Verschieben Sie Gegenstände aus dem Fahrzeuginventar in das Arsenal</German>
-                <Chinesesimp>将载具库存内物品移动到军火库</Chinesesimp>
-                <Korean>차량 소지품을 아스널로 아이템 옮기기</Korean>
-                <French>Déplacer des objets de l'inventaire des véhicules vers l'arsenal</French>
-            </Key>
             <Key ID="STR_JNA_ACT_EDIT_ARSENAL">
                 <Original>Edit Arsenal</Original>
                 <Russian>Редактировать</Russian>
@@ -218,13 +186,45 @@
                 <Original>Loading from vehicle/crate: DISABLED</Original>
                 <Russian>Загрузка из техники/ящика: ВЫКЛЮЧЕНА</Russian>
             </Key>
-            <Key ID="STR_A4AP_vehArsenal_header">
-                <Original>Vehicle Arsenal</Original>
-                <Russian>Арсенал техники</Russian>
+            <Key ID="STR_A4AP_arsenal_scarcity_0">
+                <Original>Unavailable. </Original>
+                <Russian>Недоступно. </Russian>
             </Key>
-            <Key ID="STR_A4AP_vehArsenal_desc">
-                <Original>Look at a vehicle or crate and press Space to load its cargo into the arsenal.</Original>
-                <Russian>Посмотрите на технику или ящик и нажмите Пробел, чтобы загрузить его содержимое в арсенал.</Russian>
+            <Key ID="STR_A4AP_arsenal_scarcity_1">
+                <Original>Plentiful. </Original>
+                <Russian>В достатке. </Russian>
+            </Key>
+            <Key ID="STR_A4AP_arsenal_scarcity_2">
+                <Original>Available. </Original>
+                <Russian>Доступно. </Russian>
+            </Key>
+            <Key ID="STR_A4AP_arsenal_scarcity_3">
+                <Original>Limited. </Original>
+                <Russian>Ограниченный запас. </Russian>
+            </Key>
+            <Key ID="STR_A4AP_arsenal_scarcity_4">
+                <Original>Scarce. </Original>
+                <Russian>Малый запас. </Russian>
+            </Key>
+            <Key ID="STR_A4AP_arsenal_scarcity_5">
+                <Original>Last item. </Original>
+                <Russian>Последний экземпляр. </Russian>
+            </Key>
+            <Key ID="STR_A4AP_arsenal_scarcity_ammo_0">
+                <Original>No compatible ammunition.</Original>
+                <Russian>Нет совместимых боеприпасов.</Russian>
+            </Key>
+            <Key ID="STR_A4AP_arsenal_scarcity_ammo_1">
+                <Original>Compatible ammunition is plentiful.</Original>
+                <Russian>Совместимых боеприпасов достаточно.</Russian>
+            </Key>
+            <Key ID="STR_A4AP_arsenal_scarcity_ammo_2">
+                <Original>Compatible ammunition is limited.</Original>
+                <Russian>Запас совместимых боеприпасов ограничен.</Russian>
+            </Key>
+            <Key ID="STR_A4AP_arsenal_scarcity_ammo_3">
+                <Original>Compatible ammunition is scarce.</Original>
+                <Russian>Совместимых боеприпасов мало.</Russian>
             </Key>
         </Container>
     </Package>

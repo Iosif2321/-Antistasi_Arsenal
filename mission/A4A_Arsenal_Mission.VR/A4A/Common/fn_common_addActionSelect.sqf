@@ -33,17 +33,17 @@ _id = player addAction [
 		player removeAction _id;
 		player setVariable ["jn_selectAction_id",nil];
 		terminate (player getVariable "jn_selectAction_handle");//remove timer
-		
+
 		_object call _removeScript;
-		
+
 		if(isNil "_object")exitwith{hint localize "STR_JNC_ACT_SELECT_NO_OBJECT"};
 		hint ""; //remove select hint if it was still there
-		
+
 		_object call _script;
-		
+
 	},
 	[_object,_script,_removeScript],
-	7, 
+	7,
 	true,
 	false,
 	"",

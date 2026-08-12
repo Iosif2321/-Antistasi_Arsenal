@@ -2,9 +2,9 @@
 
 Date: 2026-08-12
 
-Status: approved direction, awaiting written-spec review
+Status: implementation complete and static verification passed; live Arma runtime verification pending
 
-Branch: `codex/mission-only-arsenal`
+Branch: `mission-only-arsenal`
 
 Audience: scenario maintainers, dedicated-server administrators, SQF developers
 and multiplayer testers
@@ -86,7 +86,6 @@ mission/
           cba/
           ace/
       ui/
-      pictures/
 ```
 
 `A4A_Arsenal_Mission.VR` is the executable reference scenario and integration
@@ -166,9 +165,15 @@ names, stable Arsenal IDs and thresholds. Example shape:
 
 ```sqf
 [
-    ["Base", "a4a_arsenal_base", 25]
+    ["a4a_arsenal_base", "Base", 25]
 ]
 ```
+
+The third value is the automatic-unlock threshold in physical items. A positive
+threshold converts a finite canonical row to `-1` when reached; zero disables
+automatic unlocks. Because schema V1 stores magazines as remaining rounds, the
+server compares magazine rows against `threshold * CfgMagazines.count`. The
+standalone mission has no member/guest reserve policy.
 
 At server startup:
 
@@ -255,8 +260,8 @@ The mission protocol uses correlated requests:
 ### 8.2 Withdrawal
 
 1. Client requests a bounded item/amount against its acknowledged revision.
-2. Server classifies the item, applies reserve rules and atomically reserves or
-   rejects stock.
+2. Server classifies the item, checks finite/unlimited availability and
+   atomically reserves or rejects stock.
 3. Server returns a transaction ID and the accepted amount.
 4. Client performs the physical inventory change and reports success/failure.
 5. Failure or timeout refunds the reservation; success commits it.
@@ -267,9 +272,10 @@ The mission protocol uses correlated requests:
 
 Return uses a distinct transaction type and never accepts a free-form positive
 `UpdateItemAdd` from a client. The client reports the exact local operation and
-the server bounds it by the active session and issued transaction. Cargo returns
-are stronger: the server observes and clears the global cargo itself before
-committing stock.
+the server bounds it by the active session and issued transaction. Accepted
+returns apply the canonical automatic-unlock threshold before validation and
+commit. Cargo returns are stronger: the server observes and clears the global
+cargo itself before committing stock.
 
 The protocol does not claim to defeat a fully compromised Arma client. It does
 prevent accidental double spend, stale-response corruption, unauthenticated
@@ -317,13 +323,18 @@ All physical holders implement one `cargo container` contract. Supported
 holders include crates and vehicle objects with inventory capacity. Vehicle
 class, fuel, damage, crew, pylons and existence are outside the contract.
 
-Supported operations:
+Implemented operations:
 
 - deposit all supported physical cargo from a crate or vehicle into one
   quantitative Arsenal ID;
-- withdraw an acknowledged selection from the arsenal into a crate or vehicle;
-- transfer supported physical cargo directly from one crate/vehicle to another;
-- inspect a non-destructive summary before confirmation.
+- withdraw an acknowledged manifest from the arsenal into a crate or vehicle;
+- the reference action derives that manifest from a copy of the player's
+  current equipment.
+
+There is no separate direct holder-to-holder protocol or virtual vehicle store.
+A crate-to-vehicle or vehicle-to-crate workflow is composed through the same
+Arsenal ID: deposit from the source holder, then perform a separately
+acknowledged withdrawal into the destination holder.
 
 Each destructive cargo operation follows this sequence:
 
@@ -363,9 +374,9 @@ CBA remains optional for A4A:
   directory.
 
 CBA 3.19.0 changed the settings UI and added search, but did not remove the
-`CBA_fnc_addSetting` signature currently used by A4A. The mission will add a
-static contract test for its eight-argument call shape and a runtime test that
-the five settings appear and resolve correctly.
+`CBA_fnc_addSetting` signature currently used by A4A. The mission includes a
+static contract test for its eight-argument call shape. The check that all five
+settings appear and resolve correctly remains a live runtime test.
 
 ## 12. ACE3 3.21.1 compatibility contract
 
@@ -458,8 +469,8 @@ session happens to be current later.
 4. Add request nonce/session generation/revision protocol and make Legacy open
    work without the A4A addon loaded.
 5. Move the Legacy quantitative UI and replace absolute resource paths.
-6. Implement the generic cargo transaction service, then cover crate-to-crate,
-   crate-to-vehicle, vehicle-to-crate and Arsenal deposit/withdrawal.
+6. Implement the generic cargo transaction service for Arsenal deposit and
+   acknowledged withdrawal with either a crate or empty vehicle as holder.
 7. Add optional CBA adapter and replace all `CBA_fnc_getSetting` reads.
 8. Add the explicit-local ACE3 3.21.1 proxy adapter and compatibility tests.
 9. Remove Garage registration/source from the mission artifact and retire the
@@ -540,7 +551,8 @@ The transition is complete only when all statements below are true:
    absent or when finite stock is unsupported.
 7. No Garage UI, endpoint, dialog, module or persistence key exists in the
    deployed scenario folder.
-8. Vehicles can participate only as cargo holders in tested transfer flows.
+8. Vehicles can participate only as cargo holders in tested Arsenal
+   deposit/withdrawal flows.
 9. Concurrent last-item withdrawal produces one accepted physical grant and one
    rejected/resynced client, not two grants.
 10. Stale open, close, delta and editor-save messages cannot mutate a newer

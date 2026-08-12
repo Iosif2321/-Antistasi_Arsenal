@@ -124,7 +124,7 @@ private _itemCategory = switch true do {
 			_putList append getArray (_configCfgWeapons >> "Put" >> _x >> "magazines");
 			false
 		} count getArray (_configCfgWeapons >> "Put" >> "muzzles");
-		
+
 		// Check what the magazine actually is
 		switch true do {
 			// Grenades

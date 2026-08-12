@@ -54,11 +54,7 @@ if ("jn_fnc_arsenal" in _loadingIds) then { ["jn_fnc_arsenal"] call BIS_fnc_endL
 
 if (_notifyServer && {!isNull _originalObject} && {_requestNonce isNotEqualTo ""} && {_generation >= 1}) then {
     private _payload = [_originalObject, _requestNonce, _generation];
-    if (isServer) then {
-        _payload call A4A_fnc_requestClose;
-    } else {
-        _payload remoteExecCall ["A4A_fnc_requestClose", 2];
-    };
+    _payload remoteExecCall ["A4A_fnc_requestClose", 2];
 };
 
 true

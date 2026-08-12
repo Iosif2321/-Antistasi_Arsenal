@@ -52,15 +52,52 @@ if (
     {_derivedIndex isNotEqualTo _index}
 ) exitWith { ["Return rejected: stale or invalid request."] call _sendResult };
 
+private _transactions = localNamespace getVariable ["A4A_ServerTransactions", createHashMap];
+private _reservedAmount = 0;
+private _reservedMissingClasses = createHashMap;
+{
+    private _reserved = _transactions get _x;
+    if (
+        _reserved isEqualType createHashMap &&
+        {(_reserved getOrDefault ["kind", ""]) isEqualTo "withdraw"} &&
+        {(_reserved getOrDefault ["state", ""]) in ["reserved", "refunding"]} &&
+        {!(_reserved getOrDefault ["unlimited", false])} &&
+        {(_reserved getOrDefault ["arsenalId", ""]) isEqualTo _arsenalId}
+    ) then {
+        private _reservedIndex = _reserved getOrDefault ["index", -1];
+        private _reservedItem = _reserved getOrDefault ["item", ""];
+        private _reservedItemAmount = _reserved getOrDefault ["amount", 0];
+        if (
+            _reservedIndex isEqualTo _index &&
+            {toLower _reservedItem isEqualTo toLower _item}
+        ) then {
+            _reservedAmount = _reservedAmount + _reservedItemAmount;
+        };
+        if (
+            _reservedIndex >= 0 &&
+            {_reservedIndex <= 26} &&
+            {_reservedItem isNotEqualTo ""} &&
+            {([_data select _reservedIndex, _reservedItem] call jn_fnc_arsenal_itemCount) isEqualTo 0}
+        ) then {
+            _reservedMissingClasses set [format ["%1|%2", _reservedIndex, toLower _reservedItem], true];
+        };
+    };
+} forEach keys _transactions;
+
 private _current = [_data select _index, _item] call jn_fnc_arsenal_itemCount;
 private _entryCount = 0;
 { _entryCount = _entryCount + count _x } forEach _data;
+private _incomingKey = format ["%1|%2", _index, toLower _item];
+private _effectiveEntryCount = _entryCount + count keys _reservedMissingClasses;
 if (
-    (_current isNotEqualTo -1 && {_current + _amount > _maxAmount}) ||
-    {_current isEqualTo 0 && {_entryCount >= _maxEntries}}
+    (_current isNotEqualTo -1 && {_current + _reservedAmount + _amount > _maxAmount}) ||
+    {
+        _current isEqualTo 0 &&
+        {!(_reservedMissingClasses getOrDefault [_incomingKey, false])} &&
+        {_effectiveEntryCount >= _maxEntries}
+    }
 ) exitWith { ["Return rejected: canonical limits would be exceeded."] call _sendResult };
 
-private _transactions = localNamespace getVariable ["A4A_ServerTransactions", createHashMap];
 if (!isNil {_transactions get _transactionId}) exitWith {
     private _existing = _transactions get _transactionId;
     if (
@@ -94,4 +131,3 @@ localNamespace setVariable ["A4A_ServerTransactions", _transactions];
 
 private _grant = [_transactionId, "return", _generation, _revision, _index, _item, _amount];
 if (_localHostCall) then { _grant call A4A_fnc_receiveGrant } else { _grant remoteExecCall ["A4A_fnc_receiveGrant", _senderOwner] };
-

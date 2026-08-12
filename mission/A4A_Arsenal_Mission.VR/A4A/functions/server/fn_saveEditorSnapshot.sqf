@@ -61,6 +61,8 @@ if !(_validated select 0) exitWith {
 };
 
 private _normalized = _validated select 1;
+private _threshold = _canonical select 2;
+_normalized = ([_normalized, _threshold] call A4A_fnc_applyUnlockThreshold) select 0;
 private _newRevision = _currentRevision + 1;
 _dataById set [_arsenalId, parseSimpleArray str _normalized];
 _revisions set [_arsenalId, _newRevision];
@@ -76,4 +78,3 @@ localNamespace setVariable ["A4A_ServerSessions", _sessions];
 [true, _newRevision, _normalized, format ["Arsenal '%1' saved (%2 entries).", _arsenalId, _validated select 2]] call _sendResult;
 [_arsenalId, _newRevision, _normalized, _senderOwner, "Arsenal editor published a new snapshot."] call A4A_fnc_publishSnapshot;
 [] call A4A_fnc_schedulePersistence;
-

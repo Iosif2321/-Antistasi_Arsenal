@@ -5,9 +5,9 @@
 
     fuctions:
     ["Preload"] call jn_fnc_arsenal;
-    	preloads the arsenal like the default arsenal but it doesnt have "BIS_fnc_endLoadingScreen" so you dont have errors
+	preloads the arsenal like the default arsenal but it doesnt have "BIS_fnc_endLoadingScreen" so you dont have errors
     ["customInit", "arsenalDisplay"] call jn_fnc_arsenal;
-    	overwrites all functions in the arsenal with JNA ones.
+	overwrites all functions in the arsenal with JNA ones.
 */
 
 
@@ -187,32 +187,16 @@ private _getUsableMagazines = {
 	_magazines;
 };
 
-// Capture the engine-authenticated RPC context before entering a mode. Client
-// payload fields are never an identity or routing authority.
+// The dispatcher is a local UI helper. Every network operation uses a narrow
+// mission-native A4A endpoint and never enters this switch remotely.
 private _a4aIsRemote = isRemoteExecuted;
 private _a4aRemoteOwner = if (_a4aIsRemote) then {remoteExecutedOwner} else {-1};
-if (!isServer && {_a4aIsRemote && {_a4aRemoteOwner != 2}}) exitWith {
-	diag_log format ["A4A_Arsenal: rejected peer-authored dispatcher call from owner %1", _a4aRemoteOwner];
+if (_a4aIsRemote) exitWith {
+	diag_log format ["A4A Mission: rejected remote UI dispatcher call from owner %1", _a4aRemoteOwner];
 };
 
 _mode = [_this,0,"Open",[displaynull,""]] call bis_fnc_param;
 _this = [_this,1,[]] call bis_fnc_param;
-if (
-	isServer
-	&& {_a4aIsRemote}
-	&& {_mode in ["UpdateItemAdd", "UpdateItemRemove"]}
-	&& {canSuspend}
-) exitWith {
-	diag_log format ["A4A_Arsenal: rejected scheduled mutation mode '%1' from owner %2; use remoteExecCall", _mode, _a4aRemoteOwner];
-};
-if (
-	isServer
-	&& {_a4aIsRemote}
-	&& {!(_mode in ["UpdateItemAdd", "UpdateItemRemove"])}
-	&& {!(localNamespace getVariable ["A4A_Arsenal_ServerDispatcherAuthorized", false])}
-) exitWith {
-	diag_log format ["A4A_Arsenal: rejected remote server dispatcher mode '%1' from owner %2", _mode, _a4aRemoteOwner];
-};
 
 switch _mode do {
 
@@ -414,11 +398,7 @@ switch _mode do {
 			private _generation = _session getOrDefault ["generation", -1];
 			if (!isNull _object && {_nonce isNotEqualTo ""} && {_generation >= 1}) then {
 				private _payload = [_object, _nonce, _generation];
-				if (isServer) then {
-					_payload call A4A_fnc_requestClose;
-				} else {
-					_payload remoteExecCall ["A4A_fnc_requestClose", 2];
-				};
+				_payload remoteExecCall ["A4A_fnc_requestClose", 2];
 			};
 			localNamespace setVariable ["A4A_ClientSession", []];
 		};
@@ -726,9 +706,10 @@ switch _mode do {
 
 		_ctrlButtonRandom = _display displayctrl IDC_RSCDISPLAYARSENAL_CONTROLSBAR_BUTTONRANDOM;
 		_ctrlButtonRandom ctrlRemoveAllEventHandlers "buttonclick";
-		_ctrlButtonRandom ctrladdeventhandler ["buttonclick",{["buttonInvToJNA",[ctrlparent (_this select 0)]] call jn_fnc_arsenal;}];
-		_ctrlButtonRandom ctrlSetText localize "STR_JNA_ACT_MOVE_FROM_CRATE_TO_ARSENAL_BUTTON";
-		_ctrlButtonRandom ctrlSetTooltip localize "STR_JNA_ACT_MOVE_FROM_CRATE_TO_ARSENAL";
+		_ctrlButtonRandom ctrlSetText "";
+		_ctrlButtonRandom ctrlSetTooltip "";
+		_ctrlButtonRandom ctrlEnable false;
+		_ctrlButtonRandom ctrlShow false;
 
 		_ctrlArrowLeft = _display displayctrl IDC_RSCDISPLAYARSENAL_ARROWLEFT;
 		_ctrlArrowLeft ctrlRemoveAllEventHandlers "buttonclick";
@@ -812,13 +793,13 @@ switch _mode do {
 			private _sortByAmountIndex =  _ctrlSort lbadd (localize "STR_JNA_SORT_BY_AMOUNT");
 			private _sortDefaultIndex = _ctrlSort lbadd (localize "STR_JNA_SORT_DEFAULT");
 			private _sortColorIndex = _ctrlSort lbadd (localize "STR_JNA_SORT_COLOR");
-	  		private _sortModIndex = _ctrlSort lbadd (localize "STR_JNA_SORT_MOD");
+			private _sortModIndex = _ctrlSort lbadd (localize "STR_JNA_SORT_MOD");
 
 			_ctrlSort lbSetValue [0, SORT_ALPHABETICAL];
 			_ctrlSort lbSetValue [_sortByAmountIndex, SORT_AMOUNT];
 			_ctrlSort lbSetValue [_sortDefaultIndex, SORT_DEFAULT];
 			_ctrlSort lbSetValue [_sortColorIndex, SORT_COLOR];
-	  		_ctrlSort lbSetValue [_sortModIndex, SORT_MOD];
+			_ctrlSort lbSetValue [_sortModIndex, SORT_MOD];
 
 			lbSortByValue _ctrlSort;
 
@@ -829,7 +810,7 @@ switch _mode do {
 		uinamespace setvariable ["jn_fnc_arsenal_sort",_sortValues];
 	};
 
-  	case "SortBy":{
+	case "SortBy":{
 		_this params ["_eventParams", "_currentTabIdc"];
 		_eventParams params ["_ctrlSort", "_selectedIndex"];
 
@@ -878,34 +859,34 @@ switch _mode do {
 				private _displayNameArray = [];
 				private _modArray = [];
 				private _dataArray = [];
-			
+
 				for "_i" from (_itemCount - 1) to 0 step -1 do {
 					private _dataStr = if _type then {_ctrlList lnbdata [_i,0]} else {_ctrlList lbdata _i};
-			
+
 					if (_dataStr != "") then {
 						private _data = if (_dataStr select [0,1] == "[") then {call compile _dataStr} else {[_dataStr,0,"",""]};
 						private _item = _data select 0;
 						private _amount = _data select 1;
 						private _displayName = _data select 2;
 						private _dlcName = _data select 3;
-			
+
 						_displayNameArray pushBack _displayName;
 						_modArray pushBack _dlcName;
 						_dataArray set [_i, _data];
 					};
 				};
-			
+
 				_modArray sort true;
 
 				for "_i" from 0 to (_itemCount - 1) do {
 					private _data = _dataArray select _i;
-			
+
 					if (!isNil "_data") then {
 						private _dlcName = _data select 3;
 						_ctrlList lbSetValue [_i, _modArray find _dlcName];
 					};
 				};
-			
+
 				lbSortByValue _ctrlList;
 			};
 			case SORT_AMOUNT: {
@@ -930,7 +911,7 @@ switch _mode do {
 			case SORT_COLOR: {
 				private _displayNameArray = [];
 				private _dataArray = [];
-				
+
 				private _tempArr = [];
 
 				//Iterate in reverse order to avoid a lot of array resizes in _dataArray;
@@ -982,7 +963,7 @@ switch _mode do {
 				lbSort _ctrlList;
 			};
 		};
-  	};
+	};
 
 	///////////////////////////////////////////////////////////////////////////////////////////
 	case "ReplaceBaseItems":{
@@ -1071,7 +1052,7 @@ switch _mode do {
 
 		//add current selected items
 		_inventory_player = ["ListCurSel",[_index]] call jn_fnc_arsenal;
-		["UpdateItemAdd",[_index,_inventory_player,0]] call jn_fnc_arsenal;
+		["LocalItemAdd",[_index,_inventory_player,0]] call jn_fnc_arsenal;
 
 
 		//TODO sort (add select current item to sort?)
@@ -1253,7 +1234,7 @@ switch _mode do {
 			case IDC_RSCDISPLAYARSENAL_TAB_LOADEDMAG2: {
 				_ctrlListPrimaryWeapon = _display displayctrl (IDC_RSCDISPLAYARSENAL_LIST + IDC_RSCDISPLAYARSENAL_TAB_PRIMARYWEAPON);
 				if (!ctrlEnabled _ctrlListPrimaryWeapon || {primaryWeapon player isEqualTo ""}) exitWith { [] };
-				
+
 				_weapon = primaryWeapon player;
 				// below from core\functions\Ammunition\fn_randomRifle.sqf
 				// lookup real underbarrel GL magazine, because not everything is 40mm
@@ -1289,13 +1270,13 @@ switch _mode do {
 				] find _index;
 
 				_item = _weaponItems select _accIndex;
-				["UpdateItemAdd",[_index,_item,0]] call jn_fnc_arsenal;
+				["LocalItemAdd",[_index,_item,0]] call jn_fnc_arsenal;
 				["ListSelectCurrent",[_display,_index,_item]] call jn_fnc_arsenal;
 			};
 			case IDC_RSCDISPLAYARSENAL_TAB_LOADEDMAG: {
 				_item = currentMagazine player;
 
-				["UpdateItemAdd",[_index,_item,0]] call jn_fnc_arsenal;
+				["LocalItemAdd",[_index,_item,0]] call jn_fnc_arsenal;
 				["ListSelectCurrent",[_display,_index,_item]] call jn_fnc_arsenal;
 			};
 			case IDC_RSCDISPLAYARSENAL_TAB_LOADEDMAG2: {
@@ -1307,8 +1288,8 @@ switch _mode do {
 				{
 					if (_x in compatibleMagazines [_weapon, _muzzle]) exitWith { _item = _x};
 				} forEach (primaryWeaponMagazine player);
-				
-				["UpdateItemAdd",[_index,_item,0]] call jn_fnc_arsenal;
+
+				["LocalItemAdd",[_index,_item,0]] call jn_fnc_arsenal;
 				["ListSelectCurrent",[_display,_index,_item]] call jn_fnc_arsenal;
 			};
 			case IDC_RSCDISPLAYARSENAL_TAB_CARGOMAG;
@@ -1339,13 +1320,13 @@ switch _mode do {
 					{
 						{
 							if([_itemsUnique, _x] call _arrayContains)then{
-								["UpdateItemAdd",[_index,_x,0]] call jn_fnc_arsenal;
+								["LocalItemAdd",[_index,_x,0]] call jn_fnc_arsenal;
 							}
 						} forEach (getarray (configfile >> "cfgweapons" >> _x >> "magazines"));
 					}forEach [primaryweapon player, secondaryweapon player, handgunweapon player];
 				}else{
 					{
-						["UpdateItemAdd",[_index,_x,0]] call jn_fnc_arsenal;
+						["LocalItemAdd",[_index,_x,0]] call jn_fnc_arsenal;
 					} forEach _itemsUnique;
 				}
 			};
@@ -1559,7 +1540,7 @@ switch _mode do {
 					case IDC_RSCDISPLAYARSENAL_TAB_ITEMMUZZLE: { _weaponItems select 1 };
 					case IDC_RSCDISPLAYARSENAL_TAB_ITEMBIPOD: { _weaponItems select 6 };
 				};
-				if (_return1 isEqualType []) then { 
+				if (_return1 isEqualType []) then {
 					_return1 = if (count _return1 > 0) then { _return1 select 0 } else { "" };
 				};
 				_return1;
@@ -1661,461 +1642,57 @@ switch _mode do {
 		};
 	};
 
-	///////////////////////////////////////////////////////////////////////////////////////////  GLOBAL
-	case "UpdateItemAdd":{
-		params ["_index","_item","_amount",["_updateDataList",false],["_playerName",""],["_playerUID",""],["_arsenalID","Base"]];
-		private _trustedServerDispatcher = localNamespace getVariable ["A4A_Arsenal_ServerDispatcherAuthorized", false];
-		private _serverMutationAccepted = !(isServer && {_a4aIsRemote} && {!_trustedServerDispatcher});
+	/////////////////////////////////////////////////////////////////////////////////////////// Local list helper
+	case "LocalItemAdd":{
+		params ["_index", "_item", ["_amount", 0]];
+		if (_a4aIsRemote || {!hasInterface}) exitWith {};
+		if !(
+			_index isEqualType 0
+			&& {_index >= 0 && {_index <= 26}}
+			&& {_item isEqualType ""}
+			&& {_amount isEqualType 0}
+		) exitWith {};
 
-		// UI replicas accept committed deltas only from the server owner. Keep
-		// this origin check even under the addon's strict remote allowlist.
-		if (!isServer && {_a4aIsRemote && {_a4aRemoteOwner != 2}}) exitWith {
-			diag_log format ["A4A_Arsenal: rejected peer-forged UpdateItemAdd from owner %1", _a4aRemoteOwner];
-		};
+		private _display = uiNamespace getVariable ["arsenalDisplay", displayNull];
+		if (isNull _display || {_item isEqualTo ""}) exitWith {};
 
-		//update datalist
-		if(_updateDataList) then {
-			if (isServer) then {
-				_serverMutationAccepted = false;
-				private _mutationOwner = -1;
-				private _mutationPlayer = objNull;
-				if (_a4aIsRemote) then {
-					_mutationOwner = _a4aRemoteOwner;
-					{
-						if (
-							isPlayer _x
-							&& {!(_x isKindOf "VirtualMan_F")}
-							&& {!(_x isKindOf "HeadlessClient_F")}
-							&& {!((getPlayerUID _x) isEqualTo "")}
-							&& {(owner _x) isEqualTo _mutationOwner}
-						) exitWith {_mutationPlayer = _x};
-					} forEach allPlayers;
-				} else {
-					// Trusted local path for the listen-server/singleplayer host.
-					if (hasInterface && {!isNull player} && {isPlayer player} && {local player}) then {
-						_mutationPlayer = player;
-						// owner player is 0 in SP; clientOwner is the session key used by requestOpen.
-						_mutationOwner = clientOwner;
-					};
-				};
-
-				private _sessions = localNamespace getVariable ["A4A_Arsenal_ServerSessions", createHashMap];
-				private _session = _sessions getOrDefault [str _mutationOwner, []];
-				private _boundObject = _session param [0, objNull, [objNull]];
-				private _boundID = _session param [1, "", [""]];
-				private _boundUID = _session param [3, "", [""]];
-				private _serverObjects = localNamespace getVariable ["A4A_Arsenal_ServerObjects", []];
-				private _validItemShape = _item isEqualType "" && {!(_item isEqualTo "")} && {count _item <= 256};
-				private _knownItemClass = false;
-				if (_validItemShape) then {
-					_knownItemClass =
-						isClass (configFile >> "CfgWeapons" >> _item)
-						|| {isClass (configFile >> "CfgMagazines" >> _item)}
-						|| {isClass (configFile >> "CfgVehicles" >> _item)}
-						|| {isClass (configFile >> "CfgGlasses" >> _item)};
-				};
-				private _validMutation =
-					!isNull _mutationPlayer
-					&& {_mutationOwner >= 0}
-					&& {count _session >= 4}
-					&& {!isNull _boundObject}
-					&& {_boundObject in _serverObjects}
-					&& {!(_boundID isEqualTo "")}
-					&& {_boundUID isEqualTo getPlayerUID _mutationPlayer}
-					&& {alive _mutationPlayer}
-					&& {_mutationPlayer distance _boundObject <= 15}
-					&& {_index isEqualType 0}
-					&& {_index >= 0 && {_index < 27} && {_index isEqualTo floor _index}}
-					&& {_validItemShape}
-					&& {_knownItemClass}
-					&& {_amount isEqualType 0 && {finite _amount} && {_amount > 0} && {_amount isEqualTo floor _amount} && {_amount <= 1000000}}
-					&& {_updateDataList isEqualTo true};
-				if (!_validMutation) exitWith {
-					diag_log format ["A4A_Arsenal: rejected UpdateItemAdd from owner %1 (index=%2 item='%3' amount=%4)", _mutationOwner, _index, _item, _amount];
-				};
-
-				// Canonicalize all client-claimed routing and audit fields.
-				_arsenalID = _boundID;
-				_playerName = name _mutationPlayer;
-				_playerUID = getPlayerUID _mutationPlayer;
-
-				private _defaultData = [[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]];
-				private _serverData = localNamespace getVariable ["A4A_Arsenal_ServerData", createHashMap];
-				private _targetData = +(_serverData getOrDefault [_arsenalID, _defaultData]);
-				if (count _targetData != 27) exitWith {
-					diag_log format ["A4A_Arsenal: rejected UpdateItemAdd; canonical arsenal '%1' is invalid", _arsenalID];
-				};
-				private _derivedIndex = [_item, false] call jn_fnc_arsenal_itemType;
-				if (_derivedIndex < 0) then {_derivedIndex = IDC_RSCDISPLAYARSENAL_TAB_CARGOMISC};
-				if (_derivedIndex != _index) exitWith {
-					diag_log format ["A4A_Arsenal: rejected UpdateItemAdd category mismatch item=%1 claimed=%2 derived=%3", _item, _index, _derivedIndex];
-				};
-				_targetData set [_index, [_targetData select _index, [_item, _amount]] call jn_fnc_arsenal_addToArray];
-				// Keep every hot-path candidate inside the same persistence bounds
-				// enforced by initialization and full editor saves. Validate before
-				// canonical state, revision, mirror, or profile data can change.
-				private _candidateValid = true;
-				private _candidateEntryCount = 0;
-				private _candidateClasses = createHashMap;
-				{
-					if !(_x isEqualType []) exitWith {_candidateValid = false};
-					_candidateEntryCount = _candidateEntryCount + count _x;
-					if (_candidateEntryCount > 10000) exitWith {_candidateValid = false};
-					{
-						if !(_x isEqualType [] && {count _x == 2}) exitWith {_candidateValid = false};
-						private _entryClass = _x select 0;
-						private _entryAmount = _x select 1;
-						if !(
-							_entryClass isEqualType ""
-							&& {!(_entryClass isEqualTo "")}
-							&& {count _entryClass <= 256}
-							&& {_entryAmount isEqualType 0}
-							&& {finite _entryAmount}
-							&& {_entryAmount isEqualTo floor _entryAmount}
-							&& {_entryAmount == -1 || {_entryAmount > 0 && {_entryAmount <= 100000000}}}
-						) exitWith {_candidateValid = false};
-						private _entryKey = toLower _entryClass;
-						if (_candidateClasses getOrDefault [_entryKey, false]) exitWith {_candidateValid = false};
-						_candidateClasses set [_entryKey, true];
-					} forEach _x;
-					if (!_candidateValid) exitWith {};
-				} forEach _targetData;
-				if !(_candidateValid) exitWith {
-					diag_log format ["A4A_Arsenal: rejected UpdateItemAdd; post-merge candidate for '%1' violates persistence bounds", _arsenalID];
-				};
-				_serverData set [_arsenalID, _targetData];
-				localNamespace setVariable ["A4A_Arsenal_ServerData", _serverData];
-				private _serverRevisions = localNamespace getVariable ["A4A_Arsenal_ServerRevisions", createHashMap];
-				private _newRevision = (_serverRevisions getOrDefault [_arsenalID, 0]) + 1;
-				_serverRevisions set [_arsenalID, _newRevision];
-				localNamespace setVariable ["A4A_Arsenal_ServerRevisions", _serverRevisions];
-				_session set [4, _newRevision];
-				_sessions set [str _mutationOwner, _session];
-				localNamespace setVariable ["A4A_Arsenal_ServerSessions", _sessions];
-
-				// Public value is a compatibility mirror only.
-				private _serverKey = format ["jna_dataList_%1", _arsenalID];
-				// Keep the legacy GameLogic mirror server-local on the hot path; peers
-				// receive compact deltas below instead of the full 27-bucket snapshot.
-				server setVariable [_serverKey, _targetData];
-				profileNamespace setVariable [format ["A4A_ArsenalData_%1", _arsenalID], _targetData];
-				localNamespace setVariable ["A4A_Arsenal_ProfileSaveAuthorized", true];
-				[] call A4A_fnc_arsenal_scheduleProfileSave;
-				localNamespace setVariable ["A4A_Arsenal_ProfileSaveAuthorized", false];
-
-				// Hosted UI shares the server process and is updated directly.
-				private _hostSession = _sessions getOrDefault [str clientOwner, []];
-				if (!isDedicated && {hasInterface} && {!isNil "jna_dataList"} && {count _hostSession >= 2} && {(_hostSession select 1) isEqualTo _arsenalID}) then {
-					jna_dataList set [_index, [jna_dataList select _index, [_item, _amount]] call jn_fnc_arsenal_addToArray];
-				};
-
-				// Server-only fan-out from private sessions; never trust a public viewer list.
-				private _remoteTargets = [];
-				{
-					private _viewerOwner = parseNumber _x;
-					private _viewerSession = _sessions getOrDefault [_x, []];
-					if (_viewerOwner > 2 && {_viewerOwner != _mutationOwner} && {count _viewerSession >= 4} && {(_viewerSession select 1) isEqualTo _arsenalID}) then {
-						private _viewerUID = _viewerSession select 3;
-						if (allPlayers findIf {
-							isPlayer _x
-							&& {(owner _x) isEqualTo _viewerOwner}
-							&& {(getPlayerUID _x) isEqualTo _viewerUID}
-						} >= 0) then {
-							_remoteTargets pushBackUnique _viewerOwner;
-						};
-					};
-				} forEach (keys _sessions);
-				if !(_remoteTargets isEqualTo []) then {
-					["UpdateItemAdd", [_index, _item, _amount, true, _playerName, _playerUID, _arsenalID]] remoteExecCall ["jn_fnc_arsenal", _remoteTargets];
-				};
-				_serverMutationAccepted = true;
-				diag_log format ["A4A_Arsenal Log: %1 (UID: %2) added %3 x %4 to '%5'", _playerName, _playerUID, _amount, _item, _arsenalID];
-			} else {
-				// Client: update local GUI data
-				jna_dataList set [_index, [jna_dataList select _index, [_item, _amount]] call jn_fnc_arsenal_addToArray];
-			};
-		};
-		// exitWith inside the nested server block only leaves that block.  Keep an
-		// explicit case-scope gate so rejected RPCs cannot reach ACE/host UI code.
-		if (isServer && {!_serverMutationAccepted}) exitWith {
-			diag_log format ["A4A_Arsenal: UpdateItemAdd stopped before client/UI continuation (owner %1)", _a4aRemoteOwner];
-		};
-
-		if (missionNamespace getVariable ["A4A_aceStock_active", false] && {!isNil "A4A_fnc_arsenal_aceOnDataListUpdate"}) then {
-			[_index, _item, _amount, true] call A4A_fnc_arsenal_aceOnDataListUpdate;
-		};
-
-		private _display =  uiNamespace getVariable ["arsenalDisplay","No display"];
-
-		if (typeName _display == "STRING") exitWith {};
-		if(str _display isEqualTo "No display")exitWith{};
-
-		if(_item isEqualTo "")exitWith{};
-
-		if(_index == IDC_RSCDISPLAYARSENAL_TAB_CARGOMAGALL)then{
+		if (_index == IDC_RSCDISPLAYARSENAL_TAB_CARGOMAGALL) then {
 			switch true do {
-				case (ctrlEnabled (_display displayctrl (IDC_RSCDISPLAYARSENAL_LIST + IDC_RSCDISPLAYARSENAL_TAB_CARGOMAG))): { _index = IDC_RSCDISPLAYARSENAL_TAB_CARGOMAG; };
-				case (ctrlEnabled (_display displayctrl (IDC_RSCDISPLAYARSENAL_LIST + IDC_RSCDISPLAYARSENAL_TAB_LOADEDMAG))): { _index = IDC_RSCDISPLAYARSENAL_TAB_LOADEDMAG; };
-				case (ctrlEnabled (_display displayctrl (IDC_RSCDISPLAYARSENAL_LIST + IDC_RSCDISPLAYARSENAL_TAB_LOADEDMAG2))): { _index = IDC_RSCDISPLAYARSENAL_TAB_LOADEDMAG2; };
+				case (ctrlEnabled (_display displayCtrl (IDC_RSCDISPLAYARSENAL_LIST + IDC_RSCDISPLAYARSENAL_TAB_CARGOMAG))): { _index = IDC_RSCDISPLAYARSENAL_TAB_CARGOMAG; };
+				case (ctrlEnabled (_display displayCtrl (IDC_RSCDISPLAYARSENAL_LIST + IDC_RSCDISPLAYARSENAL_TAB_LOADEDMAG))): { _index = IDC_RSCDISPLAYARSENAL_TAB_LOADEDMAG; };
+				case (ctrlEnabled (_display displayCtrl (IDC_RSCDISPLAYARSENAL_LIST + IDC_RSCDISPLAYARSENAL_TAB_LOADEDMAG2))): { _index = IDC_RSCDISPLAYARSENAL_TAB_LOADEDMAG2; };
 			};
 		};
 
-		private _indexList = _index;
-		if(UINamespace getVariable ["jn_type","arsenal"] isEqualTo "containerArsenal")then{
-			_indexList = [IDC_RSCDISPLAYARSENAL_TAB_CARGOMAG,IDC_RSCDISPLAYARSENAL_TAB_CARGOMAGALL] select (_index in [IDCS_LEFT]);
-		};
+		private _ctrlList = _display displayCtrl (IDC_RSCDISPLAYARSENAL_LIST + _index);
+		private _isListNBox = ctrlType _ctrlList == 102;
+		if ((_index in [IDCS_RIGHT]) && {!(ctrlEnabled _ctrlList)}) exitWith {};
 
-		private _ctrlList = _display displayctrl (IDC_RSCDISPLAYARSENAL_LIST + _indexList);
-		private _type = (ctrltype _ctrlList == 102);
-		private _cursel = if _type then{-1}else{lbCurSel _ctrlList};
-
-		if((_index in [IDCS_RIGHT]) && !(ctrlEnabled _ctrlList)) exitWith{};
-
-		_l_found = -1;
-		_rowSize = if _type then{((lnbSize _ctrlList select 0) - 1);}else{(lbsize _ctrlList - 1);};
-		for "_l" from 0 to _rowSize do {
-			_dataStr = if _type then{_ctrlList lnbdata [_l,0]}else{_ctrlList lbdata _l};
-			_dataCurrent = if (_dataStr select [0,1] == "[") then {call compile _dataStr} else {[_dataStr,0,"",""]};
-			_itemCurrent = _dataCurrent select 0;
-			_amountCurrent = _dataCurrent select 1;
-			_displayNameCurrent = _dataCurrent select 2;
-			if(_item isEqualTo _itemCurrent)exitWith{
-				_l_found = _l;
-				if(_amount == -1 || {_amountCurrent == -1})then{
-					_amount = -1;
-				}else{
-					_amount =_amountCurrent + _amount;
-				};
-				_data = str [_item,_amount,_displayNameCurrent];
-				if _type then{_ctrlList lnbsetdata [[_l,0],_data]}else{_ctrlList lbsetdata [_l,_data]};
-			};
-		};
-
-
-		if(_l_found == -1)then{
-			["CreateItem",[_display,_ctrlList,_index,_item,_amount]] call jn_fnc_arsenal;
-			_l_found = _rowSize + 1;
-		};
-		["UpdateItemGui",[_display,_ctrlList,_index,_l_found]] call jn_fnc_arsenal;
-	};
-
-	///////////////////////////////////////////////////////////////////////////////////////////  GLOBAL
-	case "UpdateItemRemove":{
-		params ["_index","_item","_amount",["_updateDataList",false],["_playerName",""],["_playerUID",""],["_arsenalID","Base"]];
-		private _trustedServerDispatcher = localNamespace getVariable ["A4A_Arsenal_ServerDispatcherAuthorized", false];
-		private _serverMutationAccepted = !(isServer && {_a4aIsRemote} && {!_trustedServerDispatcher});
-
-		if (!isServer && {_a4aIsRemote && {_a4aRemoteOwner != 2}}) exitWith {
-			diag_log format ["A4A_Arsenal: rejected peer-forged UpdateItemRemove from owner %1", _a4aRemoteOwner];
-		};
-
-		//update datalist
-		if(_updateDataList)then{
-			if (isServer) then {
-				_serverMutationAccepted = false;
-				private _mutationOwner = -1;
-				private _mutationPlayer = objNull;
-				if (_a4aIsRemote) then {
-					_mutationOwner = _a4aRemoteOwner;
-					{
-						if (
-							isPlayer _x
-							&& {!(_x isKindOf "VirtualMan_F")}
-							&& {!(_x isKindOf "HeadlessClient_F")}
-							&& {!((getPlayerUID _x) isEqualTo "")}
-							&& {(owner _x) isEqualTo _mutationOwner}
-						) exitWith {_mutationPlayer = _x};
-					} forEach allPlayers;
+		private _foundRow = -1;
+		private _rowSize = if (_isListNBox) then {(lnbSize _ctrlList select 0) - 1} else {lbSize _ctrlList - 1};
+		for "_row" from 0 to _rowSize do {
+			private _dataString = if (_isListNBox) then {_ctrlList lnbData [_row, 0]} else {_ctrlList lbData _row};
+			private _currentData = if (_dataString select [0, 1] == "[") then {call compile _dataString} else {[_dataString, 0, "", ""]};
+			private _currentItem = _currentData param [0, ""];
+			if (_item isEqualTo _currentItem) exitWith {
+				_foundRow = _row;
+				private _currentAmount = _currentData param [1, 0];
+				private _displayName = _currentData param [2, ""];
+				private _newAmount = if (_amount == -1 || {_currentAmount == -1}) then {-1} else {_currentAmount + _amount};
+				private _updatedData = str [_item, _newAmount, _displayName];
+				if (_isListNBox) then {
+					_ctrlList lnbSetData [[_row, 0], _updatedData];
 				} else {
-					if (hasInterface && {!isNull player} && {isPlayer player} && {local player}) then {
-						_mutationPlayer = player;
-						_mutationOwner = clientOwner;
-					};
-				};
-
-				private _sessions = localNamespace getVariable ["A4A_Arsenal_ServerSessions", createHashMap];
-				private _session = _sessions getOrDefault [str _mutationOwner, []];
-				private _boundObject = _session param [0, objNull, [objNull]];
-				private _boundID = _session param [1, "", [""]];
-				private _boundUID = _session param [3, "", [""]];
-				private _serverObjects = localNamespace getVariable ["A4A_Arsenal_ServerObjects", []];
-				private _validItemShape = _item isEqualType "" && {!(_item isEqualTo "")} && {count _item <= 256};
-				private _knownItemClass = false;
-				if (_validItemShape) then {
-					_knownItemClass =
-						isClass (configFile >> "CfgWeapons" >> _item)
-						|| {isClass (configFile >> "CfgMagazines" >> _item)}
-						|| {isClass (configFile >> "CfgVehicles" >> _item)}
-						|| {isClass (configFile >> "CfgGlasses" >> _item)};
-				};
-				private _validMutation =
-					!isNull _mutationPlayer
-					&& {_mutationOwner >= 0}
-					&& {count _session >= 4}
-					&& {!isNull _boundObject}
-					&& {_boundObject in _serverObjects}
-					&& {!(_boundID isEqualTo "")}
-					&& {_boundUID isEqualTo getPlayerUID _mutationPlayer}
-					&& {alive _mutationPlayer}
-					&& {_mutationPlayer distance _boundObject <= 15}
-					&& {_index isEqualType 0}
-					&& {_index >= 0 && {_index < 27} && {_index isEqualTo floor _index}}
-					&& {_validItemShape}
-					&& {_knownItemClass}
-					&& {_amount isEqualType 0 && {finite _amount} && {_amount > 0} && {_amount isEqualTo floor _amount} && {_amount <= 1000000}}
-					&& {_updateDataList isEqualTo true};
-				if (!_validMutation) exitWith {
-					diag_log format ["A4A_Arsenal: rejected UpdateItemRemove from owner %1 (index=%2 item='%3' amount=%4)", _mutationOwner, _index, _item, _amount];
-				};
-
-				_arsenalID = _boundID;
-				_playerName = name _mutationPlayer;
-				_playerUID = getPlayerUID _mutationPlayer;
-				private _defaultData = [[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]];
-				private _serverData = localNamespace getVariable ["A4A_Arsenal_ServerData", createHashMap];
-				private _targetData = +(_serverData getOrDefault [_arsenalID, _defaultData]);
-				if (count _targetData != 27) exitWith {
-					diag_log format ["A4A_Arsenal: rejected UpdateItemRemove; canonical arsenal '%1' is invalid", _arsenalID];
-				};
-				private _derivedIndex = [_item, false] call jn_fnc_arsenal_itemType;
-				if (_derivedIndex < 0) then {_derivedIndex = IDC_RSCDISPLAYARSENAL_TAB_CARGOMISC};
-				if (_derivedIndex != _index) exitWith {
-					diag_log format ["A4A_Arsenal: rejected UpdateItemRemove category mismatch item=%1 claimed=%2 derived=%3", _item, _index, _derivedIndex];
-				};
-				private _available = [_targetData select _index, _item] call jn_fnc_arsenal_itemCount;
-				if (_available != -1 && {_available < _amount}) exitWith {
-					diag_log format ["A4A_Arsenal: rejected overspend owner=%1 item=%2 requested=%3 available=%4", _mutationOwner, _item, _amount, _available];
-				};
-				private _serverMinimum = [_index, _item] call _minItemsMember;
-				if (
-					_available != -1
-					&& {!(_mutationPlayer call A4A_fnc_isMember)}
-					&& {_available - _amount < _serverMinimum}
-				) exitWith {
-					diag_log format ["A4A_Arsenal: rejected reserve bypass owner=%1 item=%2 remaining=%3 minimum=%4", _mutationOwner, _item, _available - _amount, _serverMinimum];
-				};
-				_targetData set [_index, [_targetData select _index, [_item, _amount]] call jn_fnc_arsenal_removeFromArray];
-				_serverData set [_arsenalID, _targetData];
-				localNamespace setVariable ["A4A_Arsenal_ServerData", _serverData];
-				private _serverRevisions = localNamespace getVariable ["A4A_Arsenal_ServerRevisions", createHashMap];
-				private _newRevision = (_serverRevisions getOrDefault [_arsenalID, 0]) + 1;
-				_serverRevisions set [_arsenalID, _newRevision];
-				localNamespace setVariable ["A4A_Arsenal_ServerRevisions", _serverRevisions];
-				_session set [4, _newRevision];
-				_sessions set [str _mutationOwner, _session];
-				localNamespace setVariable ["A4A_Arsenal_ServerSessions", _sessions];
-
-				private _serverKey = format ["jna_dataList_%1", _arsenalID];
-				server setVariable [_serverKey, _targetData];
-				profileNamespace setVariable [format ["A4A_ArsenalData_%1", _arsenalID], _targetData];
-				localNamespace setVariable ["A4A_Arsenal_ProfileSaveAuthorized", true];
-				[] call A4A_fnc_arsenal_scheduleProfileSave;
-				localNamespace setVariable ["A4A_Arsenal_ProfileSaveAuthorized", false];
-
-				private _hostSession = _sessions getOrDefault [str clientOwner, []];
-				if (!isDedicated && {hasInterface} && {!isNil "jna_dataList"} && {count _hostSession >= 2} && {(_hostSession select 1) isEqualTo _arsenalID}) then {
-					jna_dataList set [_index, [jna_dataList select _index, [_item, _amount]] call jn_fnc_arsenal_removeFromArray];
-				};
-
-				private _remoteTargets = [];
-				{
-					private _viewerOwner = parseNumber _x;
-					private _viewerSession = _sessions getOrDefault [_x, []];
-					if (_viewerOwner > 2 && {_viewerOwner != _mutationOwner} && {count _viewerSession >= 4} && {(_viewerSession select 1) isEqualTo _arsenalID}) then {
-						private _viewerUID = _viewerSession select 3;
-						if (allPlayers findIf {
-							isPlayer _x
-							&& {(owner _x) isEqualTo _viewerOwner}
-							&& {(getPlayerUID _x) isEqualTo _viewerUID}
-						} >= 0) then {
-							_remoteTargets pushBackUnique _viewerOwner;
-						};
-					};
-				} forEach (keys _sessions);
-				if !(_remoteTargets isEqualTo []) then {
-					["UpdateItemRemove", [_index, _item, _amount, true, _playerName, _playerUID, _arsenalID]] remoteExecCall ["jn_fnc_arsenal", _remoteTargets];
-				};
-				_serverMutationAccepted = true;
-				diag_log format ["A4A_Arsenal Log: %1 (UID: %2) removed %3 x %4 from '%5'", _playerName, _playerUID, _amount, _item, _arsenalID];
-			} else {
-				// Client: update local GUI data
-				jna_dataList set [_index, [jna_dataList select _index, [_item, _amount]] call jn_fnc_arsenal_removeFromArray];
-			};
-		};
-		if (isServer && {!_serverMutationAccepted}) exitWith {
-			diag_log format ["A4A_Arsenal: UpdateItemRemove stopped before client/UI continuation (owner %1)", _a4aRemoteOwner];
-		};
-
-		if (missionNamespace getVariable ["A4A_aceStock_active", false] && {!isNil "A4A_fnc_arsenal_aceOnDataListUpdate"}) then {
-			[_index, _item, _amount, false] call A4A_fnc_arsenal_aceOnDataListUpdate;
-		};
-
-		private _display =  uiNamespace getVariable ["arsenalDisplay","No display"];
-
-		if (typeName _display == "STRING") exitWith {};
-		if(str _display isEqualTo "No display")exitWith{};
-		if(_item isEqualTo "")exitWith{};
-
-		if(_index == IDC_RSCDISPLAYARSENAL_TAB_CARGOMAGALL)then{
-			switch true do {
-				case (ctrlEnabled (_display displayctrl (IDC_RSCDISPLAYARSENAL_LIST + IDC_RSCDISPLAYARSENAL_TAB_CARGOMAG))): { _index = IDC_RSCDISPLAYARSENAL_TAB_CARGOMAG; };
-				case (ctrlEnabled (_display displayctrl (IDC_RSCDISPLAYARSENAL_LIST + IDC_RSCDISPLAYARSENAL_TAB_LOADEDMAG))): { _index = IDC_RSCDISPLAYARSENAL_TAB_LOADEDMAG; };
-				case (ctrlEnabled (_display displayctrl (IDC_RSCDISPLAYARSENAL_LIST + IDC_RSCDISPLAYARSENAL_TAB_LOADEDMAG2))): { _index = IDC_RSCDISPLAYARSENAL_TAB_LOADEDMAG2; };
-			};
-		};
-
-		//when used by vehicleArsenal;
-		_indexList = _index;
-		if(UINamespace getVariable ["jn_type","arsenal"] isEqualTo "containerArsenal")then{
-			_indexList = [IDC_RSCDISPLAYARSENAL_TAB_CARGOMAG,IDC_RSCDISPLAYARSENAL_TAB_CARGOMAGALL] select (_index in [IDCS_LEFT]);
-		};
-
-		private _ctrlList = _display displayctrl (IDC_RSCDISPLAYARSENAL_LIST + _indexList);
-		private _type = ctrltype _ctrlList == 102;
-		private _cursel = if _type then{-1}else{lbCurSel _ctrlList};
-
-		if((_index in [IDCS_RIGHT]) && !(ctrlEnabled _ctrlList)) exitWith{};
-
-		_l_found = -1;
-		_rowSize = if _type then{((lnbSize _ctrlList select 0) - 1);}else{(lbsize _ctrlList - 1);};
-		for "_l" from 0 to _rowSize do {
-			_dataStr = if _type then{_ctrlList lnbdata [_l,0]}else{_ctrlList lbdata _l};
-			_dataCurrent = if (_dataStr select [0,1] == "[") then {call compile _dataStr} else {[_dataStr,0,"",""]};
-			_itemCurrent = _dataCurrent select 0;
-			_amountCurrent = _dataCurrent select 1;
-			_displayNameCurrent = _dataCurrent select 2;
-			if(_item isEqualTo _itemCurrent)exitWith{
-				_l_found = _l;
-				if(_amount == -1)then{
-					_amount = 0;//unlimited remove
-				}else{
-					if(_amountCurrent == -1)then{
-						_amount = -1;
-					}else{
-						_amount = _amountCurrent - _amount;
-						if(_amount<0)then{_amount = 0};
-					}
-				};
-
-				if(_amount == 0 && {
-					if _type then{
-						(parseNumber (_ctrlList lnbText [_l,2]) == 0);
-					}else{
-						(_l != _cursel);
-					}
-				})then{
-					if(_type)then{_ctrlList lnbDeleteRow _l;}else{_ctrlList lbDelete _l;};
-					if(_cursel > _l)then{
-						//reselect item if a item above was removed
-						_ctrlList lbSetCurSel (_cursel-1);
-					};
-				}else{
-					_data = str [_item,_amount,_displayNameCurrent];
-					if _type then{_ctrlList lnbsetdata [[_l,0],_data]}else{_ctrlList lbsetdata [_l,_data]};
-					["UpdateItemGui",[_display,_ctrlList,_index,_l_found]] call jn_fnc_arsenal;
+					_ctrlList lbSetData [_row, _updatedData];
 				};
 			};
 		};
+
+		if (_foundRow == -1) then {
+			["CreateItem", [_display, _ctrlList, _index, _item, _amount]] call jn_fnc_arsenal;
+			_foundRow = _rowSize + 1;
+		};
+		["UpdateItemGui", [_display, _ctrlList, _index, _foundRow]] call jn_fnc_arsenal;
 	};
 
 	///////////////////////////////////////////////////////////////////////////////////////////
@@ -3311,14 +2888,6 @@ switch _mode do {
 	};
 
 	///////////////////////////////////////////////////////////////////////////////////////////
-	case "buttonInvToJNA": {
-		//_display = _this select 0;
-		private _object = missionnamespace getVariable ["jna_object",objNull];
-		//update server - pass both the cargo source (same object) and arsenal object for ID lookup
-		[_object, _object] remoteExecCall ["jn_fnc_arsenal_cargoToArsenal",2];
-	};
-
-	///////////////////////////////////////////////////////////////////////////////////////////
 	case "showMessage": {
 		if !(isnil {missionnamespace getvariable "BIS_fnc_arsenal_message"}) then {terminate (missionnamespace getvariable "BIS_fnc_arsenal_message")};
 
@@ -3392,7 +2961,7 @@ switch _mode do {
 			_ctrlDLC = _display displayctrl IDC_RSCDISPLAYARSENAL_INFO_DLCICON;
 			_ctrlDLCBackground = _display displayctrl IDC_RSCDISPLAYARSENAL_INFO_DLCBACKGROUND;
 			_dlc = _itemCfg call GETDLC;
-			if (_dlc != "") then { // && _fullVersion 
+			if (_dlc != "") then { // && _fullVersion
 
 				_dlcParams = modParams [_dlc,["name","logo","logoOver"]];
 				_name = _dlcParams param [0,""];
@@ -3709,7 +3278,7 @@ switch _mode do {
 	};
 
 	/////////////////////////////////////////////////////////////////////////////////////////// event
- 	case "KeyUp": {
+	case "KeyUp": {
 		_display = _this select 0;
 		_key = _this select 1;
 		_shift = _this select 2;
@@ -3812,7 +3381,7 @@ switch _mode do {
 				_itemsBackpack pushBack ["FirstAidKit",1];
 			};
 		} else {
-		 		if(A4A_hasACEMedical) then {
+			if(A4A_hasACEMedical) then {
 					_itemsBackpack pushBack ["ACE_fieldDressing",5];
 					_itemsBackpack pushBack ["ACE_packingBandage",5];
 					_itemsBackpack pushBack ["ACE_elasticBandage",5];
@@ -4272,11 +3841,7 @@ switch _mode do {
 			_session getOrDefault ["revision", -1],
 			+jna_dataList
 		];
-		if (isServer) then {
-			_savePayload call A4A_fnc_saveEditorSnapshot;
-		} else {
-			_savePayload remoteExecCall ["A4A_fnc_saveEditorSnapshot", 2];
-		};
+		_savePayload remoteExecCall ["A4A_fnc_saveEditorSnapshot", 2];
 
 		private _totalItems = 0;
 		{ { _totalItems = _totalItems + 1 } forEach _x } forEach jna_dataList;
@@ -4744,13 +4309,9 @@ switch _mode do {
 			_session getOrDefault ["revision", -1],
 			+jna_dataList
 		];
-		if (isServer) then {
-			_savePayload call A4A_fnc_saveEditorSnapshot;
-		} else {
-			_savePayload remoteExecCall ["A4A_fnc_saveEditorSnapshot", 2];
-			systemChat format ["Arsenal '%1' sent to server for saving.", _arsenalID];
-			diag_log format ["A4A_EditorSave: Sent sender-bound save request for '%1' to server.", _arsenalID];
-		};
+		_savePayload remoteExecCall ["A4A_fnc_saveEditorSnapshot", 2];
+		systemChat format ["Arsenal '%1' sent to server for saving.", _arsenalID];
+		diag_log format ["A4A_EditorSave: Sent sender-bound save request for '%1' to server.", _arsenalID];
 		hint parseText format ["<t size='1.2' color='#00cc00'>SAVE REQUESTED '%1'</t>", _arsenalID];
 	};
 

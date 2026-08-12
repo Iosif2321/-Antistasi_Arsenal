@@ -8,14 +8,14 @@ private _actionId = _object addAction [
 	{
 		params ["_target", "_caller", "_actionId", "_arguments"];
 		private _script = _arguments;
-		
+
 		_target removeAction _actionId;
 		_target setVariable ["jn_cancelAction_id",nil];
-		
+
 		call _script;
 	},
 	_script,
-	7, 
+	7,
 	true,
 	false,
 	"",

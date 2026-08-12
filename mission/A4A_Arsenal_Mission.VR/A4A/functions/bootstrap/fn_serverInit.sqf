@@ -21,32 +21,46 @@ addMissionEventHandler ["HandleDisconnect", {
     private _ownerKey = str (owner _unit);
     private _sessions = localNamespace getVariable ["A4A_ServerSessions", createHashMap];
     private _transactions = localNamespace getVariable ["A4A_ServerTransactions", createHashMap];
-    private _dataById = localNamespace getVariable ["A4A_ServerData", createHashMap];
-    _sessions deleteAt _ownerKey;
+    isNil {
+        private _currentSessions = localNamespace getVariable ["A4A_ServerSessions", createHashMap];
+        if (!isNil {_currentSessions get _ownerKey}) then {
+            private _session = _currentSessions get _ownerKey;
+            if (
+                _session isEqualType createHashMap &&
+                {(_session getOrDefault ["playerUID", ""]) isEqualTo _uid}
+            ) then {
+                _currentSessions deleteAt _ownerKey;
+                localNamespace setVariable ["A4A_ServerSessions", _currentSessions];
+            };
+        };
+    };
     {
         private _transactionId = _x;
-        private _transaction = _transactions get _transactionId;
+        private _currentTransactions = localNamespace getVariable ["A4A_ServerTransactions", createHashMap];
+        private _transaction = _currentTransactions getOrDefault [_transactionId, createHashMap];
         if (_transaction isEqualType createHashMap && {(_transaction getOrDefault ["ownerKey", ""]) isEqualTo _ownerKey}) then {
             if (
                 (_transaction getOrDefault ["kind", ""]) isEqualTo "withdraw" &&
                 {!(_transaction getOrDefault ["unlimited", false])}
             ) then {
-                private _arsenalId = _transaction getOrDefault ["arsenalId", ""];
-                private _index = _transaction getOrDefault ["index", -1];
-                private _item = _transaction getOrDefault ["item", ""];
-                private _amount = _transaction getOrDefault ["amount", 0];
-                private _data = _dataById getOrDefault [_arsenalId, []];
-                if (_data isEqualType [] && {count _data isEqualTo 27} && {_index >= 0} && {_index <= 26}) then {
-                    _data set [_index, [_data select _index, [_item, _amount]] call jn_fnc_arsenal_addToArray];
-                    _dataById set [_arsenalId, _data];
+                [_transactionId, parseNumber _ownerKey, "Disconnected player's finite withdrawal reservation was refunded."] call A4A_fnc_refundWithdrawalReservation;
+            } else {
+                isNil {
+                    private _latestTransactions = localNamespace getVariable ["A4A_ServerTransactions", createHashMap];
+                    if (!isNil {_latestTransactions get _transactionId}) then {
+                        private _latest = _latestTransactions get _transactionId;
+                        if (
+                            _latest isEqualType createHashMap &&
+                            {(_latest getOrDefault ["ownerKey", ""]) isEqualTo _ownerKey}
+                        ) then {
+                            _latestTransactions deleteAt _transactionId;
+                            localNamespace setVariable ["A4A_ServerTransactions", _latestTransactions];
+                        };
+                    };
                 };
             };
-            _transactions deleteAt _transactionId;
         };
     } forEach +(keys _transactions);
-    localNamespace setVariable ["A4A_ServerSessions", _sessions];
-    localNamespace setVariable ["A4A_ServerTransactions", _transactions];
-    localNamespace setVariable ["A4A_ServerData", _dataById];
     false
 }];
 

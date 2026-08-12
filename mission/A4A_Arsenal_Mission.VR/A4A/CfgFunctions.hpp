@@ -19,6 +19,8 @@ class CfgFunctions {
             class requestReturn {};
             class completeReturn {};
             class expireTransactions {};
+            class refundWithdrawalReservation {};
+            class applyUnlockThreshold {};
             class validateSnapshot {};
             class loadPersistence {};
             class schedulePersistence {};
@@ -54,6 +56,8 @@ class CfgFunctions {
         class Shared {
             file = "A4A\functions\shared";
             class getSetting {};
+            class normalizeSettings {};
+            class objectKey {};
             class itemTypeCached {};
             class resolveRemotePlayer {};
             class validateActiveSession {};

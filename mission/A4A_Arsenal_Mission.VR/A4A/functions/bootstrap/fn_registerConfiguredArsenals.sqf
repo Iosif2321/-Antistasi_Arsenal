@@ -49,8 +49,8 @@ private _unlockThresholdOverride = _serverSettings getOrDefault ["unlockThreshol
         continue;
     };
 
-    private _objectKey = netId _object;
-    if (_objectKey isEqualTo "" || {_objectKey isEqualTo "0:0"}) then {
+    private _objectKey = [_object] call A4A_fnc_objectKey;
+    if (_objectKey isEqualTo "") then {
         diag_log format ["[A4A Mission] Arsenal '%1' is not networked", _variableName];
         continue;
     };
@@ -84,6 +84,10 @@ private _unlockThresholdOverride = _serverSettings getOrDefault ["unlockThreshol
         };
     };
 
+    private _unlockResult = [_data, _threshold] call A4A_fnc_applyUnlockThreshold;
+    _data = _unlockResult select 0;
+    if (_unlockResult select 1) then { _revision = _revision + 1 };
+
     _dataById set [_arsenalId, _data];
     _revisions set [_arsenalId, _revision];
     _object setVariable ["A4A_Arsenal_MissionMeta", [_arsenalId, _threshold], true];
@@ -96,3 +100,9 @@ localNamespace setVariable ["A4A_ServerIdRegistry", _ids];
 localNamespace setVariable ["A4A_ServerData", _dataById];
 localNamespace setVariable ["A4A_ServerRevisions", _revisions];
 localNamespace setVariable ["A4A_ServerReady", _ready];
+
+// Persist the initial envelope, one-time legacy migration and any threshold
+// normalization only after every private map is fully published.
+if (count keys _dataById > 0 && {!isNil "A4A_fnc_schedulePersistence"}) then {
+    [] call A4A_fnc_schedulePersistence;
+};

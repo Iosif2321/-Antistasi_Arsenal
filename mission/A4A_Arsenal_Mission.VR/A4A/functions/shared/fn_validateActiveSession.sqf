@@ -24,7 +24,8 @@ private _valid =
 if (!_valid) exitWith { [false, _session, _ownerKey, []] };
 
 private _registry = localNamespace getVariable ["A4A_ServerRegistry", createHashMap];
-private _objectKey = netId _object;
+private _objectKey = [_object] call A4A_fnc_objectKey;
+if (_objectKey isEqualTo "") exitWith { [false, _session, _ownerKey, []] };
 if (isNil {_registry get _objectKey}) exitWith { [false, _session, _ownerKey, []] };
 private _canonical = _registry get _objectKey;
 if !(_canonical isEqualType [] && {count _canonical isEqualTo 3} && {(_canonical select 0) isEqualTo _object}) exitWith {
@@ -41,7 +42,7 @@ if (
     {_requestPlayer distance _object > _maxDistance}
 ) exitWith { [false, _session, _ownerKey, _canonical] };
 
-private _sessionLifetime = _settings getOrDefault ["sessionLifetime", 30];
+private _sessionLifetime = _settings getOrDefault ["sessionLifetime", 900];
 _session set ["expiresAt", diag_tickTime + _sessionLifetime];
 _sessions set [_ownerKey, _session];
 localNamespace setVariable ["A4A_ServerSessions", _sessions];

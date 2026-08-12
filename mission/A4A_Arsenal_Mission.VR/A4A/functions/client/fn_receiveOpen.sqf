@@ -46,9 +46,7 @@ private _threshold = _meta param [1, 25, [0]];
 A4A_guestItemLimit = _threshold;
 jna_minItemMember = [];
 jna_minItemMember resize 27;
-for "_index" from 0 to 26 do { jna_minItemMember set [_index, _threshold] };
-jna_minItemMember set [23, _threshold * 3];
-jna_minItemMember set [24, _threshold * 3];
+for "_index" from 0 to 26 do { jna_minItemMember set [_index, 0] };
 uiNamespace setVariable ["jn_type", "arsenal"];
 
 [_presentationMode] spawn {
@@ -66,4 +64,3 @@ uiNamespace setVariable ["jn_type", "arsenal"];
         ["Open", [jna_dataList]] call jn_fnc_arsenal;
     };
 };
-

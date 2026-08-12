@@ -11,6 +11,13 @@ if !(_session isEqualType createHashMap) exitWith {};
 if (_generation >= 0 && {(_session getOrDefault ["generation", -1]) isNotEqualTo _generation}) exitWith {};
 
 localNamespace setVariable ["A4A_ClientSession", []];
+localNamespace setVariable ["A4A_ClientClosePending", []];
+localNamespace setVariable ["A4A_ClientPendingTransactions", createHashMap];
+localNamespace setVariable ["A4A_ClientScheduledBatches", createHashMap];
+localNamespace setVariable ["A4A_ClientCancelledBatches", createHashMap];
+localNamespace setVariable ["A4A_ClientTransactionBusy", ""];
+localNamespace setVariable ["A4A_ClientOperationBatch", ""];
+localNamespace setVariable ["A4A_ClientOperationBaseline", []];
 jna_dataList = [];
 private _display = uiNamespace getVariable ["arsenalDisplay", displayNull];
 if (!isNull _display) then { _display closeDisplay 2 };

@@ -1,2 +1,1 @@
-/* Garage dialogs are intentionally absent from the mission edition. */
-
+/* The mission edition uses the standard Arsenal displays and adds no dialogs. */

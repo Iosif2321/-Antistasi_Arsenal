@@ -43,9 +43,9 @@ localNamespace setVariable ["A4A_ClientPendingTransactions", _pending];
         _transaction get "amount"
     ];
     if ((_transaction get "kind") isEqualTo "withdraw") then {
-        if (isServer) then { _payload call A4A_fnc_requestWithdraw } else { _payload remoteExecCall ["A4A_fnc_requestWithdraw", 2] };
+        _payload remoteExecCall ["A4A_fnc_requestWithdraw", 2];
     } else {
-        if (isServer) then { _payload call A4A_fnc_requestReturn } else { _payload remoteExecCall ["A4A_fnc_requestReturn", 2] };
+        _payload remoteExecCall ["A4A_fnc_requestReturn", 2];
     };
 } forEach _batchKeys;
 
@@ -71,9 +71,9 @@ if (count _remaining > 0) then {
                 false
             ];
             if ((_transaction get "kind") isEqualTo "withdraw") then {
-                if (isServer) then { _completePayload call A4A_fnc_completeWithdraw } else { _completePayload remoteExecCall ["A4A_fnc_completeWithdraw", 2] };
+                _completePayload remoteExecCall ["A4A_fnc_completeWithdraw", 2];
             } else {
-                if (isServer) then { _completePayload call A4A_fnc_completeReturn } else { _completePayload remoteExecCall ["A4A_fnc_completeReturn", 2] };
+                _completePayload remoteExecCall ["A4A_fnc_completeReturn", 2];
             };
         };
     } forEach _remaining;
@@ -83,4 +83,3 @@ if (count _remaining > 0) then {
     if (!isNull _display) then { _display closeDisplay 2 };
     systemChat "A4A transaction batch timed out; provisional loadout restored.";
 };
-

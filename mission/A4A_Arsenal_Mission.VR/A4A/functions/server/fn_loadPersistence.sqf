@@ -44,4 +44,3 @@ if (_legacy) then {
     diag_log format ["[A4A Mission] Migrated legacy profile data for '%1' to schema 2", _arsenalId];
 };
 [true, _normalized, _revision]
-

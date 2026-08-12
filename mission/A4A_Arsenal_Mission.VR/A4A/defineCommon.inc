@@ -30,7 +30,5 @@
 			ICON\
 		]\
 	]
-	
+
 #define ROUND_TO(FLOAT,INT) (round ((FLOAT)*10*(INT)))/(10*(INT))
-	
-	

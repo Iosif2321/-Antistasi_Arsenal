@@ -22,15 +22,23 @@ $description = Read-TextOrEmpty (Join-Path $missionRoot "description.ext")
 $functionConfig = Read-TextOrEmpty (Join-Path $missionRoot "A4A/CfgFunctions.hpp")
 $cbaAdapterPath = Join-Path $missionRoot "A4A/functions/adapters/fn_initCbaSettings.sqf"
 $getSettingPath = Join-Path $missionRoot "A4A/functions/shared/fn_getSetting.sqf"
+$settingsPath = Join-Path $missionRoot "A4A/config/settings.sqf"
 $serverInitPath = Join-Path $missionRoot "A4A/functions/bootstrap/fn_serverInit.sqf"
+$preInitPath = Join-Path $missionRoot "A4A/functions/bootstrap/fn_preInit.sqf"
+$clientInitPath = Join-Path $missionRoot "A4A/functions/bootstrap/fn_clientInit.sqf"
 $registryPath = Join-Path $missionRoot "A4A/functions/bootstrap/fn_registerConfiguredArsenals.sqf"
 $cargoValidationPath = Join-Path $missionRoot "A4A/functions/shared/fn_validateCargoRequest.sqf"
+$canEditPath = Join-Path $missionRoot "A4A/functions/shared/fn_canEdit.sqf"
 $legacyHandlerPath = Join-Path $missionRoot "A4A/JNA/fn_arsenal_handleAction.sqf"
 $cbaAdapter = Read-TextOrEmpty $cbaAdapterPath
 $getSetting = Read-TextOrEmpty $getSettingPath
+$settings = Read-TextOrEmpty $settingsPath
 $serverInit = Read-TextOrEmpty $serverInitPath
+$preInit = Read-TextOrEmpty $preInitPath
+$clientInit = Read-TextOrEmpty $clientInitPath
 $registry = Read-TextOrEmpty $registryPath
 $cargoValidation = Read-TextOrEmpty $cargoValidationPath
+$canEdit = Read-TextOrEmpty $canEditPath
 $legacyHandler = Read-TextOrEmpty $legacyHandlerPath
 
 Assert-Compat "mission has no hard CBA requiredAddons or include" (
@@ -54,15 +62,36 @@ Assert-Compat "five mission settings use documented CBA addSetting API" (
     $cbaAdapter -match 'A4A_Mission_UnlockThreshold' -and
     $cbaAdapter -match 'A4A_Mission_UIStyle'
 )
+Assert-Compat "CBA registration preserves mission-owned defaults" (
+    $cbaAdapter -match 'preprocessFileLineNumbers\s+"A4A\\config\\settings\.sqf"' -and
+    $cbaAdapter -match '_defaultCargoAccess' -and
+    $cbaAdapter -match '_defaultEditorText' -and
+    $cbaAdapter -match '_defaultEditAccessMode' -and
+    $cbaAdapter -match '_defaultThresholdOverride' -and
+    $cbaAdapter -match '_defaultUiStyleIndex' -and
+    $settings -match '"uiStyle"' -and
+    $settings -match '"editorSteamIDs"'
+)
 Assert-Compat "mission setting getter reads CBA result variables with defaults" (
     $getSetting -match 'missionNamespace\s+getVariable' -and
     $getSetting -match 'A4A_Mission_UIStyle' -and
     $getSetting -match '_default' -and
     $getSetting -notmatch 'CBA_fnc_getSetting'
 )
+Assert-Compat "mission setting getter maps configured UI fallback to CBA list index" (
+    $getSetting -match '_fallbackStyleIndex' -and
+    $getSetting -match 'missionNamespace\s+getVariable\s*\[\s*"A4A_Mission_UIStyle"\s*,\s*_fallbackStyleIndex\s*\]'
+)
+Assert-Compat "client caches mission setting defaults instead of recompiling on UI hot paths" (
+    $clientInit -match 'A4A_ClientSettings' -and
+    $getSetting -match 'A4A_ClientSettings' -and
+    $canEdit -match 'A4A_ClientSettings'
+)
 $allMissionSqf = (Get-ChildItem -LiteralPath $missionRoot -Recurse -Filter *.sqf -File | ForEach-Object { Get-Content -LiteralPath $_.FullName -Raw }) -join "`n"
 Assert-Compat "mission never calls nonexistent CBA_fnc_getSetting" ($allMissionSqf -notmatch 'CBA_fnc_getSetting')
 Assert-Compat "server captures authority-sensitive CBA values once before registry creation" (
+    $preInit -match 'A4A_fnc_initCbaSettings' -and
+    $preInit.IndexOf('A4A_fnc_initCbaSettings') -lt $preInit.IndexOf('A4A_ServerStateInitialized", true') -and
     $serverInit -match 'A4A_fnc_initCbaSettings' -and
     $serverInit.IndexOf('A4A_fnc_initCbaSettings') -lt $serverInit.IndexOf('A4A_fnc_registerConfiguredArsenals') -and
     $cbaAdapter -match 'A4A_ServerCbaAuthorityCaptured' -and
@@ -74,6 +103,14 @@ Assert-Compat "server-only CBA snapshots drive threshold and cargo access" (
     $registry -match 'unlockThresholdOverride' -and
     $cargoValidation -match 'cargoAccess' -and
     $cargoValidation -match 'A4A_fnc_canEdit'
+)
+Assert-Compat "client editor visibility follows normalized CBA settings without becoming authority" (
+    $canEdit -match 'if\s*\(isServer\)' -and
+    $canEdit -match 'A4A_ServerSettings' -and
+    $canEdit -match 'A4A_fnc_getSetting' -and
+    $canEdit -match 'splitString\s+",;' -and
+    $canEdit -match 'editorSteamIDs' -and
+    $canEdit -match 'editAccessMode'
 )
 Assert-Compat "legacy handler uses mission getter rather than CBA getter" (
     $legacyHandler -match 'A4A_fnc_getSetting' -and

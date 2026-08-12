@@ -1,8 +1,6 @@
 if (!isServer || {isRemoteExecuted}) exitWith {};
 
 private _transactions = localNamespace getVariable ["A4A_ServerTransactions", createHashMap];
-private _dataById = localNamespace getVariable ["A4A_ServerData", createHashMap];
-private _revisions = localNamespace getVariable ["A4A_ServerRevisions", createHashMap];
 private _now = diag_tickTime;
 
 {
@@ -14,45 +12,88 @@ private _now = diag_tickTime;
     ) then {
         private _kind = _transaction getOrDefault ["kind", ""];
         private _arsenalId = _transaction getOrDefault ["arsenalId", ""];
-        private _index = _transaction getOrDefault ["index", -1];
-        private _item = _transaction getOrDefault ["item", ""];
-        private _amount = _transaction getOrDefault ["amount", 0];
         private _generation = _transaction getOrDefault ["generation", -1];
         private _targetOwner = _transaction getOrDefault ["owner", -1];
+        private _dataById = localNamespace getVariable ["A4A_ServerData", createHashMap];
+        private _revisions = localNamespace getVariable ["A4A_ServerRevisions", createHashMap];
         private _data = _dataById getOrDefault [_arsenalId, []];
         private _revision = _revisions getOrDefault [_arsenalId, -1];
 
+        private _finalized = false;
         if (
             _kind isEqualTo "withdraw" &&
-            {!(_transaction getOrDefault ["unlimited", false])} &&
-            {_data isEqualType [] && {count _data isEqualTo 27}} &&
-            {_index >= 0 && {_index <= 26}}
+            {!(_transaction getOrDefault ["unlimited", false])}
         ) then {
-            _data set [_index, [_data select _index, [_item, _amount]] call jn_fnc_arsenal_addToArray];
-            _dataById set [_arsenalId, _data];
+            private _refunded = [_transactionId, _targetOwner, "Timed-out finite withdrawal reservation was refunded."] call A4A_fnc_refundWithdrawalReservation;
+            if (_refunded select 0) then {
+                _revision = _refunded select 1;
+                _data = _refunded select 2;
+                _finalized = true;
+            };
+        } else {
+            isNil {
+                private _currentTransactions = localNamespace getVariable ["A4A_ServerTransactions", createHashMap];
+                if (!isNil {_currentTransactions get _transactionId}) then {
+                    private _current = _currentTransactions get _transactionId;
+                    if (
+                        _current isEqualType createHashMap &&
+                        {_now > (_current getOrDefault ["expiresAt", 0])} &&
+                        {(_current getOrDefault ["state", ""]) in ["pending", "reserved"]}
+                    ) then {
+                        _currentTransactions deleteAt _transactionId;
+                        localNamespace setVariable ["A4A_ServerTransactions", _currentTransactions];
+                        _finalized = true;
+                    };
+                };
+            };
         };
 
-        _transactions deleteAt _transactionId;
-        private _snapshot = if (_data isEqualType [] && {count _data isEqualTo 27}) then { parseSimpleArray str _data } else { [] };
-        private _payload = [_transactionId, _kind, false, _generation, _revision, _snapshot, true, "Arsenal transaction timed out and was rolled back."];
-        if (hasInterface && {_targetOwner isEqualTo clientOwner}) then {
-            _payload call A4A_fnc_receiveTransactionResult;
-        } else {
-            if (_targetOwner >= 2) then { _payload remoteExecCall ["A4A_fnc_receiveTransactionResult", _targetOwner] };
+        if (_finalized) then {
+            _dataById = localNamespace getVariable ["A4A_ServerData", createHashMap];
+            _revisions = localNamespace getVariable ["A4A_ServerRevisions", createHashMap];
+            _data = _dataById getOrDefault [_arsenalId, []];
+            _revision = _revisions getOrDefault [_arsenalId, -1];
+            private _snapshot = if (_data isEqualType [] && {count _data isEqualTo 27}) then { parseSimpleArray str _data } else { [] };
+            private _payload = [_transactionId, _kind, false, _generation, _revision, _snapshot, true, "Arsenal transaction timed out and was rolled back."];
+            if (hasInterface && {_targetOwner isEqualTo clientOwner}) then {
+                _payload call A4A_fnc_receiveTransactionResult;
+            } else {
+                if (_targetOwner >= 2) then { _payload remoteExecCall ["A4A_fnc_receiveTransactionResult", _targetOwner] };
+            };
         };
     };
 } forEach +(keys _transactions);
-
-localNamespace setVariable ["A4A_ServerTransactions", _transactions];
-localNamespace setVariable ["A4A_ServerData", _dataById];
 
 private _sessions = localNamespace getVariable ["A4A_ServerSessions", createHashMap];
 {
     private _ownerKey = _x;
     private _session = _sessions get _ownerKey;
     if (_session isEqualType createHashMap && {_now > (_session getOrDefault ["expiresAt", 0])}) then {
-        _sessions deleteAt _ownerKey;
+        private _targetOwner = parseNumber _ownerKey;
+        private _generation = _session getOrDefault ["generation", -1];
+        private _expired = false;
+        isNil {
+            private _currentSessions = localNamespace getVariable ["A4A_ServerSessions", createHashMap];
+            if (!isNil {_currentSessions get _ownerKey}) then {
+                private _current = _currentSessions get _ownerKey;
+                if (
+                    _current isEqualType createHashMap &&
+                    {(_current getOrDefault ["generation", -1]) isEqualTo _generation} &&
+                    {_now > (_current getOrDefault ["expiresAt", 0])}
+                ) then {
+                    _currentSessions deleteAt _ownerKey;
+                    localNamespace setVariable ["A4A_ServerSessions", _currentSessions];
+                    _expired = true;
+                };
+            };
+        };
+        if (_expired) then {
+            private _payload = [_generation, "Arsenal session expired after prolonged inactivity. Reopen it to continue."];
+            if (hasInterface && {_targetOwner isEqualTo clientOwner}) then {
+                _payload call A4A_fnc_receiveInvalidate;
+            } else {
+                if (_targetOwner >= 2) then { _payload remoteExecCall ["A4A_fnc_receiveInvalidate", _targetOwner] };
+            };
+        };
     };
 } forEach +(keys _sessions);
-localNamespace setVariable ["A4A_ServerSessions", _sessions];
-

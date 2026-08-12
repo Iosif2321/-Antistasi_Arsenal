@@ -193,7 +193,7 @@ _assignedItems = ((_inventory select 9) + [_inventory select 3] + [_inventory se
 		if!(_radioName isEqualTo "")then{
 			_item =_radioName;
 		};
-		
+
         //Weapon Stack fix
         private _weaponname = getText(configfile >> "CfgWeapons" >> _item >> "baseWeapon");
         if!(_weaponname isEqualTo "")then{
@@ -345,9 +345,9 @@ private _addContainerFuncs = [
 			IDC_RSCDISPLAYARSENAL_TAB_VEST,
 			IDC_RSCDISPLAYARSENAL_TAB_BACKPACK
 		] select _foreachindex;
-		
+
 		_addContainerFunc = (_addContainerFuncs select _foreachindex);
-		
+
 		call {
 			if ([_itemCounts select _index, _item] call jn_fnc_arsenal_itemCount == -1) exitWith {
 				[_item] call _addContainerFunc;
@@ -509,7 +509,3 @@ if!(_reportTotal isEqualTo "")then{
 	]
 ]
 */
-
-
-
-

@@ -15,6 +15,15 @@ private _validation = [_senderOwner, _requestPlayer, _object, _requestNonce, _ge
 if !(_validation select 0) exitWith {};
 
 private _ownerKey = _validation select 2;
+private _transactions = localNamespace getVariable ["A4A_ServerTransactions", createHashMap];
+private _hasActiveTransaction = (keys _transactions) findIf {
+    private _transaction = _transactions get _x;
+    _transaction isEqualType createHashMap &&
+    {(_transaction getOrDefault ["ownerKey", ""]) isEqualTo _ownerKey} &&
+    {(_transaction getOrDefault ["generation", -1]) isEqualTo _generation}
+} >= 0;
+if (_hasActiveTransaction) exitWith {};
+
 private _sessions = localNamespace getVariable ["A4A_ServerSessions", createHashMap];
 _sessions deleteAt _ownerKey;
 localNamespace setVariable ["A4A_ServerSessions", _sessions];
@@ -22,4 +31,3 @@ localNamespace setVariable ["A4A_ServerSessions", _sessions];
 if (!isNil "A4A_fnc_schedulePersistence") then {
     [] call A4A_fnc_schedulePersistence;
 };
-

@@ -42,9 +42,9 @@ private _sendCompletion = {
         _completeSuccess
     ];
     if ((_pendingTransaction get "kind") isEqualTo "withdraw") then {
-        if (isServer) then { _payload call A4A_fnc_completeWithdraw } else { _payload remoteExecCall ["A4A_fnc_completeWithdraw", 2] };
+        _payload remoteExecCall ["A4A_fnc_completeWithdraw", 2];
     } else {
-        if (isServer) then { _payload call A4A_fnc_completeReturn } else { _payload remoteExecCall ["A4A_fnc_completeReturn", 2] };
+        _payload remoteExecCall ["A4A_fnc_completeReturn", 2];
     };
 };
 

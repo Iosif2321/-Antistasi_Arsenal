@@ -5,7 +5,7 @@ createHashMapFromArray [
     ["interactionDistance", 5],
     ["cargoDistance", 15],
     ["cargoAccess", 0],
-    ["sessionLifetime", 30],
+    ["sessionLifetime", 900],
     ["transactionLifetime", 10],
     ["maxEntries", 10000],
     ["maxCargoEntries", 2000],

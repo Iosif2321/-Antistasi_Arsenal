@@ -23,9 +23,12 @@ if (!_validRequest) exitWith {
 
 private _lockAcquired = false;
 private _locks = localNamespace getVariable ["A4A_ServerCargoLocks", createHashMap];
+private _lockExpiresAt = diag_tickTime + 30;
 isNil {
-    if !(_locks getOrDefault [_holderKey, false]) then {
-        _locks set [_holderKey, true];
+    private _existingLockUntil = _locks getOrDefault [_holderKey, -1];
+    if !(_existingLockUntil isEqualType 0) then { _existingLockUntil = -1 };
+    if (_existingLockUntil <= diag_tickTime) then {
+        _locks set [_holderKey, _lockExpiresAt];
         localNamespace setVariable ["A4A_ServerCargoLocks", _locks];
         _lockAcquired = true;
     };
@@ -130,6 +133,20 @@ private _result = call {
         [false, "The existing physical cargo could not be measured.", _currentRevision, [], false]
     };
 
+    private _expectedPhysicalCargo = parseSimpleArray str _beforeCargo;
+    {
+        _x params ["_index", "_className", "_amount"];
+        _expectedPhysicalCargo set [
+            _index,
+            [_expectedPhysicalCargo select _index, [_className, _amount]] call jn_fnc_arsenal_addToArray
+        ];
+    } forEach _normalizedManifest;
+    private _validatedPhysicalCargo = [_expectedPhysicalCargo] call A4A_fnc_validateSnapshot;
+    if !(_validatedPhysicalCargo select 0) exitWith {
+        [false, format ["The resulting physical cargo is unsafe: %1", _validatedPhysicalCargo select 3], _currentRevision, [], false]
+    };
+    _expectedPhysicalCargo = _validatedPhysicalCargo select 1;
+
     private _physicalCommandsValid = true;
     {
         _x params ["_index", "_className", "_amount"];
@@ -160,16 +177,25 @@ private _result = call {
     } forEach _normalizedManifest;
 
     private _afterCargo = [_holder, false] call jn_fnc_arsenal_cargoToArray;
-    private _physicalDeltaValid = _physicalCommandsValid && {count _afterCargo isEqualTo 27};
+    private _physicalDeltaValid =
+        _physicalCommandsValid &&
+        {count _afterCargo isEqualTo 27} &&
+        {load _holder <= 1.0001};
     if (_physicalDeltaValid) then {
-        {
-            _x params ["_index", "_className", "_amount"];
-            private _beforeAmount = [_beforeCargo select _index, _className] call jn_fnc_arsenal_itemCount;
-            private _afterAmount = [_afterCargo select _index, _className] call jn_fnc_arsenal_itemCount;
-            if ((_afterAmount - _beforeAmount) isNotEqualTo _amount) exitWith {
-                _physicalDeltaValid = false;
-            };
-        } forEach _normalizedManifest;
+        for "_index" from 0 to 26 do {
+            {
+                _x params ["_className", "_expectedAmount"];
+                private _actualAmount = [_afterCargo select _index, _className] call jn_fnc_arsenal_itemCount;
+                if (_actualAmount isNotEqualTo _expectedAmount) exitWith { _physicalDeltaValid = false };
+            } forEach (_expectedPhysicalCargo select _index);
+            if (!_physicalDeltaValid) exitWith {};
+            {
+                _x params ["_className", "_afterAmount"];
+                private _expectedAmount = [_expectedPhysicalCargo select _index, _className] call jn_fnc_arsenal_itemCount;
+                if (_afterAmount isNotEqualTo _expectedAmount) exitWith { _physicalDeltaValid = false };
+            } forEach (_afterCargo select _index);
+            if (!_physicalDeltaValid) exitWith {};
+        };
     };
     if (!_physicalDeltaValid) exitWith {
         private _restored = [_holder, _backup] call A4A_fnc_restoreCargo;

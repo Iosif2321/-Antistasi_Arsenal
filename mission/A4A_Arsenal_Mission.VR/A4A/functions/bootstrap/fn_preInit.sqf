@@ -19,25 +19,16 @@ if (isServer) then {
             localNamespace setVariable ["A4A_ServerItemTypeCache", createHashMap];
 
             private _settings = call compile preprocessFileLineNumbers "A4A\config\settings.sqf";
-            if !(_settings isEqualType createHashMap) then {
-                _settings = createHashMapFromArray [
-                    ["uiStyle", "Legacy"],
-                    ["unlockThreshold", 25],
-                    ["interactionDistance", 5],
-                    ["cargoDistance", 15],
-                    ["cargoAccess", 0],
-                    ["sessionLifetime", 30],
-                    ["transactionLifetime", 10],
-                    ["maxEntries", 10000],
-                    ["maxCargoEntries", 2000],
-                    ["maxPayloadCharacters", 2000000],
-                    ["maxAmount", 100000000],
-                    ["unlockThresholdOverride", 0],
-                    ["editorSteamIDs", []],
-                    ["editAccessMode", 0]
-                ];
-            };
+            if !(_settings isEqualType createHashMap) then { _settings = createHashMap };
+            _settings = [_settings] call A4A_fnc_normalizeSettings;
             localNamespace setVariable ["A4A_ServerSettings", _settings];
+            // CBA settings are registered and authority-sensitive values are
+            // captured during mission preInit, before any client mission code
+            // or Arsenal registry entry can exist. serverInit repeats the call
+            // only as an idempotent compatibility fallback.
+            if (!isNil "A4A_fnc_initCbaSettings") then {
+                [] call A4A_fnc_initCbaSettings;
+            };
             localNamespace setVariable ["A4A_ServerStateInitialized", true];
         };
     };
@@ -52,6 +43,7 @@ if (hasInterface) then {
             localNamespace setVariable ["A4A_ClientActionIds", createHashMap];
             localNamespace setVariable ["A4A_ClientPendingCargo", createHashMap];
             localNamespace setVariable ["A4A_ClientAceProxyState", []];
+            localNamespace setVariable ["A4A_ClientClosePending", []];
             localNamespace setVariable ["A4A_ClientCancelledBatches", createHashMap];
             localNamespace setVariable ["A4A_ClientScheduledBatches", createHashMap];
             localNamespace setVariable ["A4A_ClientTransactionBusy", ""];
@@ -70,7 +62,9 @@ A4A_hasACE = isClass (configFile >> "CfgPatches" >> "ace_main");
 A4A_hasACEMedical = isClass (configFile >> "CfgPatches" >> "ace_medical");
 A4A_hasACEHearing = isClass (configFile >> "CfgPatches" >> "ace_hearing");
 if (isNil "A4A_arsenalLimits") then { A4A_arsenalLimits = createHashMap };
-if (isNil "A4A_fnc_isMember") then { A4A_fnc_isMember = { true } };
+// Standalone mission semantics have no hidden member/guest reserve. The third
+// arsenal parameter is an automatic-unlock threshold applied by the server.
+A4A_fnc_isMember = { true };
 if (isNil "A4A_fnc_isMedic") then {
     A4A_fnc_isMedic = {
         params ["_unit"];

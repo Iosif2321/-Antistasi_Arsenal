@@ -44,7 +44,7 @@ if (_existingState isEqualType createHashMap) then {
 if (!isNull (findDisplay 1127001)) exitWith {
     systemChat "Close the current ACE Arsenal before opening the mission Arsenal.";
     private _payload = [_originalObject, _requestNonce, _generation];
-    if (isServer) then { _payload call A4A_fnc_requestClose } else { _payload remoteExecCall ["A4A_fnc_requestClose", 2] };
+    _payload remoteExecCall ["A4A_fnc_requestClose", 2];
     localNamespace setVariable ["A4A_ClientSession", []];
     false
 };

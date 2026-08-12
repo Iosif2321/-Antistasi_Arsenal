@@ -4,7 +4,9 @@ params [
 ];
 if (!hasInterface || {isRemoteExecuted} || {isNull _arsenalObject} || {_arsenalId isEqualTo ""}) exitWith { [] };
 
-private _actionKey = format ["cargo:%1", netId _arsenalObject];
+private _arsenalKey = [_arsenalObject] call A4A_fnc_objectKey;
+if (_arsenalKey isEqualTo "") exitWith { [] };
+private _actionKey = format ["cargo:%1", _arsenalKey];
 private _actionIds = localNamespace getVariable ["A4A_ClientActionIds", createHashMap];
 if (!isNil {_actionIds get _actionKey}) exitWith { _actionIds get _actionKey };
 
@@ -20,17 +22,9 @@ private _submit = {
     localNamespace setVariable ["A4A_ClientPendingCargo", _pending];
 
     if (_kind isEqualTo "deposit") then {
-        if (isServer) then {
-            [_target, _holder, _requestId] call A4A_fnc_requestCargoDeposit;
-        } else {
-            [_target, _holder, _requestId] remoteExecCall ["A4A_fnc_requestCargoDeposit", 2];
-        };
+        [_target, _holder, _requestId] remoteExecCall ["A4A_fnc_requestCargoDeposit", 2];
     } else {
-        if (isServer) then {
-            [_target, _holder, _requestId, _manifest] call A4A_fnc_requestCargoWithdraw;
-        } else {
-            [_target, _holder, _requestId, _manifest] remoteExecCall ["A4A_fnc_requestCargoWithdraw", 2];
-        };
+        [_target, _holder, _requestId, _manifest] remoteExecCall ["A4A_fnc_requestCargoWithdraw", 2];
     };
 
     [_requestId] spawn {
