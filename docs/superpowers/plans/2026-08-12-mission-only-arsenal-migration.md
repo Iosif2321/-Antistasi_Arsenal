@@ -72,12 +72,12 @@
 - Create: `mission/A4A_Arsenal_Mission.VR/A4A/functions/shared/**`
 - Create: `mission/A4A_Arsenal_Mission.VR/A4A/pictures/arsenal.paa`
 
-- [ ] Add a failing inventory-manifest test listing every required Legacy/JNA/shared function and prohibiting every Garage or vehicle-Arsenal symbol.
-- [ ] Run the test and confirm the missing port fails.
-- [ ] Mechanically copy the proven quantitative Arsenal/UI helpers and assets, excluding addon bootstrap, module functions, Garage, and `fn_vehicleArsenal.sqf`.
-- [ ] Replace absolute addon paths and addon-only macros with mission-relative paths; make all config caches client-local or server-private as appropriate.
-- [ ] Run the manifest test plus a delimiter/string/comment scanner across every mission SQF.
-- [ ] Commit exact mission source paths with message `feat: port quantitative arsenal into mission`.
+- [x] Add a failing inventory-manifest test listing every required Legacy/JNA/shared function and prohibiting every Garage or vehicle-Arsenal symbol.
+- [x] Run the test and confirm the missing port fails.
+- [x] Mechanically copy the proven quantitative Arsenal/UI helpers and assets, excluding addon bootstrap, module functions, Garage, and `fn_vehicleArsenal.sqf`.
+- [x] Replace absolute addon paths and addon-only macros with mission-relative paths; make all config caches client-local or server-private as appropriate.
+- [x] Run the manifest test plus a delimiter/string/comment scanner across every mission SQF.
+- [x] Commit exact mission source paths with message `feat: port quantitative arsenal into mission`.
 
 ## Task 5: Correlated open/close session protocol
 

@@ -19,6 +19,70 @@ function Assert-Check {
     }
 }
 
+function Test-SqfLexicalBalance {
+    param([Parameter(Mandatory = $true)][string]$Path)
+
+    $text = Get-Content -LiteralPath $Path -Raw
+    $stack = [System.Collections.Generic.Stack[char]]::new()
+    $pairs = @{ ')' = '('; ']' = '['; '}' = '{' }
+    $inString = $false
+    $inLineComment = $false
+    $inBlockComment = $false
+
+    for ($index = 0; $index -lt $text.Length; $index++) {
+        $char = $text[$index]
+        $next = if ($index + 1 -lt $text.Length) { $text[$index + 1] } else { [char]0 }
+
+        if ($inLineComment) {
+            if ($char -eq "`n") { $inLineComment = $false }
+            continue
+        }
+        if ($inBlockComment) {
+            if ($char -eq '*' -and $next -eq '/') {
+                $inBlockComment = $false
+                $index++
+            }
+            continue
+        }
+        if ($inString) {
+            if ($char -eq '"') {
+                if ($next -eq '"') {
+                    $index++
+                } else {
+                    $inString = $false
+                }
+            }
+            continue
+        }
+
+        if ($char -eq '/' -and $next -eq '/') {
+            $inLineComment = $true
+            $index++
+            continue
+        }
+        if ($char -eq '/' -and $next -eq '*') {
+            $inBlockComment = $true
+            $index++
+            continue
+        }
+        if ($char -eq '"') {
+            $inString = $true
+            continue
+        }
+        if ($char -in @('(', '[', '{')) {
+            $stack.Push($char)
+            continue
+        }
+        if ($pairs.ContainsKey([string]$char)) {
+            if ($stack.Count -eq 0 -or $stack.Pop() -ne $pairs[[string]$char]) {
+                return $false
+            }
+        }
+    }
+
+    return (-not $inString -and -not $inBlockComment -and $stack.Count -eq 0)
+}
+
 $requiredFiles = @(
     "description.ext",
     "initServer.sqf",
@@ -118,6 +182,63 @@ if (Test-Path -LiteralPath $missionRoot -PathType Container) {
     )
     Assert-Check "registration rejects direct remote execution" ($register -match 'isRemoteExecuted[\s\S]*?exitWith')
     Assert-Check "client bootstrap installs mission actions" ($clientInit -match 'A4A_fnc_openAction' -and $clientInit -match 'A4A_fnc_addCargoActions')
+
+    $legacyFiles = @(
+        "A4A/defineCommon.inc",
+        "A4A/Common/defineCommon.inc",
+        "A4A/Common/fn_common_addActionSelect.sqf",
+        "A4A/Common/fn_common_addActionCancel.sqf",
+        "A4A/Common/fn_common_updateActionCancel.sqf",
+        "A4A/Common/fn_common_removeActionCancel.sqf",
+        "A4A/Common/fn_common_getActionCanceled.sqf",
+        "A4A/Common/Array/defineCommon.inc",
+        "A4A/Common/Array/fn_common_array_add.sqf",
+        "A4A/Common/Array/fn_common_array_remove.sqf",
+        "A4A/JNA/defineCommon.inc",
+        "A4A/JNA/fn_arsenal.sqf",
+        "A4A/JNA/fn_arsenal_aceStock.sqf",
+        "A4A/JNA/fn_arsenal_addItem.sqf",
+        "A4A/JNA/fn_arsenal_addToArray.sqf",
+        "A4A/JNA/fn_arsenal_cargoToArray.sqf",
+        "A4A/JNA/fn_arsenal_handleAction.sqf",
+        "A4A/JNA/fn_arsenal_inList.sqf",
+        "A4A/JNA/fn_arsenal_itemCount.sqf",
+        "A4A/JNA/fn_arsenal_itemType.sqf",
+        "A4A/JNA/fn_arsenal_loadInventory.sqf",
+        "A4A/JNA/fn_arsenal_removeFromArray.sqf",
+        "A4A/JNA/fn_arsenal_removeItem.sqf",
+        "A4A/pictures/unloadvehicle.paa"
+    )
+    foreach ($legacyFile in $legacyFiles) {
+        Assert-Check "ported quantitative file: $legacyFile" (Test-Path -LiteralPath (Join-Path $missionRoot $legacyFile) -PathType Leaf)
+    }
+
+    $forbiddenPortFiles = @(
+        "A4A/JNA/fn_arsenal_init.sqf",
+        "A4A/JNA/fn_arsenal_requestOpen.sqf",
+        "A4A/JNA/fn_arsenal_requestClose.sqf",
+        "A4A/JNA/fn_arsenal_cargoToArsenal.sqf",
+        "A4A/JNA/fn_vehicleArsenal.sqf",
+        "A4A/functions/fn_moduleArsenal.sqf",
+        "A4A/functions/fn_moduleGarage.sqf"
+    )
+    foreach ($forbiddenPortFile in $forbiddenPortFiles) {
+        Assert-Check "addon-only file excluded: $forbiddenPortFile" (-not (Test-Path -LiteralPath (Join-Path $missionRoot $forbiddenPortFile)))
+    }
+
+    $legacyMainPath = Join-Path $missionRoot "A4A/JNA/fn_arsenal.sqf"
+    $legacyMain = if (Test-Path -LiteralPath $legacyMainPath) { Get-Content -LiteralPath $legacyMainPath -Raw } else { "" }
+    Assert-Check "Legacy dispatcher retains preload and open modes" ($legacyMain -match 'case\s+"Preload"' -and $legacyMain -match 'case\s+"Open"')
+    Assert-Check "Legacy dispatcher retains quantitative item rendering" ($legacyMain -match 'jna_dataList' -and $legacyMain -match 'jn_fnc_arsenal_itemCount')
+    Assert-Check "ported scripts do not include addon macro header" ($combined -notmatch 'script_component\.hpp|QPATHTOFOLDER')
+
+    $invalidSqf = @(
+        $allFiles |
+            Where-Object { $_.Extension -ieq ".sqf" } |
+            Where-Object { -not (Test-SqfLexicalBalance -Path $_.FullName) } |
+            ForEach-Object { $_.FullName.Substring($missionRoot.Length + 1) }
+    )
+    Assert-Check ("mission SQF lexical balance" + $(if ($invalidSqf.Count -gt 0) { ": " + ($invalidSqf -join ", ") } else { "" })) ($invalidSqf.Count -eq 0)
 }
 
 if ($failures.Count -gt 0) {
