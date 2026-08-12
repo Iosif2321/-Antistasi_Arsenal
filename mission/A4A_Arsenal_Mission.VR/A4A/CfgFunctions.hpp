@@ -33,6 +33,7 @@ class CfgFunctions {
             class receiveGrant {};
             class receiveTransactionResult {};
             class addCargoActions {};
+            class receiveCargoResult {};
         };
 
         class Cargo {
@@ -60,6 +61,7 @@ class CfgFunctions {
             class beginClientOperation {};
             class flushClientBatch {};
             class canEdit {};
+            class validateCargoRequest {};
         };
     };
 

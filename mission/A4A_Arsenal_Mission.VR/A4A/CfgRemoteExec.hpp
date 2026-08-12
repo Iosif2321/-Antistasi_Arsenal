@@ -19,6 +19,7 @@ class CfgRemoteExec {
         class A4A_fnc_receiveInvalidate { allowedTargets = 0; jip = 0; };
         class A4A_fnc_receiveGrant { allowedTargets = 0; jip = 0; };
         class A4A_fnc_receiveTransactionResult { allowedTargets = 0; jip = 0; };
+        class A4A_fnc_receiveCargoResult { allowedTargets = 0; jip = 0; };
     };
 
     class Commands {
@@ -26,4 +27,3 @@ class CfgRemoteExec {
         jip = 0;
     };
 };
-

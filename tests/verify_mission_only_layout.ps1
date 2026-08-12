@@ -412,6 +412,39 @@ if (Test-Path -LiteralPath $missionRoot -PathType Container) {
     )
     Assert-Check "editor save commits revision and broadcasts canonical replacement" ($saveEditor -match 'A4A_ServerData' -and $saveEditor -match 'A4A_fnc_publishSnapshot' -and $saveEditor -match 'A4A_fnc_schedulePersistence')
     Assert-Check "Legacy editor calls mission-native revisioned endpoint" ($legacyMain -match 'A4A_fnc_saveEditorSnapshot' -and $legacyMain -match 'A4A_fnc_canEdit' -and $legacyMain -notmatch 'A4A_fnc_arsenal_saveRequest|A4A_fnc_arsenal_canEdit')
+
+    $snapshotCargoPath = Join-Path $missionRoot "A4A/functions/cargo/fn_snapshotCargo.sqf"
+    $restoreCargoPath = Join-Path $missionRoot "A4A/functions/cargo/fn_restoreCargo.sqf"
+    $cargoDepositPath = Join-Path $missionRoot "A4A/functions/cargo/fn_requestCargoDeposit.sqf"
+    $cargoWithdrawPath = Join-Path $missionRoot "A4A/functions/cargo/fn_requestCargoWithdraw.sqf"
+    $cargoActionsPath = Join-Path $missionRoot "A4A/functions/client/fn_addCargoActions.sqf"
+    $cargoResultPath = Join-Path $missionRoot "A4A/functions/client/fn_receiveCargoResult.sqf"
+    $cargoValidationPath = Join-Path $missionRoot "A4A/functions/shared/fn_validateCargoRequest.sqf"
+    $cargoFiles = @($snapshotCargoPath, $restoreCargoPath, $cargoDepositPath, $cargoWithdrawPath, $cargoActionsPath, $cargoResultPath, $cargoValidationPath)
+    foreach ($cargoFile in $cargoFiles) {
+        Assert-Check ("cargo transaction exists: " + (Split-Path -Leaf $cargoFile)) (Test-Path -LiteralPath $cargoFile -PathType Leaf)
+    }
+    $snapshotCargo = if (Test-Path -LiteralPath $snapshotCargoPath) { Get-Content -LiteralPath $snapshotCargoPath -Raw } else { "" }
+    $restoreCargo = if (Test-Path -LiteralPath $restoreCargoPath) { Get-Content -LiteralPath $restoreCargoPath -Raw } else { "" }
+    $cargoDeposit = if (Test-Path -LiteralPath $cargoDepositPath) { Get-Content -LiteralPath $cargoDepositPath -Raw } else { "" }
+    $cargoWithdraw = if (Test-Path -LiteralPath $cargoWithdrawPath) { Get-Content -LiteralPath $cargoWithdrawPath -Raw } else { "" }
+    $cargoActions = if (Test-Path -LiteralPath $cargoActionsPath) { Get-Content -LiteralPath $cargoActionsPath -Raw } else { "" }
+    $cargoValidation = if (Test-Path -LiteralPath $cargoValidationPath) { Get-Content -LiteralPath $cargoValidationPath -Raw } else { "" }
+
+    Assert-Check "cargo backup recursively preserves exact physical tuples" ($snapshotCargo -match 'getItemCargo' -and $snapshotCargo -match 'magazinesAmmoCargo' -and $snapshotCargo -match 'weaponsItemsCargo' -and $snapshotCargo -match 'everyContainer')
+    Assert-Check "cargo restore preserves attachments loaded rounds and nested backpacks" ($restoreCargo -match 'addWeaponWithAttachmentsCargoGlobal' -and $restoreCargo -match 'addMagazineAmmoCargo' -and $restoreCargo -match 'addBackpackCargoGlobal' -and $restoreCargo -match 'A4A_fnc_restoreCargo')
+    Assert-Check "cargo authority binds sender registry distance holder and locality" ($cargoValidation -match 'A4A_fnc_resolveRemotePlayer' -and $cargoValidation -match 'A4A_ServerRegistry' -and $cargoValidation -match 'A4A_ServerReady' -and $cargoValidation -match 'distance' -and $cargoValidation -match 'setOwner\s+2')
+    Assert-Check "cargo deposit acquires private holder lock" ($cargoDeposit -match 'A4A_ServerCargoLocks' -and $cargoDeposit -match 'netId\s+_holder')
+    $depositValidateIndex = $cargoDeposit.IndexOf('A4A_fnc_validateSnapshot')
+    $depositClearIndex = $cargoDeposit.IndexOf('clearMagazineCargoGlobal')
+    $depositCommitIndex = $cargoDeposit.IndexOf('localNamespace setVariable ["A4A_ServerData"')
+    Assert-Check "cargo deposit validates before destructive clear and canonical commit" ($depositValidateIndex -ge 0 -and $depositClearIndex -gt $depositValidateIndex -and $depositCommitIndex -gt $depositClearIndex)
+    Assert-Check "cargo deposit has recoverable rollback and finally lock release" ($cargoDeposit -match 'A4A_fnc_snapshotCargo' -and $cargoDeposit -match 'A4A_fnc_restoreCargo' -and $cargoDeposit.LastIndexOf('deleteAt _holderKey') -gt $depositCommitIndex)
+    Assert-Check "cargo withdraw validates manifest and stock before physical mutation" ($cargoWithdraw -match 'A4A_fnc_validateSnapshot' -and $cargoWithdraw -match 'jn_fnc_arsenal_itemCount' -and $cargoWithdraw.IndexOf('A4A_fnc_validateSnapshot') -lt $cargoWithdraw.IndexOf('addMagazineAmmoCargo'))
+    Assert-Check "cargo withdraw verifies capacity and restores exact backup on partial add" ($cargoWithdraw -match 'A4A_fnc_snapshotCargo' -and $cargoWithdraw -match 'A4A_fnc_restoreCargo' -and $cargoWithdraw -match '_physicalDeltaValid')
+    Assert-Check "cargo commits use one revision and one snapshot notification" ($cargoDeposit -match 'A4A_ServerRevisions' -and $cargoDeposit -match 'A4A_fnc_publishSnapshot' -and $cargoDeposit -match 'A4A_fnc_schedulePersistence' -and $cargoWithdraw -match 'A4A_ServerRevisions' -and $cargoWithdraw -match 'A4A_fnc_publishSnapshot')
+    Assert-Check "cargo actions treat cursor crate or vehicle as one generic holder" ($cargoActions -match 'cursorObject' -and $cargoActions -match 'A4A_fnc_requestCargoDeposit' -and $cargoActions -match 'A4A_fnc_requestCargoWithdraw' -and $cargoActions -match 'jn_fnc_arsenal_cargoToArray' -and $cargoActions -notmatch 'Garage|vehicleArsenal')
+    Assert-Check "cargo code has no per-item network fanout" ($cargoDeposit -notmatch 'UpdateItemAdd|UpdateItemRemove' -and $cargoWithdraw -notmatch 'UpdateItemAdd|UpdateItemRemove')
 }
 
 if ($failures.Count -gt 0) {

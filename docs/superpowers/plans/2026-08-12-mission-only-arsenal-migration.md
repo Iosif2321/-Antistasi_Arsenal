@@ -145,12 +145,12 @@
 - Create: `mission/A4A_Arsenal_Mission.VR/A4A/functions/cargo/fn_restoreCargo.sqf`
 - Create: `mission/A4A_Arsenal_Mission.VR/A4A/functions/client/fn_addCargoActions.sqf`
 
-- [ ] Add RED checks for one generic crate/vehicle path, registered nearby arsenal, sender locality, server-observed holder, per-holder lock, complete tuple accounting for weapons/attachments/loaded rounds, capacity check, validate candidate before clear, rollback snapshot, bounded batch, atomic canonical revision, and finally-style lock release.
-- [ ] Run the test and observe failure.
-- [ ] Implement deposit/withdraw without Garage state, hidden staging inventory, or fire-and-forget per-item deltas.
-- [ ] Attach the same mission actions to configured crates and physical vehicles; treat vehicles strictly as cargo holders.
-- [ ] Rerun cargo tests and confirm the mission artifact contains no Garage/vehicle-storage code.
-- [ ] Commit exact paths with message `feat: transact crate and vehicle cargo`.
+- [x] Add RED checks for one generic crate/vehicle path, registered nearby arsenal, sender locality, server-observed holder, per-holder lock, complete tuple accounting for weapons/attachments/loaded rounds, capacity check, validate candidate before clear, rollback snapshot, bounded batch, atomic canonical revision, and finally-style lock release.
+- [x] Run the test and observe failure.
+- [x] Implement deposit/withdraw without Garage state, hidden staging inventory, or fire-and-forget per-item deltas.
+- [x] Attach the same mission actions to configured crates and physical vehicles; treat vehicles strictly as cargo holders.
+- [x] Rerun cargo tests and confirm the mission artifact contains no Garage/vehicle-storage code.
+- [x] Commit exact paths with message `feat: transact crate and vehicle cargo`.
 
 ## Task 9: Optional CBA_A3 3.19.0 adapter
 

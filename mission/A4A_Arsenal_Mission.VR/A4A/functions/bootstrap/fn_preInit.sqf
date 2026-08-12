@@ -24,9 +24,11 @@ if (isServer) then {
                     ["uiStyle", "Legacy"],
                     ["unlockThreshold", 25],
                     ["interactionDistance", 5],
+                    ["cargoDistance", 15],
                     ["sessionLifetime", 30],
                     ["transactionLifetime", 10],
                     ["maxEntries", 10000],
+                    ["maxCargoEntries", 2000],
                     ["maxPayloadCharacters", 2000000],
                     ["maxAmount", 100000000],
                     ["editorSteamIDs", []],
@@ -46,6 +48,7 @@ if (hasInterface) then {
             localNamespace setVariable ["A4A_ClientPendingRequests", createHashMap];
             localNamespace setVariable ["A4A_ClientPendingTransactions", createHashMap];
             localNamespace setVariable ["A4A_ClientActionIds", createHashMap];
+            localNamespace setVariable ["A4A_ClientPendingCargo", createHashMap];
             localNamespace setVariable ["A4A_ClientCancelledBatches", createHashMap];
             localNamespace setVariable ["A4A_ClientScheduledBatches", createHashMap];
             localNamespace setVariable ["A4A_ClientTransactionBusy", ""];
