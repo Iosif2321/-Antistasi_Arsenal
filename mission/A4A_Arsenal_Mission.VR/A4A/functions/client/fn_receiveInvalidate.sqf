@@ -15,9 +15,8 @@ jna_dataList = [];
 private _display = uiNamespace getVariable ["arsenalDisplay", displayNull];
 if (!isNull _display) then { _display closeDisplay 2 };
 if (missionNamespace getVariable ["A4A_aceStock_active", false] && {!isNil "A4A_fnc_closeAceProxy"}) then {
-    [] call A4A_fnc_closeAceProxy;
+    [-1, false] call A4A_fnc_closeAceProxy;
 };
 private _loadingIds = missionNamespace getVariable ["BIS_fnc_startLoadingScreen_ids", []];
 if ("jn_fnc_arsenal" in _loadingIds) then { ["jn_fnc_arsenal"] call BIS_fnc_endLoadingScreen };
 systemChat _message;
-

@@ -1,99 +1,44 @@
-﻿/**
-	Handler for when the 'Arsenal' action is taken.
-	
-	Usage:
-		_thing addAction ["Action", JN_fnc_arsenal_handleAction];
-	
-	Params:
-		Same as any 'addAction' handler
-**/
-
-if !(missionNamespace getVariable ["arsenalInit", false]) exitWith {};
-
-private _uiStyleSetting = ["uiStyle", "Legacy"] call A4A_fnc_getSetting;
-private _uiStyle = [0, 1] select (_uiStyleSetting in ["ACE", 1]);
-if (
-	_uiStyle isEqualTo 1
-	&& {
-		missionNamespace getVariable ["A4A_aceStock_active", false]
-		|| {!isNull (findDisplay 1127001)}
-	}
-) exitWith {
-	systemChat "Close the current ACE Arsenal before opening A4A ACE Preview.";
-	diag_log "A4A_Arsenal: handleAction rejected overlapping ACE Arsenal open";
-};
-diag_log format [
-	"A4A_Arsenal: handleAction uiStyle=%1 (0=Legacy, 1=ACE) aceAvailable=%2",
-	_uiStyle,
-	!isNil "ace_arsenal_fnc_openBox"
+/* Compatibility addAction handler routed into the mission-native open RPC. */
+params [
+    ["_target", objNull, [objNull]],
+    ["_caller", objNull, [objNull]]
 ];
+if (
+    !hasInterface ||
+    {isRemoteExecuted} ||
+    {isNull _target} ||
+    {_caller isNotEqualTo player} ||
+    {!(missionNamespace getVariable ["arsenalInit", false])}
+) exitWith {};
 
-missionNamespace setVariable ["jna_object", _this select 0];
-
-// Antistasi UI dependencies removed
-/*
-if (isMenuOpen) then {
-	[] call SCRT_fnc_ui_toggleCommanderMenu;
-	private _display = findDisplay 60000;
-	if (str (_display) != "no display") then {
-		_display closeDisplay 1;
-	};
-
-	private _loadoutMenuDisplay = findDisplay 120000;
-	if (str (_loadoutMenuDisplay) != "no display") then {
-		_loadoutMenuDisplay closeDisplay 1;
-	};
-
-	['off'] call SCRT_fnc_ui_toggleMenuBlur;
-
-	uiNamespace setVariable ["isLoadoutArsenal", true];
-};
-*/
-
-//start loading screen
-["jn_fnc_arsenal", "Loading Nutz Arsenal"] call bis_fnc_startloadingscreen;
-[] spawn {
-uisleep 10;
-private _ids = missionnamespace getvariable ["BIS_fnc_startLoadingScreen_ids",[]];
-  if("jn_fnc_arsenal" in _ids)then{
-	private _display =  uiNamespace getVariable ["arsenalDisplay","No display"];
-	titleText["ERROR DURING LOADING ARSENAL", "PLAIN"];
-	if (typeName _display == "DISPLAY") then {
-		_display closedisplay 2;
-	};
-	["jn_fnc_arsenal"] call BIS_fnc_endLoadingScreen;
-  };
+private _uiStyle = ["uiStyle", "Legacy"] call A4A_fnc_getSetting;
+if (_uiStyle in ["ACE", 1] && {!isNull (findDisplay 1127001)}) exitWith {
+    systemChat "Close the current ACE Arsenal before opening the mission Arsenal.";
 };
 
-//save proper ammo because BIS arsenal rearms it, and I will over write it back again
-missionNamespace setVariable ["jna_magazines_init",  [
-	magazinesAmmoCargo (uniformContainer player),
-	magazinesAmmoCargo (vestContainer player),
-	magazinesAmmoCargo (backpackContainer player)
-]];
+private _requestNonce = format ["%1:%2:%3", clientOwner, floor (diag_tickTime * 1000), floor random 1000000000];
+private _meta = _target getVariable ["A4A_Arsenal_MissionMeta", ["", 25]];
+private _pending = localNamespace getVariable ["A4A_ClientPendingRequests", createHashMap];
+_pending set [_requestNonce, [_target, diag_tickTime, _meta param [0, ""]]];
+localNamespace setVariable ["A4A_ClientPendingRequests", _pending];
 
-//Save attachments in containers, because BIS arsenal removes them
-private _attachmentsContainers = [[],[],[]];
-{
-	private _container = _x;
-	private _weaponAtt = weaponsItemsCargo _x;
-	private _attachments = [];
+["jn_fnc_arsenal", "Loading quantitative Arsenal"] call BIS_fnc_startLoadingScreen;
+private _payload = [_target, _requestNonce];
+if (isServer) then {
+    _payload call A4A_fnc_requestOpen;
+} else {
+    _payload remoteExecCall ["A4A_fnc_requestOpen", 2];
+};
 
-	if!(isNil "_weaponAtt")then{
-
-		{
-			private _atts = [_x select 1,_x select 2,_x select 3,_x select 6];
-			_atts = _atts - [""];
-			_attachments = _attachments + _atts;
-		} forEach _weaponAtt;
-		_attachmentsContainers set [_foreachindex,_attachments];
-	}
-} forEach [uniformContainer player,vestContainer player,backpackContainer player];
-missionNamespace setVariable ["jna_containerCargo_init", _attachmentsContainers];
-
-//set type
-UINamespace setVariable ["jn_type","arsenal"];
-
-//request server to open arsenal (pass the object and client UI style preference)
-private _arsenalObj = missionNamespace getVariable ["jna_object", objNull];
-[clientOwner, _arsenalObj, _uiStyle] remoteExecCall ["jn_fnc_arsenal_requestOpen",2];
+[_requestNonce] spawn {
+    params ["_nonce"];
+    uiSleep 10;
+    private _pendingRequests = localNamespace getVariable ["A4A_ClientPendingRequests", createHashMap];
+    if (!isNil {_pendingRequests get _nonce}) then {
+        _pendingRequests deleteAt _nonce;
+        localNamespace setVariable ["A4A_ClientPendingRequests", _pendingRequests];
+        private _loadingIds = missionNamespace getVariable ["BIS_fnc_startLoadingScreen_ids", []];
+        if ("jn_fnc_arsenal" in _loadingIds) then { ["jn_fnc_arsenal"] call BIS_fnc_endLoadingScreen };
+        systemChat "A4A Arsenal open request timed out.";
+    };
+};

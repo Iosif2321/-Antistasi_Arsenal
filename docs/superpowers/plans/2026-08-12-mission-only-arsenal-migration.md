@@ -174,11 +174,11 @@
 - Create: `mission/A4A_Arsenal_Mission.VR/A4A/functions/adapters/fn_closeAceProxy.sqf`
 - Modify: `mission/A4A_Arsenal_Mission.VR/A4A/JNA/fn_arsenal_aceStock.sqf`
 
-- [ ] Add RED checks for ACE feature detection, `createVehicleLocal "Land_HelipadEmpty_F"`, explicit local `false` for virtual-item changes, `openBox` on the proxy, original/proxy identity separation, current-box/session generation checks, next-frame cleanup, and Legacy fallback for finite or absent ACE support.
-- [ ] Run the compatibility test and observe failure.
-- [ ] Implement the proxy lifecycle without `initBox`/`removeBox` on persistent mission objects and without installing global ACE actions.
-- [ ] Compare every called signature with installed ACE3 3.21.1 source and rerun the test.
-- [ ] Commit exact paths with message `feat: integrate optional ace arsenal proxy`.
+- [x] Add RED checks for ACE feature detection, `createVehicleLocal "Land_HelipadEmpty_F"`, explicit local `false` for virtual-item changes, `openBox` on the proxy, original/proxy identity separation, current-box/session generation checks, next-frame cleanup, and Legacy fallback for finite or absent ACE support.
+- [x] Run the compatibility test and observe failure.
+- [x] Implement the proxy lifecycle without `initBox`/`removeBox` on persistent mission objects and without installing global ACE actions.
+- [x] Compare every called signature with installed ACE3 3.21.1 source and rerun the test.
+- [x] Commit exact paths with message `feat: integrate optional ace arsenal proxy`.
 
 ## Task 11: Runnable unpacked VR scenario and operator documentation
 

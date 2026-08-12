@@ -51,6 +51,7 @@ if (hasInterface) then {
             localNamespace setVariable ["A4A_ClientPendingTransactions", createHashMap];
             localNamespace setVariable ["A4A_ClientActionIds", createHashMap];
             localNamespace setVariable ["A4A_ClientPendingCargo", createHashMap];
+            localNamespace setVariable ["A4A_ClientAceProxyState", []];
             localNamespace setVariable ["A4A_ClientCancelledBatches", createHashMap];
             localNamespace setVariable ["A4A_ClientScheduledBatches", createHashMap];
             localNamespace setVariable ["A4A_ClientTransactionBusy", ""];

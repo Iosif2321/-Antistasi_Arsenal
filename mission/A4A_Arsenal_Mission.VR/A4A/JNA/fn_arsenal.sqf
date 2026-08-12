@@ -406,6 +406,22 @@ switch _mode do {
 		if (isNull _arsenalObj) then {
 			_arsenalObj = missionNamespace getVariable ["jna_object", objNull];
 		};
+		private _closeMissionSession = {
+			private _session = localNamespace getVariable ["A4A_ClientSession", []];
+			if !(_session isEqualType createHashMap) exitWith {};
+			private _object = _session getOrDefault ["object", objNull];
+			private _nonce = _session getOrDefault ["requestNonce", ""];
+			private _generation = _session getOrDefault ["generation", -1];
+			if (!isNull _object && {_nonce isNotEqualTo ""} && {_generation >= 1}) then {
+				private _payload = [_object, _nonce, _generation];
+				if (isServer) then {
+					_payload call A4A_fnc_requestClose;
+				} else {
+					_payload remoteExecCall ["A4A_fnc_requestClose", 2];
+				};
+			};
+			localNamespace setVariable ["A4A_ClientSession", []];
+		};
 
 		// ACE supports one display/currentBox at a time. Do not bind A4A handlers
 		// or overwrite the current JNA snapshot when another ACE session owns it.
@@ -427,9 +443,7 @@ switch _mode do {
 				if (missionNamespace getVariable ["A4A_aceStock_active", false]) then {
 					[] call A4A_fnc_arsenal_aceEndSession;
 				};
-				if (!isNull _arsenalObj) then {
-					[clientOwner, _arsenalObj] remoteExecCall ["jn_fnc_arsenal_requestClose", 2];
-				};
+				[] call _closeMissionSession;
 				systemChat "Overlapping A4A ACE Arsenal opens were cancelled. Open the intended arsenal again.";
 				diag_log "A4A_Arsenal: overlapping ACE opens cancelled to avoid cross-session state";
 			};
@@ -437,9 +451,7 @@ switch _mode do {
 		if (!isNull _existingAceDisplay) exitWith {
 			private _lsIds = missionNamespace getVariable ["BIS_fnc_startLoadingScreen_ids", []];
 			if ("jn_fnc_arsenal" in _lsIds) then { ["jn_fnc_arsenal"] call BIS_fnc_endLoadingScreen };
-			if (!isNull _arsenalObj) then {
-				[clientOwner, _arsenalObj] remoteExecCall ["jn_fnc_arsenal_requestClose", 2];
-			};
+			[] call _closeMissionSession;
 			systemChat "Close the existing ACE Arsenal before opening A4A ACE Preview.";
 			diag_log "A4A_Arsenal: ACE preview rejected because another ACE display is already open";
 		};
@@ -480,9 +492,7 @@ switch _mode do {
 		if (count _items == 0) exitWith {
 			systemChat "Arsenal is empty.";
 			["RestoreTFAR"] call jn_fnc_arsenal;
-			if (!isNull _arsenalObj) then {
-				[clientOwner, _arsenalObj] remoteExecCall ["jn_fnc_arsenal_requestClose", 2];
-			};
+			[] call _closeMissionSession;
 			diag_log format ["A4A_Arsenal: ACE preview aborted for %1 (no virtual items)", name player];
 		};
 
@@ -503,7 +513,7 @@ switch _mode do {
 		};
 		[_arsenalObj, _aceProxy] call A4A_fnc_arsenal_aceBeginSession;
 		diag_log format ["A4A_Arsenal: opening ACE stock UI for %1 (%2 item classes)", name player, count _items];
-		[_aceProxy, player] call ace_arsenal_fnc_openBox;
+		[_aceProxy, player, false] call ace_arsenal_fnc_openBox;
 		// ACE can reject openBox without emitting displayClosed. Reclaim the proxy
 		// and close the bound server session if no display appears.
 		[_aceProxy] spawn {
