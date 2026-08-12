@@ -18,13 +18,32 @@ addMissionEventHandler ["HandleDisconnect", {
     private _ownerKey = str (owner _unit);
     private _sessions = localNamespace getVariable ["A4A_ServerSessions", createHashMap];
     private _transactions = localNamespace getVariable ["A4A_ServerTransactions", createHashMap];
+    private _dataById = localNamespace getVariable ["A4A_ServerData", createHashMap];
     _sessions deleteAt _ownerKey;
     {
-        private _transaction = _y;
-        if (_transaction isEqualType [] && {count _transaction > 1} && {(_transaction select 1) isEqualTo _ownerKey}) then {
-            _transactions deleteAt _x;
+        private _transactionId = _x;
+        private _transaction = _transactions get _transactionId;
+        if (_transaction isEqualType createHashMap && {(_transaction getOrDefault ["ownerKey", ""]) isEqualTo _ownerKey}) then {
+            if (
+                (_transaction getOrDefault ["kind", ""]) isEqualTo "withdraw" &&
+                {!(_transaction getOrDefault ["unlimited", false])}
+            ) then {
+                private _arsenalId = _transaction getOrDefault ["arsenalId", ""];
+                private _index = _transaction getOrDefault ["index", -1];
+                private _item = _transaction getOrDefault ["item", ""];
+                private _amount = _transaction getOrDefault ["amount", 0];
+                private _data = _dataById getOrDefault [_arsenalId, []];
+                if (_data isEqualType [] && {count _data isEqualTo 27} && {_index >= 0} && {_index <= 26}) then {
+                    _data set [_index, [_data select _index, [_item, _amount]] call jn_fnc_arsenal_addToArray];
+                    _dataById set [_arsenalId, _data];
+                };
+            };
+            _transactions deleteAt _transactionId;
         };
-    } forEach _transactions;
+    } forEach +(keys _transactions);
+    localNamespace setVariable ["A4A_ServerSessions", _sessions];
+    localNamespace setVariable ["A4A_ServerTransactions", _transactions];
+    localNamespace setVariable ["A4A_ServerData", _dataById];
     false
 }];
 
@@ -36,4 +55,3 @@ addMissionEventHandler ["HandleDisconnect", {
         };
     };
 };
-

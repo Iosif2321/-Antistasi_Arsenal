@@ -41,5 +41,9 @@ if (
     {_requestPlayer distance _object > _maxDistance}
 ) exitWith { [false, _session, _ownerKey, _canonical] };
 
-[true, _session, _ownerKey, _canonical]
+private _sessionLifetime = _settings getOrDefault ["sessionLifetime", 30];
+_session set ["expiresAt", diag_tickTime + _sessionLifetime];
+_sessions set [_ownerKey, _session];
+localNamespace setVariable ["A4A_ServerSessions", _sessions];
 
+[true, _session, _ownerKey, _canonical]

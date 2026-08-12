@@ -18,8 +18,12 @@ private _sessions = localNamespace getVariable ["A4A_ServerSessions", createHash
         private _targetOwner = parseNumber _ownerKey;
         if (_targetOwner isNotEqualTo _excludedOwner) then {
             private _generation = _session getOrDefault ["generation", -1];
-            [_generation, _revision, parseSimpleArray str _data, _message] remoteExecCall ["A4A_fnc_receiveTransactionResult", _targetOwner];
+            private _payload = ["", "sync", true, _generation, _revision, parseSimpleArray str _data, false, _message];
+            if (isServer && {hasInterface} && {_targetOwner isEqualTo clientOwner}) then {
+                _payload call A4A_fnc_receiveTransactionResult;
+            } else {
+                _payload remoteExecCall ["A4A_fnc_receiveTransactionResult", _targetOwner];
+            };
         };
     };
 } forEach keys _sessions;
-

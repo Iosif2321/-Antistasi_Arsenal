@@ -57,6 +57,8 @@ class CfgFunctions {
             class resolveRemotePlayer {};
             class validateActiveSession {};
             class publishSnapshot {};
+            class beginClientOperation {};
+            class flushClientBatch {};
         };
     };
 
@@ -95,4 +97,3 @@ class CfgFunctions {
         };
     };
 };
-

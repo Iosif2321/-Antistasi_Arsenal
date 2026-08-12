@@ -301,6 +301,77 @@ if (Test-Path -LiteralPath $missionRoot -PathType Container) {
         $requestClose -match 'deleteAt'
     )
     Assert-Check "client installs correlated Legacy close handler" ($clientInit -match 'arsenalClosed' -and $clientInit -match 'A4A_ClientSession' -and $clientInit -match 'A4A_fnc_requestClose')
+
+    $requestWithdrawPath = Join-Path $missionRoot "A4A/functions/server/fn_requestWithdraw.sqf"
+    $completeWithdrawPath = Join-Path $missionRoot "A4A/functions/server/fn_completeWithdraw.sqf"
+    $requestReturnPath = Join-Path $missionRoot "A4A/functions/server/fn_requestReturn.sqf"
+    $completeReturnPath = Join-Path $missionRoot "A4A/functions/server/fn_completeReturn.sqf"
+    $expireTransactionsPath = Join-Path $missionRoot "A4A/functions/server/fn_expireTransactions.sqf"
+    $receiveGrantPath = Join-Path $missionRoot "A4A/functions/client/fn_receiveGrant.sqf"
+    $receiveResultPath = Join-Path $missionRoot "A4A/functions/client/fn_receiveTransactionResult.sqf"
+    $transactionFiles = @($requestWithdrawPath, $completeWithdrawPath, $requestReturnPath, $completeReturnPath, $expireTransactionsPath, $receiveGrantPath, $receiveResultPath)
+    foreach ($transactionFile in $transactionFiles) {
+        Assert-Check ("transaction protocol exists: " + (Split-Path -Leaf $transactionFile)) (Test-Path -LiteralPath $transactionFile -PathType Leaf)
+    }
+    $requestWithdraw = if (Test-Path -LiteralPath $requestWithdrawPath) { Get-Content -LiteralPath $requestWithdrawPath -Raw } else { "" }
+    $completeWithdraw = if (Test-Path -LiteralPath $completeWithdrawPath) { Get-Content -LiteralPath $completeWithdrawPath -Raw } else { "" }
+    $requestReturn = if (Test-Path -LiteralPath $requestReturnPath) { Get-Content -LiteralPath $requestReturnPath -Raw } else { "" }
+    $completeReturn = if (Test-Path -LiteralPath $completeReturnPath) { Get-Content -LiteralPath $completeReturnPath -Raw } else { "" }
+    $expireTransactions = if (Test-Path -LiteralPath $expireTransactionsPath) { Get-Content -LiteralPath $expireTransactionsPath -Raw } else { "" }
+    $receiveGrant = if (Test-Path -LiteralPath $receiveGrantPath) { Get-Content -LiteralPath $receiveGrantPath -Raw } else { "" }
+    $receiveResult = if (Test-Path -LiteralPath $receiveResultPath) { Get-Content -LiteralPath $receiveResultPath -Raw } else { "" }
+    $flushBatchPath = Join-Path $missionRoot "A4A/functions/shared/fn_flushClientBatch.sqf"
+    $flushBatch = if (Test-Path -LiteralPath $flushBatchPath) { Get-Content -LiteralPath $flushBatchPath -Raw } else { "" }
+    $beginOperationPath = Join-Path $missionRoot "A4A/functions/shared/fn_beginClientOperation.sqf"
+    $beginOperation = if (Test-Path -LiteralPath $beginOperationPath) { Get-Content -LiteralPath $beginOperationPath -Raw } else { "" }
+    $addItemPath = Join-Path $missionRoot "A4A/JNA/fn_arsenal_addItem.sqf"
+    $removeItemPath = Join-Path $missionRoot "A4A/JNA/fn_arsenal_removeItem.sqf"
+    $addItem = Get-Content -LiteralPath $addItemPath -Raw
+    $removeItem = Get-Content -LiteralPath $removeItemPath -Raw
+
+    Assert-Check "withdraw validates active session revision class and bounded amount" (
+        $requestWithdraw -match 'A4A_fnc_validateActiveSession' -and
+        $requestWithdraw -match 'A4A_ServerRevisions' -and
+        $requestWithdraw -match 'A4A_fnc_itemTypeCached' -and
+        $requestWithdraw -match 'finite\s+_amount' -and
+        $requestWithdraw -match 'A4A_ServerTransactions'
+    )
+    $reserveIndex = $requestWithdraw.IndexOf('jn_fnc_arsenal_removeFromArray')
+    $storeTransactionIndex = $requestWithdraw.IndexOf('localNamespace setVariable ["A4A_ServerTransactions"', [Math]::Max(0, $reserveIndex))
+    $grantIndex = $requestWithdraw.IndexOf('A4A_fnc_receiveGrant', [Math]::Max(0, $storeTransactionIndex))
+    Assert-Check "withdraw reserves finite stock before grant" (
+        $reserveIndex -ge 0 -and
+        $storeTransactionIndex -gt $reserveIndex -and
+        $grantIndex -gt $storeTransactionIndex
+    )
+    Assert-Check "withdraw completion is idempotent and commits revision once" (
+        $completeWithdraw -match 'state' -and
+        $completeWithdraw -match 'A4A_ServerRevisions' -and
+        $completeWithdraw -match 'deleteAt' -and
+        $completeWithdraw -match 'A4A_fnc_receiveTransactionResult'
+    )
+    Assert-Check "return validates before pending commit" ($requestReturn -match 'A4A_fnc_validateActiveSession' -and $requestReturn -match 'A4A_fnc_itemTypeCached' -and $requestReturn -match 'A4A_ServerTransactions' -and $requestReturn -match 'A4A_fnc_receiveGrant')
+    Assert-Check "return completion commits canonical state and revision" ($completeReturn -match 'jn_fnc_arsenal_addToArray' -and $completeReturn -match 'A4A_ServerData' -and $completeReturn -match 'A4A_ServerRevisions')
+    Assert-Check "expired withdrawals refund reservation and notify origin" ($expireTransactions -match 'withdraw' -and $expireTransactions -match 'jn_fnc_arsenal_addToArray' -and $expireTransactions -match 'A4A_fnc_receiveTransactionResult')
+    Assert-Check "client grant completes only a known pending transaction" ($receiveGrant -match 'A4A_ClientPendingTransactions' -and $receiveGrant -match '_transactionId' -and $receiveGrant -match 'A4A_fnc_completeWithdraw' -and $receiveGrant -match 'A4A_fnc_completeReturn')
+    Assert-Check "client result resyncs authoritative snapshot and supports rollback" ($receiveResult -match 'count\s+_snapshot\s+isEqualTo\s+27' -and $receiveResult -match 'jna_dataList' -and $receiveResult -match '_rollback' -and $receiveResult -match 'setUnitLoadout')
+    Assert-Check "legacy wrappers submit correlated transactions" (
+        $addItem -match 'A4A_ClientPendingTransactions' -and $addItem -match 'A4A_fnc_flushClientBatch' -and
+        $removeItem -match 'A4A_ClientPendingTransactions' -and $removeItem -match 'A4A_fnc_flushClientBatch' -and
+        $flushBatch -match 'A4A_fnc_requestReturn' -and $flushBatch -match 'A4A_fnc_requestWithdraw'
+    )
+    Assert-Check "legacy wrappers cannot call canonical dispatcher" ($addItem -notmatch 'UpdateItemAdd|remoteExecCall\s*\[\s*"jn_fnc_arsenal"' -and $removeItem -notmatch 'UpdateItemRemove|remoteExecCall\s*\[\s*"jn_fnc_arsenal"')
+    Assert-Check "Legacy UI records provisional loadout baseline" ($legacyMain -match 'A4A_fnc_beginClientOperation' -and $beginOperation -match 'A4A_ClientOperationBaseline' -and $beginOperation -match 'getUnitLoadout\s+player')
+    Assert-Check "physical loadout is deferred until every batch reservation is granted" (
+        $flushBatch.IndexOf('_provisionalLoadout = getUnitLoadout player') -ge 0 -and
+        $flushBatch.IndexOf('player setUnitLoadout _baseline') -gt $flushBatch.IndexOf('_provisionalLoadout = getUnitLoadout player') -and
+        $flushBatch.IndexOf('A4A_fnc_requestWithdraw') -gt $flushBatch.IndexOf('player setUnitLoadout _baseline') -and
+        $receiveGrant -match 'findIf[\s\S]*?state[\s\S]*?granted' -and
+        $receiveGrant.IndexOf('player setUnitLoadout _provisionalLoadout') -ge 0 -and
+        $receiveGrant.IndexOf('true] call _sendCompletion') -gt $receiveGrant.IndexOf('player setUnitLoadout _provisionalLoadout') -and
+        $receiveGrant -match 'A4A_fnc_completeWithdraw' -and $receiveGrant -match 'A4A_fnc_completeReturn'
+    )
+    Assert-Check "legacy dispatcher is not a remote endpoint" ($remoteExec -notmatch 'class\s+jn_fnc_arsenal\b')
 }
 
 if ($failures.Count -gt 0) {

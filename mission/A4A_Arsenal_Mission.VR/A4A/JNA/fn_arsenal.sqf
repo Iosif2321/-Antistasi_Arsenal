@@ -2453,6 +2453,9 @@ switch _mode do {
 
 	///////////////////////////////////////////////////////////////////////////////////////////
 	case "SelectItem": {
+		if !([] call A4A_fnc_beginClientOperation) exitWith {
+			["showMessage", [_this select 0, "Wait for the current Arsenal transaction."]] call jn_fnc_arsenal;
+		};
 		params ["_display","_ctrlList","_index"];
 
 		private _cursel = lbcursel _ctrlList;
@@ -3087,6 +3090,9 @@ switch _mode do {
 
 	///////////////////////////////////////////////////////////////////////////////////////////  event
 	case "buttonCargo": {
+		if !([] call A4A_fnc_beginClientOperation) exitWith {
+			["showMessage", [_this select 0, "Wait for the current Arsenal transaction."]] call jn_fnc_arsenal;
+		};
 		_display = _this select 0;
 		_add = _this select 1;
 		_selected = -1;
@@ -3921,6 +3927,9 @@ switch _mode do {
 	};
 
 	case "buttonTemplateOK": {
+		if !([] call A4A_fnc_beginClientOperation) exitWith {
+			["showMessage", [_this select 0, "Wait for the current Arsenal transaction."]] call jn_fnc_arsenal;
+		};
 		_display = _this select 0;
 		_center = (missionnamespace getvariable ["BIS_fnc_arsenal_center",player]);
 		_hideTemplate = true;

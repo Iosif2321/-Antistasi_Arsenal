@@ -111,12 +111,12 @@
 - Modify: `mission/A4A_Arsenal_Mission.VR/A4A/JNA/fn_arsenal_addItem.sqf`
 - Modify: `mission/A4A_Arsenal_Mission.VR/A4A/JNA/fn_arsenal_removeItem.sqf`
 
-- [ ] Add RED invariants proving clients cannot call canonical Add/Remove, every request carries the active generation and expected revision, withdrawals reserve before physical grant, completion commits once, failure/timeout refunds, duplicate messages are idempotent, and origin receives authoritative result/rollback.
-- [ ] Run the test and observe failure against the optimistic legacy wrappers.
-- [ ] Route every finite-stock take/return through transaction IDs and a server-side state machine; keep unlimited `-1` semantics explicit and bounded.
-- [ ] Replace client-first canonical updates with provisional UI state plus ACK/resync; invalidate full-save eligibility whenever the client lacks an acknowledged baseline.
-- [ ] Rerun the transaction checks and legacy regression suite.
-- [ ] Commit exact paths with message `feat: make arsenal inventory transactional`.
+- [x] Add RED invariants proving clients cannot call canonical Add/Remove, every request carries the active generation and expected revision, withdrawals reserve before physical grant, completion commits once, failure/timeout refunds, duplicate messages are idempotent, and origin receives authoritative result/rollback.
+- [x] Run the test and observe failure against the optimistic legacy wrappers.
+- [x] Route every finite-stock take/return through transaction IDs and a server-side state machine; keep unlimited `-1` semantics explicit and bounded.
+- [x] Replace client-first canonical updates with provisional UI state plus ACK/resync; invalidate full-save eligibility whenever the client lacks an acknowledged baseline.
+- [x] Rerun the transaction checks and legacy regression suite.
+- [x] Commit exact paths with message `feat: make arsenal inventory transactional`.
 
 ## Task 7: Canonical validation, revisions, and persistence
 
