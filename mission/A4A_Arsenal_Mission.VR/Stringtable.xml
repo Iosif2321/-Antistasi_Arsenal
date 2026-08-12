@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project name="A4A_Arsenal_Mission">
+    <Package name="Mission">
+        <Key ID="STR_A4A_MISSION_NAME">
+            <English>A4A Quantitative Arsenal - Mission Edition</English>
+            <Russian>A4A Количественный арсенал — сценарий</Russian>
+        </Key>
+    </Package>
+</Project>
+

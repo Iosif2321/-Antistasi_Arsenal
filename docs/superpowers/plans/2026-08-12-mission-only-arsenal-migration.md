@@ -21,11 +21,11 @@
 - Create: `mission/A4A_Arsenal_Mission.VR/A4A/config/arsenals.sqf`
 - Create: `mission/A4A_Arsenal_Mission.VR/A4A/config/settings.sqf`
 
-- [ ] Add a failing static test that requires the unpacked mission root and rejects `CfgPatches`, addon paths, `$PBOPREFIX$`, Garage files/functions, `fn_vehicleArsenal.sqf`, and PBO artifacts anywhere inside the mission artifact.
-- [ ] Run `powershell -NoProfile -ExecutionPolicy Bypass -File tests/verify_mission_only_layout.ps1` and confirm the missing artifact fails.
-- [ ] Add the minimal scenario-owned skeleton and empty, parseable configuration files.
-- [ ] Rerun the layout test and confirm its structural subset passes.
-- [ ] Commit exact task paths with message `test: define mission-only arsenal artifact`.
+- [x] Add a failing static test that requires the unpacked mission root and rejects `CfgPatches`, addon paths, `$PBOPREFIX$`, Garage files/functions, `fn_vehicleArsenal.sqf`, and PBO artifacts anywhere inside the mission artifact.
+- [x] Run `powershell -NoProfile -ExecutionPolicy Bypass -File tests/verify_mission_only_layout.ps1` and confirm the missing artifact fails.
+- [x] Add the minimal scenario-owned skeleton and empty, parseable configuration files.
+- [x] Rerun the layout test and confirm its structural subset passes.
+- [x] Commit exact task paths with message `test: define mission-only arsenal artifact`.
 
 ## Task 2: Mission configuration and strict RPC surface
 
@@ -209,4 +209,3 @@
 - [ ] Record exact PASS/FAIL/NOT_RUN evidence and hashes in `VERIFICATION.md`; leave PBO build and live Arma/ACE/CBA multiplayer tests explicitly `NOT_RUN` because the product is unpacked and the engine runtime is a separate proof gate.
 - [ ] Review `git diff --stat`, exact staged paths, and `git diff --cached`; keep `timecraft*` and all unrelated user files unstaged.
 - [ ] Commit exact migration/test/document paths with message `chore: verify mission-only arsenal migration`.
-
