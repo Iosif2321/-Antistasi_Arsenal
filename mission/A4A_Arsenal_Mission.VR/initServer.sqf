@@ -1,2 +1,1 @@
-/* Server bootstrap is registered through mission CfgFunctions in description.ext. */
-
+[] call A4A_fnc_serverInit;

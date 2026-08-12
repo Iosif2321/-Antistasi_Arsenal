@@ -74,6 +74,50 @@ if (Test-Path -LiteralPath $missionRoot -PathType Container) {
     )
     Assert-Check "no arbitrary-code remote function is whitelisted" ($remoteExec -notmatch '(?i)BIS_fnc_(?:spawn|call|execVM)|CBA_fnc_globalExecute|A4A_fnc_.*(?:exec|eval|code)')
     Assert-Check "all A4A RPC classes disable JIP" (-not ($remoteExec -match 'class\s+A4A_fnc_[^{]+\{[^}]*jip\s*=\s*1'))
+
+    $preInitPath = Join-Path $missionRoot "A4A/functions/bootstrap/fn_preInit.sqf"
+    $serverInitPath = Join-Path $missionRoot "A4A/functions/bootstrap/fn_serverInit.sqf"
+    $clientInitPath = Join-Path $missionRoot "A4A/functions/bootstrap/fn_clientInit.sqf"
+    $registerPath = Join-Path $missionRoot "A4A/functions/bootstrap/fn_registerConfiguredArsenals.sqf"
+    $preInit = if (Test-Path -LiteralPath $preInitPath) { Get-Content -LiteralPath $preInitPath -Raw } else { "" }
+    $serverInit = if (Test-Path -LiteralPath $serverInitPath) { Get-Content -LiteralPath $serverInitPath -Raw } else { "" }
+    $clientInit = if (Test-Path -LiteralPath $clientInitPath) { Get-Content -LiteralPath $clientInitPath -Raw } else { "" }
+    $register = if (Test-Path -LiteralPath $registerPath) { Get-Content -LiteralPath $registerPath -Raw } else { "" }
+
+    foreach ($bootstrapPath in @($preInitPath, $serverInitPath, $clientInitPath, $registerPath)) {
+        Assert-Check ("bootstrap exists: " + (Split-Path -Leaf $bootstrapPath)) (Test-Path -LiteralPath $bootstrapPath -PathType Leaf)
+    }
+
+    $serverPrivateNames = @(
+        "A4A_ServerRegistry",
+        "A4A_ServerData",
+        "A4A_ServerRevisions",
+        "A4A_ServerReady",
+        "A4A_ServerSessions",
+        "A4A_ServerTransactions",
+        "A4A_ServerCargoLocks",
+        "A4A_ServerSettings"
+    )
+    foreach ($privateName in $serverPrivateNames) {
+        Assert-Check "preInit creates private $privateName" ($preInit -match [regex]::Escape("localNamespace setVariable [`"$privateName`""))
+    }
+
+    Assert-Check "preInit server state is atomically claimed" ($preInit -match 'isServer[\s\S]*?isNil\s*\{[\s\S]*?A4A_ServerStateInitialized')
+    Assert-Check "server init has an atomic one-time claim" ($serverInit -match 'isNil\s*\{[\s\S]*?A4A_ServerInitDone[\s\S]*?_runServerInit\s*=\s*true')
+    Assert-Check "client init has an atomic one-time claim" ($clientInit -match 'isNil\s*\{[\s\S]*?A4A_ClientInitDone[\s\S]*?_runClientInit\s*=\s*true')
+    Assert-Check "server loads mission-owned arsenal rows" ($register -match 'preprocessFileLineNumbers\s+"A4A\\config\\arsenals\.sqf"')
+    Assert-Check "server resolves configured editor variables" ($register -match 'missionNamespace\s+getVariable\s*\[\s*_variableName\s*,\s*objNull\s*\]')
+    Assert-Check "server registry stores canonical object id threshold" ($register -match 'A4A_ServerRegistry' -and $register -match '\[\s*_object\s*,\s*_arsenalId\s*,\s*_threshold\s*\]')
+    $readyFalseIndex = $register.IndexOf('_ready set [_arsenalId, false]')
+    $dataSetIndex = $register.IndexOf('_dataById set [_arsenalId, _data]')
+    $readyTrueIndex = $register.IndexOf('_ready set [_arsenalId, true]')
+    Assert-Check "registration initializes data before ready" (
+        $readyFalseIndex -ge 0 -and
+        $dataSetIndex -gt $readyFalseIndex -and
+        $readyTrueIndex -gt $dataSetIndex
+    )
+    Assert-Check "registration rejects direct remote execution" ($register -match 'isRemoteExecuted[\s\S]*?exitWith')
+    Assert-Check "client bootstrap installs mission actions" ($clientInit -match 'A4A_fnc_openAction' -and $clientInit -match 'A4A_fnc_addCargoActions')
 }
 
 if ($failures.Count -gt 0) {

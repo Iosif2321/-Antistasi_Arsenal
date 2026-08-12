@@ -56,12 +56,12 @@
 - Create: `mission/A4A_Arsenal_Mission.VR/A4A/functions/bootstrap/fn_clientInit.sqf`
 - Create: `mission/A4A_Arsenal_Mission.VR/A4A/functions/bootstrap/fn_registerConfiguredArsenals.sqf`
 
-- [ ] Add failing invariants for server-private registry/data/revision/session/transaction/cargo-lock maps, canonical object/ID/threshold resolution, ready gating, atomic one-time claims, and idempotent JIP client actions.
-- [ ] Run the test and confirm these invariants fail.
-- [ ] Implement constant-time pre-initialization and deferred registration from `[variableName, arsenalId, threshold]` rows in `arsenals.sqf`.
-- [ ] Ensure absent/malformed mission configuration fails closed with bounded diagnostics and never imports authority from replicated mission variables.
-- [ ] Rerun the targeted test.
-- [ ] Commit exact task paths with message `feat: bootstrap mission arsenal state`.
+- [x] Add failing invariants for server-private registry/data/revision/session/transaction/cargo-lock maps, canonical object/ID/threshold resolution, ready gating, atomic one-time claims, and idempotent JIP client actions.
+- [x] Run the test and confirm these invariants fail.
+- [x] Implement constant-time pre-initialization and deferred registration from `[variableName, arsenalId, threshold]` rows in `arsenals.sqf`.
+- [x] Ensure absent/malformed mission configuration fails closed with bounded diagnostics and never imports authority from replicated mission variables.
+- [x] Rerun the targeted test.
+- [x] Commit exact task paths with message `feat: bootstrap mission arsenal state`.
 
 ## Task 4: Port quantitative Legacy Arsenal without addon/Garage dependencies
 
