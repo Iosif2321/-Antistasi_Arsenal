@@ -37,11 +37,11 @@
 - Create: `mission/A4A_Arsenal_Mission.VR/A4A/ui/defines.hpp`
 - Create: `mission/A4A_Arsenal_Mission.VR/A4A/ui/dialogs.hpp`
 
-- [ ] Extend the test to require mission-local `CfgFunctions`, `CfgRemoteExec` Functions/Commands `mode = 1`, `allowedTargets`, `jip = 0`, no arbitrary-code RPC gadgets, and all include paths relative to the mission.
-- [ ] Run the test and observe the missing declarations fail.
-- [ ] Implement the narrow client/server function registration and UI includes.
-- [ ] Parse `description.ext` with the available CfgConvert tool and rerun the static test.
-- [ ] Commit exact task paths with message `feat: define mission rpc and function surface`.
+- [x] Extend the test to require mission-local `CfgFunctions`, `CfgRemoteExec` Functions/Commands `mode = 1`, `allowedTargets`, `jip = 0`, no arbitrary-code RPC gadgets, and all include paths relative to the mission.
+- [x] Run the test and observe the missing declarations fail.
+- [x] Implement the narrow client/server function registration and UI includes.
+- [x] Parse `description.ext` with the available CfgConvert tool and rerun the static test.
+- [x] Commit exact task paths with message `feat: define mission rpc and function surface`.
 
 ## Task 3: Deterministic bootstrap and scenario configuration
 

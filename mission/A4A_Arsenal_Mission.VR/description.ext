@@ -13,3 +13,8 @@ respawn = 3;
 respawnDelay = 5;
 disabledAI = 1;
 
+#include "A4A\ui\defines.hpp"
+#include "A4A\ui\dialogs.hpp"
+#include "A4A\CfgFunctions.hpp"
+#include "A4A\CfgRemoteExec.hpp"
+
