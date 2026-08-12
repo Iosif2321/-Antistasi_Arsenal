@@ -11,6 +11,7 @@ if (isServer) then {
             localNamespace setVariable ["A4A_ServerRevisions", createHashMap];
             localNamespace setVariable ["A4A_ServerReady", createHashMap];
             localNamespace setVariable ["A4A_ServerSessions", createHashMap];
+            localNamespace setVariable ["A4A_ServerSessionGenerations", createHashMap];
             localNamespace setVariable ["A4A_ServerTransactions", createHashMap];
             localNamespace setVariable ["A4A_ServerCargoLocks", createHashMap];
             localNamespace setVariable ["A4A_ServerSaveGeneration", createHashMap];
@@ -43,9 +44,9 @@ if (hasInterface) then {
             localNamespace setVariable ["A4A_ClientSession", []];
             localNamespace setVariable ["A4A_ClientPendingRequests", createHashMap];
             localNamespace setVariable ["A4A_ClientPendingTransactions", createHashMap];
+            localNamespace setVariable ["A4A_ClientActionIds", createHashMap];
             localNamespace setVariable ["A4A_ClientItemTypeCache", createHashMap];
             localNamespace setVariable ["A4A_ClientStateInitialized", true];
         };
     };
 };
-

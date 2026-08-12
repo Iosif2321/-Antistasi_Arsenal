@@ -89,12 +89,12 @@
 - Create: `mission/A4A_Arsenal_Mission.VR/A4A/functions/client/fn_receiveInvalidate.sqf`
 - Create: `mission/A4A_Arsenal_Mission.VR/A4A/functions/client/fn_openAction.sqf`
 
-- [ ] Add RED checks requiring sender-to-player binding, registered/ready object, distance, UID, request nonce, server generation, canonical revision, object identity, expiry, and stale-response rejection on open/close.
-- [ ] Run the test and observe failure.
-- [ ] Implement one active generation per owner, response payload `[object, nonce, generation, revision, snapshot, presentationMode]`, matching close, disconnect/expiry cleanup, and loading/UI invalidation.
-- [ ] Ensure Legacy never binds an open response through a mutable global target.
-- [ ] Rerun the targeted test.
-- [ ] Commit exact paths with message `feat: correlate arsenal sessions`.
+- [x] Add RED checks requiring sender-to-player binding, registered/ready object, distance, UID, request nonce, server generation, canonical revision, object identity, expiry, and stale-response rejection on open/close.
+- [x] Run the test and observe failure.
+- [x] Implement one active generation per owner, response payload `[object, nonce, generation, revision, snapshot, presentationMode]`, matching close, disconnect/expiry cleanup, and loading/UI invalidation.
+- [x] Ensure Legacy never binds an open response through a mutable global target.
+- [x] Rerun the targeted test.
+- [x] Commit exact paths with message `feat: correlate arsenal sessions`.
 
 ## Task 6: Server-authoritative inventory transactions
 

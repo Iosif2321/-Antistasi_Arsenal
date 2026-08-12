@@ -239,6 +239,68 @@ if (Test-Path -LiteralPath $missionRoot -PathType Container) {
             ForEach-Object { $_.FullName.Substring($missionRoot.Length + 1) }
     )
     Assert-Check ("mission SQF lexical balance" + $(if ($invalidSqf.Count -gt 0) { ": " + ($invalidSqf -join ", ") } else { "" })) ($invalidSqf.Count -eq 0)
+
+    $requestOpenPath = Join-Path $missionRoot "A4A/functions/server/fn_requestOpen.sqf"
+    $requestClosePath = Join-Path $missionRoot "A4A/functions/server/fn_requestClose.sqf"
+    $receiveOpenPath = Join-Path $missionRoot "A4A/functions/client/fn_receiveOpen.sqf"
+    $receiveInvalidatePath = Join-Path $missionRoot "A4A/functions/client/fn_receiveInvalidate.sqf"
+    $openActionPath = Join-Path $missionRoot "A4A/functions/client/fn_openAction.sqf"
+    $resolvePlayerPath = Join-Path $missionRoot "A4A/functions/shared/fn_resolveRemotePlayer.sqf"
+    $validateSessionPath = Join-Path $missionRoot "A4A/functions/shared/fn_validateActiveSession.sqf"
+    $publishSnapshotPath = Join-Path $missionRoot "A4A/functions/shared/fn_publishSnapshot.sqf"
+    $sessionFiles = @($requestOpenPath, $requestClosePath, $receiveOpenPath, $receiveInvalidatePath, $openActionPath, $resolvePlayerPath, $validateSessionPath, $publishSnapshotPath)
+    foreach ($sessionFile in $sessionFiles) {
+        Assert-Check ("session protocol exists: " + (Split-Path -Leaf $sessionFile)) (Test-Path -LiteralPath $sessionFile -PathType Leaf)
+    }
+    $requestOpen = if (Test-Path -LiteralPath $requestOpenPath) { Get-Content -LiteralPath $requestOpenPath -Raw } else { "" }
+    $requestClose = if (Test-Path -LiteralPath $requestClosePath) { Get-Content -LiteralPath $requestClosePath -Raw } else { "" }
+    $receiveOpen = if (Test-Path -LiteralPath $receiveOpenPath) { Get-Content -LiteralPath $receiveOpenPath -Raw } else { "" }
+    $openAction = if (Test-Path -LiteralPath $openActionPath) { Get-Content -LiteralPath $openActionPath -Raw } else { "" }
+    $resolvePlayer = if (Test-Path -LiteralPath $resolvePlayerPath) { Get-Content -LiteralPath $resolvePlayerPath -Raw } else { "" }
+
+    Assert-Check "remote player binding filters virtual and empty-UID entities" ($resolvePlayer -match 'remoteExecutedOwner|_senderOwner' -and $resolvePlayer -match 'VirtualMan_F' -and $resolvePlayer -match 'getPlayerUID')
+    Assert-Check "open request validates sender registry readiness and distance" (
+        $requestOpen -match 'A4A_fnc_resolveRemotePlayer' -and
+        $requestOpen -match 'A4A_ServerRegistry' -and
+        $requestOpen -match 'A4A_ServerReady' -and
+        $requestOpen -match 'distance' -and
+        $requestOpen -match 'getPlayerUID'
+    )
+    Assert-Check "open request stores nonce generation revision session" (
+        $requestOpen -match '_requestNonce' -and
+        $requestOpen -match 'A4A_ServerSessionGenerations' -and
+        $requestOpen -match 'A4A_ServerRevisions' -and
+        $requestOpen -match 'A4A_ServerSessions'
+    )
+    Assert-Check "open response carries correlated object nonce generation revision snapshot" (
+        $requestOpen -match 'A4A_fnc_receiveOpen' -and
+        $requestOpen -match '\[\s*_object\s*,\s*_requestNonce\s*,\s*_generation\s*,\s*_revision\s*,\s*\+(?:_data|_snapshot)'
+    )
+    Assert-Check "open action records pending request before server RPC" (
+        $openAction -match 'A4A_ClientPendingRequests' -and
+        $openAction.IndexOf('_pending set') -ge 0 -and
+        $openAction.IndexOf('A4A_fnc_requestOpen') -gt $openAction.IndexOf('_pending set')
+    )
+    Assert-Check "open receiver accepts only server and matches pending object nonce" (
+        $receiveOpen -match 'remoteExecutedOwner\s+(?:isEqualTo|isNotEqualTo)\s+2' -and
+        $receiveOpen -match 'A4A_ClientPendingRequests' -and
+        $receiveOpen -match '_requestNonce' -and
+        $receiveOpen -match 'isEqualTo\s+_object'
+    )
+    Assert-Check "open receiver binds canonical generation revision snapshot" (
+        $receiveOpen -match 'A4A_ClientSession' -and
+        $receiveOpen -match '_generation' -and
+        $receiveOpen -match '_revision' -and
+        $receiveOpen -match 'jna_dataList' -and
+        $receiveOpen -match 'count\s+_snapshot\s+isEqualTo\s+27'
+    )
+    Assert-Check "close request matches object nonce generation before delete" (
+        $requestClose -match 'A4A_fnc_validateActiveSession' -and
+        $requestClose -match '_requestNonce' -and
+        $requestClose -match '_generation' -and
+        $requestClose -match 'deleteAt'
+    )
+    Assert-Check "client installs correlated Legacy close handler" ($clientInit -match 'arsenalClosed' -and $clientInit -match 'A4A_ClientSession' -and $clientInit -match 'A4A_fnc_requestClose')
 }
 
 if ($failures.Count -gt 0) {
