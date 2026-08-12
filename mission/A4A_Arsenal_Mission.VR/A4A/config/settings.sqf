@@ -6,8 +6,8 @@ createHashMapFromArray [
     ["sessionLifetime", 30],
     ["transactionLifetime", 10],
     ["maxEntries", 10000],
+    ["maxPayloadCharacters", 2000000],
     ["maxAmount", 100000000],
     ["editorSteamIDs", []],
     ["editAccessMode", 0]
 ]
-

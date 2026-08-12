@@ -59,6 +59,7 @@ class CfgFunctions {
             class publishSnapshot {};
             class beginClientOperation {};
             class flushClientBatch {};
+            class canEdit {};
         };
     };
 

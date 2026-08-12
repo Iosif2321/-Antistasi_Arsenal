@@ -683,7 +683,7 @@ switch _mode do {
 
 		_ctrlButtonExport = _display displayctrl IDC_RSCDISPLAYARSENAL_CONTROLSBAR_BUTTONEXPORT;
 		_ctrlButtonExport ctrlRemoveAllEventHandlers "buttonclick";
-		if (!isNil "A4A_fnc_arsenal_canEdit" && {[player] call A4A_fnc_arsenal_canEdit}) then {
+		if (!isNil "A4A_fnc_canEdit" && {[player] call A4A_fnc_canEdit}) then {
 			_ctrlButtonExport ctrlSetText (localize "STR_JNA_ACT_EDIT_ARSENAL");
 			_ctrlButtonExport ctrlSetTooltip (localize "STR_JNA_ACT_EDIT_ARSENAL_TIP");
 			_ctrlButtonExport ctrlEnable true;
@@ -3662,7 +3662,7 @@ switch _mode do {
 			};
 			//--- Ctrl+V: Import arsenal data from clipboard (authorized editor only)
 			case (_key == DIK_V): {
-				if (_ctrl && {!isNil "A4A_fnc_arsenal_canEdit"} && {[player] call A4A_fnc_arsenal_canEdit}) then {
+				if (_ctrl && {!isNil "A4A_fnc_canEdit"} && {[player] call A4A_fnc_canEdit}) then {
 					["ImportData"] call jn_fnc_arsenal;
 					_return = true;
 				};
@@ -4065,10 +4065,11 @@ switch _mode do {
 	//        ["ExportData", [true]] call jn_fnc_arsenal;       RPT only (silent)
 	case "ExportData": {
 		private _rptOnly = _this param [0, false];
-		if (!_rptOnly && {isNil "A4A_fnc_arsenal_canEdit" || {!([player] call A4A_fnc_arsenal_canEdit)}}) exitWith {
+		if (!_rptOnly && {isNil "A4A_fnc_canEdit" || {!([player] call A4A_fnc_canEdit)}}) exitWith {
 			systemChat "Arsenal edit access denied.";
 		};
-		private _arsenalID = (missionNamespace getVariable ["jna_object", objNull]) getVariable ["A4A_Arsenal_ID", "Base"];
+		private _exportObject = missionNamespace getVariable ["jna_object", objNull];
+		private _arsenalID = (_exportObject getVariable ["A4A_Arsenal_MissionMeta", ["Base", 25]]) param [0, "Base"];
 
 		// Category names indexed by BIS IDC tab order (0=PrimaryWeapon, 1=Launcher, ..., 26=Misc)
 		private _catNames = [
@@ -4174,11 +4175,10 @@ switch _mode do {
 	// Import arsenal data from clipboard (SQF array format)
 	// Usage: ["ImportData"] call jn_fnc_arsenal;
 	case "ImportData": {
-		if (isNil "A4A_fnc_arsenal_canEdit" || {!([player] call A4A_fnc_arsenal_canEdit)}) exitWith {
+		if (isNil "A4A_fnc_canEdit" || {!([player] call A4A_fnc_canEdit)}) exitWith {
 			systemChat "Arsenal edit access denied.";
 		};
 		private _importArsenalObj = _this param [0, missionNamespace getVariable ["jna_object", objNull], [objNull]];
-		private _oneShotImport = _this param [1, false, [true]];
 		private _clipText = copyFromClipboard;
 		if (_clipText isEqualTo "") exitWith {
 			systemChat "Import failed: clipboard is empty.";
@@ -4250,13 +4250,22 @@ switch _mode do {
 		// Apply
 		jna_dataList = _parsed;
 
-		// Persist through the same sender-bound deep validator as EditorSave.
+		// Persist through the same correlated revision check as EditorSave.
+		private _session = localNamespace getVariable ["A4A_ClientSession", []];
+		if !(_session isEqualType createHashMap) exitWith {
+			systemChat "Import rejected: no active Arsenal session.";
+		};
+		private _savePayload = [
+			_importArsenalObj,
+			_session getOrDefault ["requestNonce", ""],
+			_session getOrDefault ["generation", -1],
+			_session getOrDefault ["revision", -1],
+			+jna_dataList
+		];
 		if (isServer) then {
-			// addAction code is scheduled. Force the local hosted/SP endpoint call
-			// into an unscheduled critical section, matching remoteExecCall.
-			isNil {[_importArsenalObj, +jna_dataList, player, _oneShotImport] call A4A_fnc_arsenal_saveRequest};
+			_savePayload call A4A_fnc_saveEditorSnapshot;
 		} else {
-			[_importArsenalObj, +jna_dataList, objNull, _oneShotImport] remoteExecCall ["A4A_fnc_arsenal_saveRequest", 2];
+			_savePayload remoteExecCall ["A4A_fnc_saveEditorSnapshot", 2];
 		};
 
 		private _totalItems = 0;
@@ -4276,7 +4285,7 @@ switch _mode do {
 		disableSerialization;
 
 		// Authorized editors only; prevents bypass via direct call.
-		if (isNil "A4A_fnc_arsenal_canEdit" || {!([player] call A4A_fnc_arsenal_canEdit)}) exitWith {};
+		if (isNil "A4A_fnc_canEdit" || {!([player] call A4A_fnc_canEdit)}) exitWith {};
 
 		// Prevent double-open
 		if (!isNil {uiNamespace getVariable "jna_editor_open"}) exitWith {};
@@ -4608,7 +4617,7 @@ switch _mode do {
 	case "EditorModify": {
 		_this params ["_display", "_action"];
 		disableSerialization;
-		if (isNil "A4A_fnc_arsenal_canEdit" || {!([player] call A4A_fnc_arsenal_canEdit)}) exitWith {};
+		if (isNil "A4A_fnc_canEdit" || {!([player] call A4A_fnc_canEdit)}) exitWith {};
 
 		private _list = _display displayCtrl 90002;
 		private _sel = lbCurSel _list;
@@ -4702,24 +4711,33 @@ switch _mode do {
 
 	///////////////////////////////////////////////////////////////////////////////////////////
 	case "EditorSave": {
-		if (isNil "A4A_fnc_arsenal_canEdit" || {!([player] call A4A_fnc_arsenal_canEdit)}) exitWith {
+		if (isNil "A4A_fnc_canEdit" || {!([player] call A4A_fnc_canEdit)}) exitWith {
 			systemChat "Arsenal edit access denied.";
 		};
 		private _display = _this select 0;
 		private _arsenalObj = missionNamespace getVariable ["jna_object", objNull];
-		private _arsenalID = _arsenalObj getVariable ["A4A_Arsenal_ID", "Base"];
+		private _arsenalID = (_arsenalObj getVariable ["A4A_Arsenal_MissionMeta", ["Base", 25]]) param [0, "Base"];
+		private _session = localNamespace getVariable ["A4A_ClientSession", []];
+		if !(_session isEqualType createHashMap) exitWith {
+			systemChat "Editor save rejected: no active Arsenal session.";
+		};
 
 		// Count items for log
 		private _totalItems = 0;
 		{ _totalItems = _totalItems + count _x } forEach jna_dataList;
 		diag_log format ["A4A_EditorSave: Arsenal '%1'  %2 items, isServer=%3", _arsenalID, _totalItems, isServer];
 
+		private _savePayload = [
+			_arsenalObj,
+			_session getOrDefault ["requestNonce", ""],
+			_session getOrDefault ["generation", -1],
+			_session getOrDefault ["revision", -1],
+			+jna_dataList
+		];
 		if (isServer) then {
-			// Listen-server and singleplayer use the same deep validator as dedicated MP.
-			[_arsenalObj, +jna_dataList, player] call A4A_fnc_arsenal_saveRequest;
+			_savePayload call A4A_fnc_saveEditorSnapshot;
 		} else {
-			// Dedicated server derives sender identity and arsenal ID from this RPC.
-			[_arsenalObj, +jna_dataList] remoteExecCall ["A4A_fnc_arsenal_saveRequest", 2];
+			_savePayload remoteExecCall ["A4A_fnc_saveEditorSnapshot", 2];
 			systemChat format ["Arsenal '%1' sent to server for saving.", _arsenalID];
 			diag_log format ["A4A_EditorSave: Sent sender-bound save request for '%1' to server.", _arsenalID];
 		};

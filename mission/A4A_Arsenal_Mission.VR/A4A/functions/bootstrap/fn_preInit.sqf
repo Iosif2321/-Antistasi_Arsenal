@@ -14,7 +14,7 @@ if (isServer) then {
             localNamespace setVariable ["A4A_ServerSessionGenerations", createHashMap];
             localNamespace setVariable ["A4A_ServerTransactions", createHashMap];
             localNamespace setVariable ["A4A_ServerCargoLocks", createHashMap];
-            localNamespace setVariable ["A4A_ServerSaveGeneration", createHashMap];
+            localNamespace setVariable ["A4A_ServerSaveGeneration", 0];
             localNamespace setVariable ["A4A_ServerSaveRateLimit", createHashMap];
             localNamespace setVariable ["A4A_ServerItemTypeCache", createHashMap];
 
@@ -27,6 +27,7 @@ if (isServer) then {
                     ["sessionLifetime", 30],
                     ["transactionLifetime", 10],
                     ["maxEntries", 10000],
+                    ["maxPayloadCharacters", 2000000],
                     ["maxAmount", 100000000],
                     ["editorSteamIDs", []],
                     ["editAccessMode", 0]

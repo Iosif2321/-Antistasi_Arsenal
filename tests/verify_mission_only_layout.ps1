@@ -372,6 +372,46 @@ if (Test-Path -LiteralPath $missionRoot -PathType Container) {
         $receiveGrant -match 'A4A_fnc_completeWithdraw' -and $receiveGrant -match 'A4A_fnc_completeReturn'
     )
     Assert-Check "legacy dispatcher is not a remote endpoint" ($remoteExec -notmatch 'class\s+jn_fnc_arsenal\b')
+
+    $validateSnapshotPath = Join-Path $missionRoot "A4A/functions/server/fn_validateSnapshot.sqf"
+    $loadPersistencePath = Join-Path $missionRoot "A4A/functions/server/fn_loadPersistence.sqf"
+    $schedulePersistencePath = Join-Path $missionRoot "A4A/functions/server/fn_schedulePersistence.sqf"
+    $saveEditorPath = Join-Path $missionRoot "A4A/functions/server/fn_saveEditorSnapshot.sqf"
+    $canEditPath = Join-Path $missionRoot "A4A/functions/shared/fn_canEdit.sqf"
+    $persistenceFiles = @($validateSnapshotPath, $loadPersistencePath, $schedulePersistencePath, $saveEditorPath, $canEditPath)
+    foreach ($persistenceFile in $persistenceFiles) {
+        Assert-Check ("persistence protocol exists: " + (Split-Path -Leaf $persistenceFile)) (Test-Path -LiteralPath $persistenceFile -PathType Leaf)
+    }
+    $validateSnapshot = if (Test-Path -LiteralPath $validateSnapshotPath) { Get-Content -LiteralPath $validateSnapshotPath -Raw } else { "" }
+    $loadPersistence = if (Test-Path -LiteralPath $loadPersistencePath) { Get-Content -LiteralPath $loadPersistencePath -Raw } else { "" }
+    $schedulePersistence = if (Test-Path -LiteralPath $schedulePersistencePath) { Get-Content -LiteralPath $schedulePersistencePath -Raw } else { "" }
+    $saveEditor = if (Test-Path -LiteralPath $saveEditorPath) { Get-Content -LiteralPath $saveEditorPath -Raw } else { "" }
+    $canEdit = if (Test-Path -LiteralPath $canEditPath) { Get-Content -LiteralPath $canEditPath -Raw } else { "" }
+
+    Assert-Check "snapshot validator enforces 27 canonical buckets" ($validateSnapshot -match 'count\s+_candidate\s+isNotEqualTo\s+27' -and $validateSnapshot -match 'A4A_fnc_itemTypeCached' -and $validateSnapshot -match '_derivedIndex\s+isNotEqualTo\s+_bucketIndex')
+    Assert-Check "snapshot validator enforces global unique bounded known rows" (
+        $validateSnapshot -match 'createHashMap' -and
+        $validateSnapshot -match 'toLower\s+_className' -and
+        $validateSnapshot -match 'finite\s+_amount' -and
+        $validateSnapshot -match '_amount\s+(?:isEqualTo|isNotEqualTo)\s+-1' -and
+        $validateSnapshot -match '_maxEntries' -and
+        $validateSnapshot -match '_maxPayloadCharacters' -and
+        $validateSnapshot -match 'count\s+str\s+_candidate' -and
+        $validateSnapshot -match '_maxAmount'
+    )
+    Assert-Check "persistence uses versioned envelope and validates legacy data" ($loadPersistence -match 'A4A_MissionArsenal_v2_' -and $loadPersistence -match 'A4A_ArsenalData_' -and $loadPersistence -match 'A4A_fnc_validateSnapshot' -and $loadPersistence -match '\[\s*2\s*,\s*_revision\s*,')
+    Assert-Check "profile save is generation-safe and debounced" ($schedulePersistence -match 'A4A_ServerSaveGeneration' -and $schedulePersistence -match 'uiSleep\s+0\.25' -and $schedulePersistence -match 'saveProfileNamespace' -and $schedulePersistence -match 'A4A_fnc_validateSnapshot')
+    Assert-Check "editor authorization uses private server settings" ($canEdit -match 'A4A_ServerSettings' -and $canEdit -match 'editorSteamIDs' -and $canEdit -match 'getPlayerUID')
+    Assert-Check "editor save binds sender session revision validator and rate limit" (
+        $saveEditor -match 'A4A_fnc_validateActiveSession' -and
+        $saveEditor -match 'A4A_fnc_canEdit' -and
+        $saveEditor -match 'A4A_ServerRevisions' -and
+        $saveEditor -match 'saveEligibleRevision' -and
+        $saveEditor -match 'A4A_fnc_validateSnapshot' -and
+        $saveEditor -match 'A4A_ServerSaveRateLimit'
+    )
+    Assert-Check "editor save commits revision and broadcasts canonical replacement" ($saveEditor -match 'A4A_ServerData' -and $saveEditor -match 'A4A_fnc_publishSnapshot' -and $saveEditor -match 'A4A_fnc_schedulePersistence')
+    Assert-Check "Legacy editor calls mission-native revisioned endpoint" ($legacyMain -match 'A4A_fnc_saveEditorSnapshot' -and $legacyMain -match 'A4A_fnc_canEdit' -and $legacyMain -notmatch 'A4A_fnc_arsenal_saveRequest|A4A_fnc_arsenal_canEdit')
 }
 
 if ($failures.Count -gt 0) {

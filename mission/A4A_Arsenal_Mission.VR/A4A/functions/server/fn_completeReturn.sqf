@@ -38,22 +38,31 @@ if !(_data isEqualType [] && {count _data isEqualTo 27} && {_revision >= 0}) exi
 private _rollback = !_success;
 private _message = "Return rejected; the client will restore its provisional loadout.";
 if (_success) then {
-    _data set [_index, [_data select _index, [_item, _amount]] call jn_fnc_arsenal_addToArray];
-    _dataById set [_arsenalId, _data];
-    localNamespace setVariable ["A4A_ServerData", _dataById];
-    _revision = _revision + 1;
-    _revisions set [_arsenalId, _revision];
-    localNamespace setVariable ["A4A_ServerRevisions", _revisions];
-    _message = "Return committed.";
+    private _candidate = parseSimpleArray str _data;
+    _candidate set [_index, [_candidate select _index, [_item, _amount]] call jn_fnc_arsenal_addToArray];
+    private _validated = [_candidate] call A4A_fnc_validateSnapshot;
+    if !(_validated select 0) then {
+        _success = false;
+        _rollback = true;
+        _message = format ["Return rejected by canonical validator: %1", _validated select 3];
+    } else {
+        _data = _validated select 1;
+        _dataById set [_arsenalId, _data];
+        localNamespace setVariable ["A4A_ServerData", _dataById];
+        _revision = _revision + 1;
+        _revisions set [_arsenalId, _revision];
+        localNamespace setVariable ["A4A_ServerRevisions", _revisions];
+        _message = "Return committed.";
 
-    private _sessions = localNamespace getVariable ["A4A_ServerSessions", createHashMap];
-    private _ownerKey = str _senderOwner;
-    if (!isNil {_sessions get _ownerKey}) then {
-        private _session = _sessions get _ownerKey;
-        _session set ["revision", _revision];
-        _session set ["saveEligibleRevision", -1];
-        _sessions set [_ownerKey, _session];
-        localNamespace setVariable ["A4A_ServerSessions", _sessions];
+        private _sessions = localNamespace getVariable ["A4A_ServerSessions", createHashMap];
+        private _ownerKey = str _senderOwner;
+        if (!isNil {_sessions get _ownerKey}) then {
+            private _session = _sessions get _ownerKey;
+            _session set ["revision", _revision];
+            _session set ["saveEligibleRevision", -1];
+            _sessions set [_ownerKey, _session];
+            localNamespace setVariable ["A4A_ServerSessions", _sessions];
+        };
     };
 };
 
@@ -67,4 +76,3 @@ if (_success) then {
     [_arsenalId, _revision, _data, _senderOwner, "Arsenal stock updated."] call A4A_fnc_publishSnapshot;
     if (!isNil "A4A_fnc_schedulePersistence") then { [] call A4A_fnc_schedulePersistence };
 };
-

@@ -128,12 +128,12 @@
 - Create: `mission/A4A_Arsenal_Mission.VR/A4A/functions/server/fn_saveEditorSnapshot.sqf`
 - Create: `mission/A4A_Arsenal_Mission.VR/A4A/functions/shared/fn_itemTypeCached.sqf`
 
-- [ ] Add RED cases for 27 buckets, canonical bucket/type, known config class, one global case-insensitive occurrence, amount `-1` or positive integer within cap, total entry cap, payload-string cap, expected revision, and invalid-profile fallback without partial import.
-- [ ] Run the test and observe failure.
-- [ ] Implement deep validation and load-then-publish ordering; increment revision on every canonical mutation and compare editor baselines before replace.
-- [ ] Implement a generation-safe 250 ms `uiSleep` coalescer and bounded editor-save rate limiting.
-- [ ] Rerun validation, persistence, and UTF-8/delimiter gates.
-- [ ] Commit exact paths with message `feat: validate and persist mission arsenal state`.
+- [x] Add RED cases for 27 buckets, canonical bucket/type, known config class, one global case-insensitive occurrence, amount `-1` or positive integer within cap, total entry cap, payload-string cap, expected revision, and invalid-profile fallback without partial import.
+- [x] Run the test and observe failure.
+- [x] Implement deep validation and load-then-publish ordering; increment revision on every canonical mutation and compare editor baselines before replace.
+- [x] Implement a generation-safe 250 ms `uiSleep` coalescer and bounded editor-save rate limiting.
+- [x] Rerun validation, persistence, and UTF-8/delimiter gates.
+- [x] Commit exact paths with message `feat: validate and persist mission arsenal state`.
 
 ## Task 8: Atomic physical cargo for crates and vehicles
 
